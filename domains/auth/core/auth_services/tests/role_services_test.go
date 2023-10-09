@@ -9,6 +9,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
+	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"testing"
 )
@@ -91,21 +92,21 @@ func TestRole(t *testing.T) {
 	})
 	t.Run("DeleteSuccess", func(t *testing.T) {
 		ctx := context.Background()
-		r.setupAndPopulate()
+		ori := r.setupAndPopulate()
 		models := r.repo.Get(ctx, auth_requests.NewGetRequest())
 		assert.Len(t, models, 2)
 
-		affected, err := r.services.DeleteById(ctx, "1")
+		affected, err := r.services.DeleteById(ctx, ori[0].Id)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
 		models = r.repo.Get(ctx, auth_requests.NewGetRequest())
 		assert.Len(t, models, 1)
-		assert.Equal(t, "2", models[0].Id)
+		assert.Equal(t, ori[1].Id, models[0].Id)
 	})
 	t.Run("InsertAndUpdateFailedValidation", func(t *testing.T) {
 		ctx := context.Background()
-		r.setupAndPopulate()
+		id := r.setupAndPopulate()[0].Id
 
 		input := &auth_entities.Role{}
 		_, err := r.services.Insert(ctx, input)
@@ -114,7 +115,7 @@ func TestRole(t *testing.T) {
 		assert.ErrorContains(t, err, "nama.required")
 		assert.ErrorContains(t, err, "level.min.1")
 
-		input.Id = "1"
+		input.Id = id
 		input.Level = -1
 		_, err = r.services.Update(ctx, input)
 		assert.ErrorIs(t, err, helpers_error.ValidationError)
@@ -126,6 +127,9 @@ func TestRole(t *testing.T) {
 
 		affected, err := r.services.DeleteById(ctx, "1")
 		assert.Equal(t, 0, affected)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+
+		_, err = r.services.Update(ctx, &auth_entities.Role{Id: "1"})
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 }
@@ -142,9 +146,27 @@ func (r *RoleServicesTest) setup() {
 func (r *RoleServicesTest) setMemoryRepository() {
 	r.repo = auth_repos_memory.NewRoleMemoryRepository()
 }
+func (r *RoleServicesTest) setMysqlRepository() {
+	r.repo = auth_repos_mysql.NewRoleMysqlRepository()
+	models := r.repo.Get(context.Background(), auth_requests.NewGetRequest())
+	for _, model := range models {
+		_, _ = r.repo.DeleteById(context.Background(), model.Id)
+	}
+}
 func (r *RoleServicesTest) setupAndPopulate() []*auth_entities.Role {
 	r.setup()
 	input := []*auth_entities.Role{
+		{
+			Nama:      "Admin IT Sekolah",
+			Deskripsi: "Deskripsi role admin IT sekolah",
+			Level:     10,
+			Permissions: []string{
+				"user.user.get",
+				"user.user.insert",
+				"user.user.update",
+				"user.user.delete",
+			},
+		},
 		{
 			Nama:      "Developer",
 			Deskripsi: "Deskripsi role developer",
@@ -158,17 +180,6 @@ func (r *RoleServicesTest) setupAndPopulate() []*auth_entities.Role {
 				"user.role.insert",
 				"user.role.update",
 				"user.role.delete",
-			},
-		},
-		{
-			Nama:      "Admin IT Sekolah",
-			Deskripsi: "Deskripsi role admin IT sekolah",
-			Level:     10,
-			Permissions: []string{
-				"user.user.get",
-				"user.user.insert",
-				"user.user.update",
-				"user.user.delete",
 			},
 		},
 	}

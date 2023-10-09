@@ -31,7 +31,12 @@ func (r *RoleRepository) Get(ctx context.Context, request auth_requests.GetReque
 func (r *RoleRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
 	return len(r.getDataFiltered(request))
 }
-
+func (r *RoleRepository) CountByNama(ctx context.Context, nama string, exceptId string) (count int) {
+	matches := helpers.Filter(r.data, func(role *auth_entities.Role) bool {
+		return role.Nama == nama && role.Id != exceptId
+	})
+	return len(matches)
+}
 func (r *RoleRepository) Insert(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error) {
 	lastId := helpers.Reduce(r.data, 0, func(accumulator int, role *auth_entities.Role) int {
 		datumId, _ := strconv.Atoi(role.Id)
