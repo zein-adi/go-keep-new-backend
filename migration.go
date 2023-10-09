@@ -17,17 +17,13 @@ func RunMigration() {
 		"auth": "domains/auth/repos/auth_repos_mysql/migrations",
 	}
 
-	// Flag Parsing
-	pversion := flag.String("version", "", "force: version")
-	flag.Parse()
-	version := *pversion
-
 	args := flag.Args()
 	if len(args) < 3 {
 		panic("usage: migrate [action: up|down|version|force] [domain] [options]")
 	}
 	action := flag.Arg(1)
 	domain := flag.Arg(2)
+	version := flag.Arg(3)
 
 	// Validation
 	v := validator.New()
@@ -87,7 +83,7 @@ func (m *Migration) Up() {
 	fmt.Printf("Version     : %d", version)
 }
 func (m *Migration) Down() {
-	err := m.Migrate.Down()
+	err := m.Migrate.Steps(-1)
 	fmt.Print("Migrate Down : ")
 	if err != nil {
 		fmt.Println(err)
