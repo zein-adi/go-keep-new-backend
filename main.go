@@ -23,11 +23,14 @@ func main() {
 func startHttpServer() {
 	roleRepo := auth_repos_mysql.NewRoleMysqlRepository()
 	roleServices := auth_services.NewRoleServices(roleRepo)
-	role := auth_handlers_restful.NewRoleRestful(roleServices)
+	roleRestful := auth_handlers_restful.NewRoleRestful(roleServices)
 
 	userRepo := auth_repos_mysql.NewUserMysqlRepository()
 	userServices := auth_services.NewUserServices(userRepo)
-	user := auth_handlers_restful.NewUserRestful(userServices)
+	userRestful := auth_handlers_restful.NewUserRestful(userServices)
+
+	permissionService := auth_services.NewPermissionServices()
+	permissionRestful := auth_handlers_restful.NewPermissionRestful(permissionService)
 
 	opt := cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://192.168.232.2:3000"},
@@ -47,16 +50,18 @@ func startHttpServer() {
 		}).SetMiddleware(middlewares.AuthRefresh)
 	})
 	router.Group("/user", "user.", func(router *components.Router) {
-		router.GET("/roles", role.Get, "role.get")
-		router.POST("/roles", role.Insert, "role.insert")
-		router.PUT("/roles/:roleId", role.Update, "role.update")
-		router.DELETE("/roles/:roleId", role.DeleteById, "role.delete")
+		router.GET("/roles", roleRestful.Get, "role.get")
+		router.POST("/roles", roleRestful.Insert, "role.insert")
+		router.PUT("/roles/:roleId", roleRestful.Update, "role.update")
+		router.DELETE("/roles/:roleId", roleRestful.DeleteById, "role.delete")
 
-		router.GET("/users", user.Get, "user.get")
-		router.POST("/users", user.Insert, "user.insert")
-		router.PUT("/users/:userId", user.Update, "user.update")
-		router.PATCH("/users/:userId/password", user.UpdatePassword, "user.update.password")
-		router.DELETE("/users/:userId", user.DeleteById, "user.delete")
+		router.GET("/users", userRestful.Get, "user.get")
+		router.POST("/users", userRestful.Insert, "user.insert")
+		router.PUT("/users/:userId", userRestful.Update, "user.update")
+		router.PATCH("/users/:userId/password", userRestful.UpdatePassword, "user.update.password")
+		router.DELETE("/users/:userId", userRestful.DeleteById, "user.delete")
+
+		router.GET("/permissions", permissionRestful.Get, "permission.get")
 	}) // .SetMiddleware(middlewares.Auth, middlewares.Acl)
 
 	fmt.Println("Listening...")
