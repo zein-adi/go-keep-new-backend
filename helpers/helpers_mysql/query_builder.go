@@ -63,7 +63,9 @@ func (x *QueryBuilder) Get() (rows *sql.Rows, cleanup func()) {
 	rows, err := x.db.QueryContext(x.ctx, query, arguments...)
 	helpers_error.PanicIfError(err)
 	cleanup = func() {
-		helpers_error.PanicIfError(rows.Close())
+		if rows != nil {
+			helpers_error.PanicIfError(rows.Close())
+		}
 	}
 	return rows, cleanup
 }

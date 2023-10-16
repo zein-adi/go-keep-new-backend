@@ -9,7 +9,7 @@ import (
 type IRoleServices interface {
 	Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.Role
 	Count(ctx context.Context, request auth_requests.GetRequest) int
-	Insert(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error)
-	Update(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error)
-	DeleteById(ctx context.Context, id string) (int, error)
+	Insert(ctx context.Context, role *auth_entities.Role, currentUserRoleIds []string) (*auth_entities.Role, error)
+	Update(ctx context.Context, role *auth_entities.Role, currentUserRoleIds []string) (*auth_entities.Role, error)
+	DeleteById(ctx context.Context, id string, currentUserRoleIds []string) (affected int, err error)
 }

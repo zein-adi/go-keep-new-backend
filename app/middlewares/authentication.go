@@ -4,6 +4,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
+	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
 	"net/http"
@@ -58,11 +59,78 @@ func GetAuthorizationToken(r *http.Request) (string, error) {
 
 	return bearer[1], nil
 }
-func GetRefreshJwtClaims(tokenString string) (jwt.MapClaims, error) {
-	return getJwtClaims(tokenString, refreshTokenSecret)
+func GetRefreshJwtClaims(tokenString string) (*RefreshTokenClaims, error) {
+	claims, err := getJwtClaims(tokenString, refreshTokenSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	subject, err := claims.GetSubject()
+	if err != nil {
+		return nil, err
+	}
+	expirationTime, err := claims.GetExpirationTime()
+	if err != nil {
+		return nil, err
+	}
+	iat, err := claims.GetIssuedAt()
+	if err != nil {
+		return nil, err
+	}
+	rememberAny, ok := claims["remember"]
+	if !ok {
+		return nil, errors.Wrap(JwtTokenError, "jwt token must contains remember field")
+	}
+	remember := rememberAny.(bool)
+
+	model := &RefreshTokenClaims{
+		Sub:      subject,
+		Remember: remember,
+		Iat:      iat.Unix(),
+		Exp:      expirationTime.Unix(),
+	}
+	return model, nil
 }
-func GetJwtClaims(tokenString string) (jwt.MapClaims, error) {
-	return getJwtClaims(tokenString, accessTokenSecret)
+func GetJwtClaims(tokenString string) (*AccessTokenClaims, error) {
+	claims, err := getJwtClaims(tokenString, accessTokenSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	subject, err := claims.GetSubject()
+	if err != nil {
+		return nil, err
+	}
+	expirationTime, err := claims.GetExpirationTime()
+	if err != nil {
+		return nil, err
+	}
+	iat, err := claims.GetIssuedAt()
+	if err != nil {
+		return nil, err
+	}
+	nameInf, ok := claims["name"]
+	if !ok {
+		return nil, errors.Wrap(JwtTokenError, "jwt token must contains name field")
+	}
+	roleIdsInf, ok := claims["roleIds"]
+	if !ok {
+		return nil, errors.Wrap(JwtTokenError, "jwt token must contains roleIds field")
+	}
+	nameString := nameInf.(string)
+	roleIdsAny := roleIdsInf.([]any)
+	roleIds := helpers.Map(roleIdsAny, func(d any) string {
+		return d.(string)
+	})
+
+	model := &AccessTokenClaims{
+		Sub:     subject,
+		Name:    nameString,
+		RoleIds: roleIds,
+		Iat:     iat.Unix(),
+		Exp:     expirationTime.Unix(),
+	}
+	return model, nil
 }
 func getJwtClaims(tokenString string, tokenSecret string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {

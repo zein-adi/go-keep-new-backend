@@ -10,6 +10,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_local"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_restful"
+	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_redis"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
@@ -28,10 +29,11 @@ func startHttpServer() {
 	roleRestful := auth_handlers_restful.NewRoleRestful(roleServices)
 
 	userRepo := auth_repos_mysql.NewUserMysqlRepository()
-	userServices := auth_services.NewUserServices(userRepo)
+	userServices := auth_services.NewUserServices(userRepo, roleRepo)
 	userRestful := auth_handlers_restful.NewUserRestful(userServices)
 
-	permissionService := auth_services.NewPermissionServices()
+	permissionRepo := auth_repos_memory.NewPermissionMemoryRepository()
+	permissionService := auth_services.NewPermissionServices(permissionRepo, roleRepo)
 	permissionRestful := auth_handlers_restful.NewPermissionRestful(permissionService)
 
 	authRepo := auth_repos_redis.NewAuthRedisRepository()

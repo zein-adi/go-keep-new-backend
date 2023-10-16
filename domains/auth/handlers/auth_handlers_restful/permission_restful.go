@@ -3,6 +3,7 @@ package auth_handlers_restful
 import (
 	"context"
 	"github.com/julienschmidt/httprouter"
+	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
 	"net/http"
@@ -17,11 +18,13 @@ type PermissionRestful struct {
 	service auth_service_interfaces.IPermissionServices
 }
 
-func (x *PermissionRestful) Get(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *PermissionRestful) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	models := x.service.Get(ctx)
+	accessToken, _ := middlewares.GetAuthorizationToken(r)
+	accessClaim, _ := middlewares.GetJwtClaims(accessToken)
+	models := x.service.Get(ctx, accessClaim.RoleIds)
 	count := len(models)
 
 	h.SendMultiResponse(w, http.StatusOK, models, count)

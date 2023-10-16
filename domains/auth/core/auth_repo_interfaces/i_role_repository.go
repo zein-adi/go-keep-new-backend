@@ -8,8 +8,9 @@ import (
 
 type IRoleRepository interface {
 	Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.Role
-	GetById(ctx context.Context, ids []string) ([]*auth_entities.Role, error)
 	Count(ctx context.Context, request auth_requests.GetRequest) (count int)
+	// GetById throws NewEntryCountMismatchError
+	GetById(ctx context.Context, ids []string) ([]*auth_entities.Role, error)
 	FindById(ctx context.Context, id string) (*auth_entities.Role, error)
 	CountByNama(ctx context.Context, nama string, exceptId string) (count int)
 	Insert(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error)

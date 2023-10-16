@@ -51,7 +51,6 @@ func (r *RoleRepository) Insert(_ context.Context, role *auth_entities.Role) (*a
 	r.data = append(r.data, model)
 	return model, nil
 }
-
 func (r *RoleRepository) Update(ctx context.Context, role *auth_entities.Role) (affected int, err error) {
 	_, err = r.FindById(ctx, role.Id)
 	if err != nil {
@@ -63,7 +62,6 @@ func (r *RoleRepository) Update(ctx context.Context, role *auth_entities.Role) (
 	r.data[index] = role
 	return 1, nil
 }
-
 func (r *RoleRepository) FindById(_ context.Context, id string) (*auth_entities.Role, error) {
 	index, err := helpers.FindIndex(r.data, func(role *auth_entities.Role) bool {
 		return role.Id == id
@@ -73,7 +71,6 @@ func (r *RoleRepository) FindById(_ context.Context, id string) (*auth_entities.
 	}
 	return r.data[index].Copy(), nil
 }
-
 func (r *RoleRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
 	_, err = r.FindById(ctx, id)
 	if err != nil {
@@ -92,15 +89,22 @@ func (r *RoleRepository) GetById(_ context.Context, ids []string) ([]*auth_entit
 	copied := helpers.Map(matches, func(d *auth_entities.Role) *auth_entities.Role {
 		return d.Copy()
 	})
+	expectedLen := len(ids)
+	actualLen := len(copied)
+	if actualLen < expectedLen {
+		return copied, helpers_error.NewEntryCountMismatchError(expectedLen, actualLen)
+	}
 	return copied, nil
 }
 
 func (r *RoleRepository) getDataFiltered(request auth_requests.GetRequest) []*auth_entities.Role {
 	return helpers.Filter(r.data, func(role *auth_entities.Role) bool {
 		res := true
+
 		if request.Search != "" {
 			res = res && strings.Contains(role.Nama, request.Search)
 		}
+
 		return res
 	})
 }

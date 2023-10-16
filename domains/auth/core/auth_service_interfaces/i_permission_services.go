@@ -5,5 +5,5 @@ import (
 )
 
 type IPermissionServices interface {
-	Get(ctx context.Context) []string
+	Get(ctx context.Context, roleIds []string) []string
 }

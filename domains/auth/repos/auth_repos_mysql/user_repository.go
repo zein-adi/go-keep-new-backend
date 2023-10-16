@@ -130,7 +130,12 @@ func (r *UserRepository) getQueryFiltered(ctx context.Context, request auth_requ
 func (r *UserRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func()) []*auth_entities.User {
 	defer cleanup()
 
-	var models []*auth_entities.User
+	models := make([]*auth_entities.User, 0)
+
+	if rows == nil {
+		return models
+	}
+
 	for rows.Next() {
 		model := &auth_entities.User{}
 		models = append(models, model)

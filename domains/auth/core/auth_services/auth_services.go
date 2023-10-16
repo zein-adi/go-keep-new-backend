@@ -81,17 +81,7 @@ func (a *AuthServices) Refresh(ctx context.Context, refreshToken string) (access
 		return "", "", refreshTokenBlacklistedError
 	}
 
-	username, err := claims.GetSubject()
-	if err != nil {
-		return "", "", err
-	}
-	exp, err := claims.GetExpirationTime()
-	if err != nil {
-		return "", "", err
-	}
-	rememberMe := claims["remember"].(bool)
-
-	user, err := a.userRepo.FindByUsername(ctx, username)
+	user, err := a.userRepo.FindByUsername(ctx, claims.Sub)
 	if err != nil {
 		return "", "", err
 	}
@@ -101,6 +91,7 @@ func (a *AuthServices) Refresh(ctx context.Context, refreshToken string) (access
 	accessToken = middlewares.IssueNewAccessToken(user.Username, user.Nama, user.RoleIds, newIat, newExp)
 
 	var futureExpired time.Time
+	rememberMe := claims.Remember
 	if rememberMe {
 		newExp = time.Now().Add(time.Hour * 24 * 7)
 		futureExpired = newIat.Add(time.Hour * 24)
@@ -109,7 +100,7 @@ func (a *AuthServices) Refresh(ctx context.Context, refreshToken string) (access
 		futureExpired = newIat.Add(time.Hour * 3)
 	}
 
-	shouldIssueNewRefreshToken := exp.Before(futureExpired)
+	shouldIssueNewRefreshToken := time.Unix(claims.Exp, 0).Before(futureExpired)
 	if shouldIssueNewRefreshToken {
 		refreshToken = middlewares.IssueNewRefreshToken(user.Username, rememberMe, newIat, newExp)
 	}
@@ -131,12 +122,7 @@ func (a *AuthServices) Profile(ctx context.Context, accessToken string) (*auth_r
 		return response, err
 	}
 
-	username, err := claims.GetSubject()
-	if err != nil {
-		return response, err
-	}
-
-	user, err := a.userRepo.FindByUsername(ctx, username)
+	user, err := a.userRepo.FindByUsername(ctx, claims.Sub)
 	if err != nil {
 		return response, err
 	}
@@ -149,6 +135,9 @@ func (a *AuthServices) Profile(ctx context.Context, accessToken string) (*auth_r
 	var permissions []string
 	for _, roleId := range user.RoleIds {
 		role := rolesKeyId[roleId]
+		if role == nil {
+			continue
+		}
 		roleNames = append(roleNames, role.Nama)
 		permissions = append(permissions, role.Permissions...)
 	}

@@ -9,7 +9,6 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
-	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"testing"
 	"time"
 )
@@ -34,22 +33,18 @@ func TestAuth(t *testing.T) {
 		assert.Nil(t, err)
 
 		claims, err := middlewares.GetJwtClaims(accessToken)
-		roleIds := helpers.Map(claims["roleIds"].([]any), func(d any) string {
-			return d.(string)
-		})
+		roleIds := claims.RoleIds
 
 		assert.Nil(t, err)
-		subject, err := claims.GetSubject()
 		assert.Nil(t, err)
-		assert.Equal(t, username, subject)
-		assert.Equal(t, user.Nama, claims["name"])
+		assert.Equal(t, username, claims.Sub)
+		assert.Equal(t, user.Nama, claims.Name)
 		assert.Equal(t, user.RoleIds, roleIds)
 
 		refreshClaims, err := middlewares.GetRefreshJwtClaims(refreshToken)
 		assert.Nil(t, err)
-		subject, err = refreshClaims.GetSubject()
 		assert.Nil(t, err)
-		assert.Equal(t, username, subject)
+		assert.Equal(t, username, refreshClaims.Sub)
 	})
 	t.Run("LoginSuccessRememberMeTrue", func(t *testing.T) {
 		r.setup()
@@ -62,8 +57,8 @@ func TestAuth(t *testing.T) {
 		_, refreshToken, _ := r.services.Login(context.Background(), username, password, true)
 
 		refreshClaims, _ := middlewares.GetRefreshJwtClaims(refreshToken)
-		expired, _ := refreshClaims.GetExpirationTime()
-		assert.Equal(t, true, refreshClaims["remember"])
+		expired := time.Unix(refreshClaims.Exp, 0)
+		assert.Equal(t, true, refreshClaims.Remember)
 
 		// Not Expired Yet
 		nowPlus6Days23Hour := time.Now().Add(time.Hour*24*7 - time.Hour*1)
@@ -86,8 +81,8 @@ func TestAuth(t *testing.T) {
 		_, refreshToken, _ := r.services.Login(context.Background(), username, password, false)
 
 		refreshClaims, _ := middlewares.GetRefreshJwtClaims(refreshToken)
-		expired, _ := refreshClaims.GetExpirationTime()
-		assert.Equal(t, false, refreshClaims["remember"])
+		expired := time.Unix(refreshClaims.Exp, 0)
+		assert.Equal(t, false, refreshClaims.Remember)
 
 		// Not Expired Yet
 		nowPlus23Hour59Minute := time.Now().Add(time.Hour*24 - time.Minute*1)
@@ -148,7 +143,7 @@ func TestAuth(t *testing.T) {
 		// Bambang Santoso, Role: Guru dan Staf
 		user := users[3]
 
-		refreshToken := middlewares.IssueNewRefreshToken(user.Username, false, time.Now(), time.Now().Add(time.Hour))
+		refreshToken := middlewares.IssueNewAccessToken(user.Username, user.Nama, user.RoleIds, time.Now(), time.Now().Add(time.Hour))
 		profile, err := r.services.Profile(context.Background(), refreshToken)
 		assert.Nil(t, err)
 		assert.Equal(t, user.Username, profile.Username)
@@ -235,6 +230,22 @@ func TestAuth(t *testing.T) {
 		assert.Empty(t, newAccToken)
 		assert.Empty(t, newRefToken)
 	})
+	t.Run("ProfileEmptyWhenRolesNotFound", func(t *testing.T) {
+		r.setup()
+		r.populateRole()
+		users := r.populateUser()
+		// Bambang Santoso, Role: Guru dan Staf
+		user := users[3]
+		user.RoleIds = []string{"10000"}
+
+		refreshToken := middlewares.IssueNewAccessToken(user.Username, user.Nama, user.RoleIds, time.Now(), time.Now().Add(time.Hour))
+		profile, err := r.services.Profile(context.Background(), refreshToken)
+		assert.Nil(t, err)
+		assert.Equal(t, user.Username, profile.Username)
+		assert.Equal(t, user.Nama, profile.Nama)
+		assert.Empty(t, profile.Roles)
+		assert.Empty(t, profile.Permissions)
+	})
 }
 
 type AuthServicesTest struct {
@@ -250,6 +261,7 @@ func (r *AuthServicesTest) setup() {
 }
 func (r *AuthServicesTest) setMemoryRepository() {
 	r.repo = auth_repos_memory.NewAuthMemoryRepository()
+	//r.repo = auth_repos_redis.NewAuthRedisRepository()
 	r.userRepo = auth_repos_memory.NewUserMemoryRepository()
 	r.roleRepo = auth_repos_memory.NewRoleMemoryRepository()
 }

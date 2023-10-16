@@ -9,8 +9,8 @@ import (
 type IUserServices interface {
 	Get(ctx context.Context, request auth_requests.GetRequest) []*auth_responses.UserResponse
 	Count(ctx context.Context, request auth_requests.GetRequest) int
-	Insert(ctx context.Context, request *auth_requests.UserInputRequest) (*auth_responses.UserResponse, error)
-	Update(ctx context.Context, request *auth_requests.UserUpdateRequest) (*auth_responses.UserResponse, error)
-	UpdatePassword(ctx context.Context, request *auth_requests.UserUpdatePasswordRequest) (affected int, err error)
-	DeleteById(ctx context.Context, id string) (affected int, err error)
+	Insert(ctx context.Context, request *auth_requests.UserInputRequest, currentUserRoleIds []string) (*auth_responses.UserResponse, error)
+	Update(ctx context.Context, request *auth_requests.UserUpdateRequest, currentUserRoleIds []string) (*auth_responses.UserResponse, error)
+	UpdatePassword(ctx context.Context, request *auth_requests.UserUpdatePasswordRequest, currentUserRoleIds []string) (affected int, err error)
+	DeleteById(ctx context.Context, id string, currentUserRoleIds []string) (affected int, err error)
 }

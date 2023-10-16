@@ -13,106 +13,128 @@ import (
 	"strings"
 )
 
-func NewUserServices(userRepo auth_repo_interfaces.IUserRepository) *UserServices {
+func NewUserServices(userRepo auth_repo_interfaces.IUserRepository, roleRepo auth_repo_interfaces.IRoleRepository) *UserServices {
 	return &UserServices{
 		userRepo: userRepo,
+		roleRepo: roleRepo,
 	}
 }
 
 type UserServices struct {
 	userRepo auth_repo_interfaces.IUserRepository
+	roleRepo auth_repo_interfaces.IRoleRepository
 }
 
-func (r *UserServices) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_responses.UserResponse {
-	models := r.userRepo.Get(ctx, request)
+func (x *UserServices) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_responses.UserResponse {
+	models := x.userRepo.Get(ctx, request)
 	return helpers.Map(models, func(d *auth_entities.User) *auth_responses.UserResponse {
-		return r.newUserResponseFromUserEntity(d)
+		return x.newUserResponseFromUserEntity(d)
 	})
 }
-
-func (r *UserServices) Count(ctx context.Context, request auth_requests.GetRequest) int {
-	return r.userRepo.Count(ctx, request)
+func (x *UserServices) Count(ctx context.Context, request auth_requests.GetRequest) int {
+	return x.userRepo.Count(ctx, request)
 }
-
-func (r *UserServices) Insert(ctx context.Context, request *auth_requests.UserInputRequest) (*auth_responses.UserResponse, error) {
-	// Validation
+func (x *UserServices) Insert(ctx context.Context, request *auth_requests.UserInputRequest, currentUserRoleIds []string) (*auth_responses.UserResponse, error) {
+	// Basic Input Validation
 	err := validator.New().ValidateStruct(request)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
-	err = r.validateUsername(ctx, request.Username, "")
+	err = x.validateUsername(ctx, request.Username, "")
+	if err != nil {
+		return &auth_responses.UserResponse{}, err
+	}
+
+	// Validate Current User Access To Updated Model
+	err = x.validateAccessedLevel(ctx, currentUserRoleIds, request.RoleIds)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
 
 	// Proses
-	userEntity := r.newUserEntityFromUserInputRequest(request)
+	userEntity := x.newUserEntityFromUserInputRequest(request)
 	userEntity.Username = strings.ToLower(userEntity.Username)
-	model, err := r.userRepo.Insert(ctx, userEntity)
+	model, err := x.userRepo.Insert(ctx, userEntity)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
-	return r.newUserResponseFromUserEntity(model), nil
+	return x.newUserResponseFromUserEntity(model), nil
 }
-
-func (r *UserServices) Update(ctx context.Context, request *auth_requests.UserUpdateRequest) (*auth_responses.UserResponse, error) {
+func (x *UserServices) Update(ctx context.Context, request *auth_requests.UserUpdateRequest, currentUserRoleIds []string) (*auth_responses.UserResponse, error) {
 	// Check Data
-	_, err := r.userRepo.FindById(ctx, request.Id)
+	_, err := x.userRepo.FindById(ctx, request.Id)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
 
-	// Validation
+	// Basic Input Validation
 	err = validator.New().ValidateStruct(request)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
-	err = r.validateUsername(ctx, request.Username, request.Id)
+	err = x.validateUsername(ctx, request.Username, request.Id)
+	if err != nil {
+		return &auth_responses.UserResponse{}, err
+	}
+
+	// Validate Current User Access To Updated Model
+	err = x.validateAccessedLevel(ctx, currentUserRoleIds, request.RoleIds)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
 
 	// Proses
-	userEntity := r.newUserEntityFromUserUpdateRequest(request)
+	userEntity := x.newUserEntityFromUserUpdateRequest(request)
 	userEntity.Username = strings.ToLower(userEntity.Username)
-	_, err = r.userRepo.Update(ctx, userEntity)
+	_, err = x.userRepo.Update(ctx, userEntity)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
 	}
-	return r.newUserResponseFromUserEntity(userEntity), nil
+	return x.newUserResponseFromUserEntity(userEntity), nil
 }
-
-func (r *UserServices) UpdatePassword(ctx context.Context, request *auth_requests.UserUpdatePasswordRequest) (affected int, err error) {
-	_, err = r.userRepo.FindById(ctx, request.Id)
+func (x *UserServices) UpdatePassword(ctx context.Context, request *auth_requests.UserUpdatePasswordRequest, currentUserRoleIds []string) (affected int, err error) {
+	model, err := x.userRepo.FindById(ctx, request.Id)
 	if err != nil {
 		return 0, err
 	}
 
+	// Basic Input Validation
 	err = validator.New().ValidateStruct(request)
 	if err != nil {
 		return 0, err
 	}
 
-	return r.userRepo.UpdatePassword(ctx, request.Id, HashPassword(request.Password))
-}
-
-func (r *UserServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
-	_, err = r.userRepo.FindById(ctx, id)
+	// Validate Current User Access To Updated Model
+	err = x.validateAccessedLevel(ctx, currentUserRoleIds, model.RoleIds)
 	if err != nil {
 		return 0, err
 	}
-	return r.userRepo.DeleteById(ctx, id)
+
+	return x.userRepo.UpdatePassword(ctx, request.Id, HashPassword(request.Password))
+}
+func (x *UserServices) DeleteById(ctx context.Context, id string, currentUserRoleIds []string) (affected int, err error) {
+	model, err := x.userRepo.FindById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
+	// Validate Current User Access To Updated Model
+	err = x.validateAccessedLevel(ctx, currentUserRoleIds, model.RoleIds)
+	if err != nil {
+		return 0, err
+	}
+
+	return x.userRepo.DeleteById(ctx, id)
 }
 
-func (r *UserServices) validateUsername(ctx context.Context, username string, userId string) error {
-	count := r.userRepo.CountByUsername(ctx, username, userId)
+func (x *UserServices) validateUsername(ctx context.Context, username string, userId string) error {
+	count := x.userRepo.CountByUsername(ctx, username, userId)
 	if count > 0 {
 		return helpers_error.NewValidationErrors("username", "duplicate", "")
 	}
 	return nil
 }
-
-func (r *UserServices) newUserEntityFromUserInputRequest(user *auth_requests.UserInputRequest) *auth_entities.User {
+func (x *UserServices) newUserEntityFromUserInputRequest(user *auth_requests.UserInputRequest) *auth_entities.User {
 	return &auth_entities.User{
 		Username: user.Username,
 		Password: HashPassword(user.Password),
@@ -120,7 +142,7 @@ func (r *UserServices) newUserEntityFromUserInputRequest(user *auth_requests.Use
 		RoleIds:  user.RoleIds,
 	}
 }
-func (r *UserServices) newUserEntityFromUserUpdateRequest(user *auth_requests.UserUpdateRequest) *auth_entities.User {
+func (x *UserServices) newUserEntityFromUserUpdateRequest(user *auth_requests.UserUpdateRequest) *auth_entities.User {
 	return &auth_entities.User{
 		Id:       user.Id,
 		Username: user.Username,
@@ -128,7 +150,7 @@ func (r *UserServices) newUserEntityFromUserUpdateRequest(user *auth_requests.Us
 		RoleIds:  user.RoleIds,
 	}
 }
-func (r *UserServices) newUserResponseFromUserEntity(user *auth_entities.User) *auth_responses.UserResponse {
+func (x *UserServices) newUserResponseFromUserEntity(user *auth_entities.User) *auth_responses.UserResponse {
 	return &auth_responses.UserResponse{
 		Id:       user.Id,
 		Username: user.Username,
@@ -136,6 +158,24 @@ func (r *UserServices) newUserResponseFromUserEntity(user *auth_entities.User) *
 		RoleIds:  user.RoleIds,
 	}
 }
+func (x *UserServices) validateAccessedLevel(ctx context.Context, currentUserRoleIds, accessedRoleIds []string) error {
+	accessedRoles, err := x.roleRepo.GetById(ctx, accessedRoleIds)
+	if err != nil {
+		return err
+	}
+	currentUserRoles, err := x.roleRepo.GetById(ctx, currentUserRoleIds)
+	if err != nil {
+		return err
+	}
+	accessedMinLevel := getMinimumLevelFromRoles(accessedRoles)
+	userMinLevel := getMinimumLevelFromRoles(currentUserRoles)
+	err = validateAccessedLevel(userMinLevel, accessedMinLevel)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func HashPassword(unencryptedPassword string) string {
 	passwordByte, _ := bcrypt.GenerateFromPassword([]byte(unencryptedPassword), 10)
 	return string(passwordByte)

@@ -25,10 +25,7 @@ func (x *MiddlewareAcl) Handle(writer http.ResponseWriter, request *http.Request
 	tokenString, _ := GetAuthorizationToken(request)
 	claims, _ := GetJwtClaims(tokenString)
 
-	roleIdsInt := claims["roleIds"].([]any)
-	roleIds := helpers.Map(roleIdsInt, func(d any) string {
-		return d.(string)
-	})
+	roleIds := claims.RoleIds
 	permissions := x.getPermissionsByRole(roleIds...)
 
 	_, err := helpers.FindIndex(permissions, func(s string) bool {
