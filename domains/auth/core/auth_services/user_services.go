@@ -10,6 +10,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 func NewUserServices(userRepo auth_repo_interfaces.IUserRepository) *UserServices {
@@ -46,6 +47,7 @@ func (r *UserServices) Insert(ctx context.Context, request *auth_requests.UserIn
 
 	// Proses
 	userEntity := r.newUserEntityFromUserInputRequest(request)
+	userEntity.Username = strings.ToLower(userEntity.Username)
 	model, err := r.userRepo.Insert(ctx, userEntity)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err
@@ -72,6 +74,7 @@ func (r *UserServices) Update(ctx context.Context, request *auth_requests.UserUp
 
 	// Proses
 	userEntity := r.newUserEntityFromUserUpdateRequest(request)
+	userEntity.Username = strings.ToLower(userEntity.Username)
 	_, err = r.userRepo.Update(ctx, userEntity)
 	if err != nil {
 		return &auth_responses.UserResponse{}, err

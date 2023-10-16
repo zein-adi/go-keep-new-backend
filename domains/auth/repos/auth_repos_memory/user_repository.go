@@ -20,7 +20,7 @@ type UserRepository struct {
 	data []*auth_entities.User
 }
 
-func (r *UserRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.User {
+func (r *UserRepository) Get(_ context.Context, request auth_requests.GetRequest) []*auth_entities.User {
 	data := r.getDataFiltered(request)
 	data = helpers.Slice(data, request.Skip, request.Take)
 	return helpers.Map(data, func(d *auth_entities.User) *auth_entities.User {
@@ -28,18 +28,18 @@ func (r *UserRepository) Get(ctx context.Context, request auth_requests.GetReque
 	})
 }
 
-func (r *UserRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
+func (r *UserRepository) Count(_ context.Context, request auth_requests.GetRequest) (count int) {
 	return len(r.getDataFiltered(request))
 }
 
-func (r *UserRepository) CountByUsername(ctx context.Context, username string, exceptId string) (count int) {
+func (r *UserRepository) CountByUsername(_ context.Context, username string, exceptId string) (count int) {
 	matches := helpers.Filter(r.data, func(user *auth_entities.User) bool {
 		return user.Username == username && user.Id != exceptId
 	})
 	return len(matches)
 }
 
-func (r *UserRepository) Insert(ctx context.Context, user *auth_entities.User) (*auth_entities.User, error) {
+func (r *UserRepository) Insert(_ context.Context, user *auth_entities.User) (*auth_entities.User, error) {
 	lastId := helpers.Reduce(r.data, 0, func(accumulator int, user *auth_entities.User) int {
 		datumId, _ := strconv.Atoi(user.Id)
 		return max(accumulator, datumId)
@@ -77,7 +77,7 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userId, password st
 	return 1, nil
 }
 
-func (r *UserRepository) FindById(ctx context.Context, id string) (*auth_entities.User, error) {
+func (r *UserRepository) FindById(_ context.Context, id string) (*auth_entities.User, error) {
 	index, err := helpers.FindIndex(r.data, func(user *auth_entities.User) bool {
 		return user.Id == id
 	})
@@ -86,7 +86,15 @@ func (r *UserRepository) FindById(ctx context.Context, id string) (*auth_entitie
 	}
 	return r.data[index].Copy(), nil
 }
-
+func (r *UserRepository) FindByUsername(_ context.Context, username string) (*auth_entities.User, error) {
+	index, err := helpers.FindIndex(r.data, func(user *auth_entities.User) bool {
+		return user.Username == username
+	})
+	if err != nil {
+		return &auth_entities.User{}, helpers_error.NewEntryNotFoundError(userEntityName, "username", username)
+	}
+	return r.data[index].Copy(), nil
+}
 func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
 	_, err = r.FindById(ctx, id)
 	if err != nil {

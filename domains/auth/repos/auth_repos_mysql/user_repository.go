@@ -26,66 +26,36 @@ type UserRepository struct {
 	dbCleanup func()
 }
 
-func (r *UserRepository) Cleanup() {
-	r.dbCleanup()
-}
 func (r *UserRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.User {
 	q := r.getQueryFiltered(ctx, request)
 	q.Skip(request.Skip)
 	q.Take(request.Take)
 	q.OrderBy("nama")
-	rows, cleanup := q.Get()
-	defer cleanup()
-
-	var models []*auth_entities.User
-	for rows.Next() {
-		model := &auth_entities.User{}
-		models = append(models, model)
-
-		roleIdText := ""
-		helpers_error.PanicIfError(rows.Scan(
-			&model.Id,
-			&model.Username,
-			&model.Password,
-			&model.Nama,
-			&roleIdText,
-		))
-		helpers_error.PanicIfError(json.Unmarshal([]byte(roleIdText), &model.RoleIds))
-	}
-
-	return models
+	return r.newEntitiesFromRows(q.Get())
 }
-
 func (r *UserRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
 	return r.getQueryFiltered(ctx, request).Count()
 }
-
 func (r *UserRepository) FindById(ctx context.Context, id string) (*auth_entities.User, error) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("id", "=", id)
 	q.Take(1)
-
-	rows, cleanup := q.Get()
-	defer cleanup()
-
-	if !rows.Next() {
+	models := r.newEntitiesFromRows(q.Get())
+	if len(models) == 0 {
 		return nil, helpers_error.EntryNotFoundError
 	}
-
-	model := &auth_entities.User{}
-
-	roleIdText := ""
-	helpers_error.PanicIfError(rows.Scan(
-		&model.Id,
-		&model.Username,
-		&model.Password,
-		&model.Nama,
-		&roleIdText,
-	))
-	helpers_error.PanicIfError(json.Unmarshal([]byte(roleIdText), &model.RoleIds))
-	return model, nil
+	return models[0], nil
 }
-
+func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*auth_entities.User, error) {
+	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
+	q.Where("username", "=", username)
+	q.Take(1)
+	models := r.newEntitiesFromRows(q.Get())
+	if len(models) == 0 {
+		return nil, helpers_error.EntryNotFoundError
+	}
+	return models[0], nil
+}
 func (r *UserRepository) CountByUsername(ctx context.Context, username string, exceptId string) (count int) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("username", "=", username)
@@ -93,7 +63,6 @@ func (r *UserRepository) CountByUsername(ctx context.Context, username string, e
 	q.Take(1)
 	return q.Count()
 }
-
 func (r *UserRepository) Insert(ctx context.Context, user *auth_entities.User) (*auth_entities.User, error) {
 	roleIds, err := json.Marshal(user.RoleIds)
 	helpers_error.PanicIfError(err)
@@ -113,7 +82,6 @@ func (r *UserRepository) Insert(ctx context.Context, user *auth_entities.User) (
 	model.Id = strconv.Itoa(lastId)
 	return model, nil
 }
-
 func (r *UserRepository) Update(ctx context.Context, user *auth_entities.User) (affected int, err error) {
 	roleIds, err := json.Marshal(user.RoleIds)
 	helpers_error.PanicIfError(err)
@@ -127,7 +95,6 @@ func (r *UserRepository) Update(ctx context.Context, user *auth_entities.User) (
 	})
 	return affected, nil
 }
-
 func (r *UserRepository) UpdatePassword(ctx context.Context, userId, password string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Where("id", "=", userId)
@@ -136,7 +103,6 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userId, password st
 	})
 	return affected, nil
 }
-
 func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Where("id", "=", id)
@@ -148,6 +114,9 @@ func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected in
 	return affected, nil
 }
 
+func (r *UserRepository) Cleanup() {
+	r.dbCleanup()
+}
 func (r *UserRepository) getQueryFiltered(ctx context.Context, request auth_requests.GetRequest) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Select("id, username, password, nama, role_ids")
@@ -157,4 +126,24 @@ func (r *UserRepository) getQueryFiltered(ctx context.Context, request auth_requ
 	}
 
 	return q
+}
+func (r *UserRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func()) []*auth_entities.User {
+	defer cleanup()
+
+	var models []*auth_entities.User
+	for rows.Next() {
+		model := &auth_entities.User{}
+		models = append(models, model)
+
+		roleIdText := ""
+		helpers_error.PanicIfError(rows.Scan(
+			&model.Id,
+			&model.Username,
+			&model.Password,
+			&model.Nama,
+			&roleIdText,
+		))
+		helpers_error.PanicIfError(json.Unmarshal([]byte(roleIdText), &model.RoleIds))
+	}
+	return models
 }

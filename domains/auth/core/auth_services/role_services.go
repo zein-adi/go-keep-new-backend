@@ -22,11 +22,9 @@ type RoleServices struct {
 func (r *RoleServices) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.Role {
 	return r.roleRepo.Get(ctx, request)
 }
-
 func (r *RoleServices) Count(ctx context.Context, request auth_requests.GetRequest) int {
 	return r.roleRepo.Count(ctx, request)
 }
-
 func (r *RoleServices) Insert(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error) {
 	err := r.validate(ctx, role)
 	if err != nil {
@@ -34,7 +32,6 @@ func (r *RoleServices) Insert(ctx context.Context, role *auth_entities.Role) (*a
 	}
 	return r.roleRepo.Insert(ctx, role)
 }
-
 func (r *RoleServices) Update(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error) {
 	_, err := r.roleRepo.FindById(ctx, role.Id)
 	if err != nil {
@@ -52,7 +49,6 @@ func (r *RoleServices) Update(ctx context.Context, role *auth_entities.Role) (*a
 	}
 	return role.Copy(), nil
 }
-
 func (r *RoleServices) DeleteById(ctx context.Context, id string) (int, error) {
 	_, err := r.roleRepo.FindById(ctx, id)
 	if err != nil {

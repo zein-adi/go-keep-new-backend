@@ -8,6 +8,7 @@ import (
 
 type IRoleRepository interface {
 	Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.Role
+	GetById(ctx context.Context, ids []string) ([]*auth_entities.Role, error)
 	Count(ctx context.Context, request auth_requests.GetRequest) (count int)
 	FindById(ctx context.Context, id string) (*auth_entities.Role, error)
 	CountByNama(ctx context.Context, nama string, exceptId string) (count int)

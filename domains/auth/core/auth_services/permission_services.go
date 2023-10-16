@@ -11,8 +11,9 @@ func NewPermissionServices() *PermissionServices {
 type PermissionServices struct {
 }
 
-func (p *PermissionServices) Get(ctx context.Context) []string {
+func (p *PermissionServices) Get(_ context.Context) []string {
 	return []string{
+		"user.permission.get",
 		"user.role.get",
 		"user.role.insert",
 		"user.role.update",

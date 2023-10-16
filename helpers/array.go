@@ -1,6 +1,8 @@
 package helpers
 
-import "errors"
+import (
+	"errors"
+)
 
 // FindIndex mencari index dari array, mengeluarkan error bila tidak ditemukan
 func FindIndex[D any](data []D, f func(D) bool) (int, error) {
@@ -74,6 +76,18 @@ func Filter[D any](data []D, f func(D) bool) []D {
 		if f(datum) {
 			result = append(result, datum)
 		}
+	}
+	return result
+}
+
+func Unique[D int | string](data []D) []D {
+	keys := make(map[D]bool, len(data))
+	for _, datum := range data {
+		keys[datum] = true
+	}
+	var result []D
+	for res := range keys {
+		result = append(result, res)
 	}
 	return result
 }
