@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-func NewRoleLocal(service auth_service_interfaces.IRoleServices) *RoleLocal {
-	return &RoleLocal{service: service}
+func NewRoleLocalHandler(service auth_service_interfaces.IRoleServices) *RoleLocalHandler {
+	return &RoleLocalHandler{service: service}
 }
 
-type RoleLocal struct {
+type RoleLocalHandler struct {
 	service auth_service_interfaces.IRoleServices
 }
 
-func (x *RoleLocal) Get() []*auth_entities.Role {
+func (x *RoleLocalHandler) Get() []*auth_entities.Role {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

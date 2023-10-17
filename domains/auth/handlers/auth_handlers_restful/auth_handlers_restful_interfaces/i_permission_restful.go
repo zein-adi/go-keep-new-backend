@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-type IPermissionRestful interface {
+type IPermissionRestfulHandler interface {
 	Get(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 }

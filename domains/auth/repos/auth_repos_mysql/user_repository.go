@@ -13,30 +13,30 @@ import (
 
 var userTableName = "users"
 
-func NewUserMysqlRepository() *UserRepository {
+func NewUserMysqlRepository() *UserMysqlRepository {
 	db, cleanup := helpers_mysql.OpenMySqlConnection()
-	return &UserRepository{
+	return &UserMysqlRepository{
 		db:        db,
 		dbCleanup: cleanup,
 	}
 }
 
-type UserRepository struct {
+type UserMysqlRepository struct {
 	db        *sql.DB
 	dbCleanup func()
 }
 
-func (r *UserRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.User {
+func (r *UserMysqlRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.User {
 	q := r.getQueryFiltered(ctx, request)
 	q.Skip(request.Skip)
 	q.Take(request.Take)
 	q.OrderBy("nama")
 	return r.newEntitiesFromRows(q.Get())
 }
-func (r *UserRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
+func (r *UserMysqlRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
 	return r.getQueryFiltered(ctx, request).Count()
 }
-func (r *UserRepository) FindById(ctx context.Context, id string) (*auth_entities.User, error) {
+func (r *UserMysqlRepository) FindById(ctx context.Context, id string) (*auth_entities.User, error) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("id", "=", id)
 	q.Take(1)
@@ -46,7 +46,7 @@ func (r *UserRepository) FindById(ctx context.Context, id string) (*auth_entitie
 	}
 	return models[0], nil
 }
-func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*auth_entities.User, error) {
+func (r *UserMysqlRepository) FindByUsername(ctx context.Context, username string) (*auth_entities.User, error) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("username", "=", username)
 	q.Take(1)
@@ -56,14 +56,14 @@ func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*
 	}
 	return models[0], nil
 }
-func (r *UserRepository) CountByUsername(ctx context.Context, username string, exceptId string) (count int) {
+func (r *UserMysqlRepository) CountByUsername(ctx context.Context, username string, exceptId string) (count int) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("username", "=", username)
 	q.Where("id", "!=", exceptId)
 	q.Take(1)
 	return q.Count()
 }
-func (r *UserRepository) Insert(ctx context.Context, user *auth_entities.User) (*auth_entities.User, error) {
+func (r *UserMysqlRepository) Insert(ctx context.Context, user *auth_entities.User) (*auth_entities.User, error) {
 	roleIds, err := json.Marshal(user.RoleIds)
 	helpers_error.PanicIfError(err)
 
@@ -82,7 +82,7 @@ func (r *UserRepository) Insert(ctx context.Context, user *auth_entities.User) (
 	model.Id = strconv.Itoa(lastId)
 	return model, nil
 }
-func (r *UserRepository) Update(ctx context.Context, user *auth_entities.User) (affected int, err error) {
+func (r *UserMysqlRepository) Update(ctx context.Context, user *auth_entities.User) (affected int, err error) {
 	roleIds, err := json.Marshal(user.RoleIds)
 	helpers_error.PanicIfError(err)
 
@@ -95,7 +95,7 @@ func (r *UserRepository) Update(ctx context.Context, user *auth_entities.User) (
 	})
 	return affected, nil
 }
-func (r *UserRepository) UpdatePassword(ctx context.Context, userId, password string) (affected int, err error) {
+func (r *UserMysqlRepository) UpdatePassword(ctx context.Context, userId, password string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Where("id", "=", userId)
 	affected = q.Update(map[string]any{
@@ -103,7 +103,7 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userId, password st
 	})
 	return affected, nil
 }
-func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
+func (r *UserMysqlRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Where("id", "=", id)
 
@@ -114,10 +114,10 @@ func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected in
 	return affected, nil
 }
 
-func (r *UserRepository) Cleanup() {
+func (r *UserMysqlRepository) Cleanup() {
 	r.dbCleanup()
 }
-func (r *UserRepository) getQueryFiltered(ctx context.Context, request auth_requests.GetRequest) *helpers_mysql.QueryBuilder {
+func (r *UserMysqlRepository) getQueryFiltered(ctx context.Context, request auth_requests.GetRequest) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Select("id, username, password, nama, role_ids")
 
@@ -127,7 +127,7 @@ func (r *UserRepository) getQueryFiltered(ctx context.Context, request auth_requ
 
 	return q
 }
-func (r *UserRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func()) []*auth_entities.User {
+func (r *UserMysqlRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func()) []*auth_entities.User {
 	defer cleanup()
 
 	models := make([]*auth_entities.User, 0)

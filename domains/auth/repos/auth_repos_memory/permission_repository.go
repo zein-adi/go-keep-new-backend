@@ -2,15 +2,15 @@ package auth_repos_memory
 
 import "context"
 
-func NewPermissionMemoryRepository() *PermissionRepository {
-	return &PermissionRepository{}
+func NewPermissionMemoryRepository() *PermissionMemoryRepository {
+	return &PermissionMemoryRepository{}
 }
 
-type PermissionRepository struct {
+type PermissionMemoryRepository struct {
 	data []string
 }
 
-func (x *PermissionRepository) Get(_ context.Context) []string {
+func (x *PermissionMemoryRepository) Get(_ context.Context) []string {
 	return []string{
 		"user.permission.get",
 		"user.role.get",
@@ -22,5 +22,11 @@ func (x *PermissionRepository) Get(_ context.Context) []string {
 		"user.user.update",
 		"user.user.update.password",
 		"user.user.delete",
+
+		"keep.pos.get",
+		"keep.pos.insert",
+		"keep.pos.update",
+		"keep.pos.delete",
+		"keep.pos.trash",
 	}
 }

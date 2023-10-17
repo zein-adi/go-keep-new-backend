@@ -14,15 +14,15 @@ import (
 	"time"
 )
 
-func NewAuthRestful(service auth_service_interfaces.IAuthServices) *AuthRestful {
-	return &AuthRestful{service: service}
+func NewAuthRestfulHandler(service auth_service_interfaces.IAuthServices) *AuthRestfulHandler {
+	return &AuthRestfulHandler{service: service}
 }
 
-type AuthRestful struct {
+type AuthRestfulHandler struct {
 	service auth_service_interfaces.IAuthServices
 }
 
-func (x *AuthRestful) Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 
@@ -47,7 +47,7 @@ func (x *AuthRestful) Login(w http.ResponseWriter, r *http.Request, _ httprouter
 	}
 	h.SendSingleResponse(w, http.StatusOK, response)
 }
-func (x *AuthRestful) Refresh(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Refresh(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 
@@ -63,7 +63,7 @@ func (x *AuthRestful) Refresh(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 	h.SendSingleResponse(w, http.StatusOK, response)
 }
-func (x *AuthRestful) Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 
@@ -75,7 +75,7 @@ func (x *AuthRestful) Logout(w http.ResponseWriter, r *http.Request, _ httproute
 	}
 	h.SendSingleResponse(w, http.StatusOK, "")
 }
-func (x *AuthRestful) Profile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Profile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 

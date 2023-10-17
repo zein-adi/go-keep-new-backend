@@ -15,15 +15,15 @@ import (
 	"time"
 )
 
-func NewUserRestful(service auth_service_interfaces.IUserServices) *UserRestful {
-	return &UserRestful{service: service}
+func NewUserRestfulHandler(service auth_service_interfaces.IUserServices) *UserRestfulHandler {
+	return &UserRestfulHandler{service: service}
 }
 
-type UserRestful struct {
+type UserRestfulHandler struct {
 	service auth_service_interfaces.IUserServices
 }
 
-func (x *UserRestful) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *UserRestfulHandler) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -45,7 +45,7 @@ func (x *UserRestful) Get(w http.ResponseWriter, r *http.Request, _ httprouter.P
 
 	h.SendMultiResponse(w, http.StatusOK, models, count)
 }
-func (x *UserRestful) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *UserRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -70,7 +70,7 @@ func (x *UserRestful) Insert(w http.ResponseWriter, r *http.Request, _ httproute
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *UserRestful) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *UserRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -98,7 +98,7 @@ func (x *UserRestful) Update(w http.ResponseWriter, r *http.Request, p httproute
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *UserRestful) UpdatePassword(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *UserRestfulHandler) UpdatePassword(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -126,7 +126,7 @@ func (x *UserRestful) UpdatePassword(w http.ResponseWriter, r *http.Request, p h
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *UserRestful) DeleteById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *UserRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

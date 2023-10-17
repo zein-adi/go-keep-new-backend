@@ -16,15 +16,15 @@ import (
 	"time"
 )
 
-func NewRoleRestful(service auth_service_interfaces.IRoleServices) *RoleRestful {
-	return &RoleRestful{service: service}
+func NewRoleRestfulHandler(service auth_service_interfaces.IRoleServices) *RoleRestfulHandler {
+	return &RoleRestfulHandler{service: service}
 }
 
-type RoleRestful struct {
+type RoleRestfulHandler struct {
 	service auth_service_interfaces.IRoleServices
 }
 
-func (x *RoleRestful) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *RoleRestfulHandler) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -46,7 +46,7 @@ func (x *RoleRestful) Get(w http.ResponseWriter, r *http.Request, _ httprouter.P
 
 	h.SendMultiResponse(w, http.StatusOK, models, count)
 }
-func (x *RoleRestful) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *RoleRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -71,7 +71,7 @@ func (x *RoleRestful) Insert(w http.ResponseWriter, r *http.Request, _ httproute
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *RoleRestful) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *RoleRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -99,7 +99,7 @@ func (x *RoleRestful) Update(w http.ResponseWriter, r *http.Request, p httproute
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *RoleRestful) DeleteById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *RoleRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

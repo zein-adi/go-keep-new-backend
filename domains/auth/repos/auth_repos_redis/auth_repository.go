@@ -10,21 +10,21 @@ import (
 
 var authEntityName = "auth"
 
-func NewAuthRedisRepository() *AuthRepository {
+func NewAuthRedisRepository() *AuthMysqlRepository {
 	db, dbCleanup := helpers_redis.OpenRedisConnection()
-	return &AuthRepository{
+	return &AuthMysqlRepository{
 		db:        db,
 		dbCleanup: dbCleanup,
 	}
 }
 
-type AuthRepository struct {
+type AuthMysqlRepository struct {
 	db        *redis.Client
 	data      []string
 	dbCleanup func()
 }
 
-func (r *AuthRepository) FindBlacklistByToken(ctx context.Context, refreshToken string) (entryNotFoundError error) {
+func (r *AuthMysqlRepository) FindBlacklistByToken(ctx context.Context, refreshToken string) (entryNotFoundError error) {
 	result, err := r.db.Get(ctx, refreshToken).Result()
 	if err != nil {
 		return helpers_error.NewEntryNotFoundError(authEntityName, "token", refreshToken)
@@ -32,7 +32,7 @@ func (r *AuthRepository) FindBlacklistByToken(ctx context.Context, refreshToken 
 	println(result)
 	return nil
 }
-func (r *AuthRepository) InsertBlackList(ctx context.Context, refreshToken string) error {
+func (r *AuthMysqlRepository) InsertBlackList(ctx context.Context, refreshToken string) error {
 	err := r.db.Set(ctx, refreshToken, "blacklisted", time.Hour*24*7).Err()
 	if err != nil {
 		return err
@@ -40,6 +40,6 @@ func (r *AuthRepository) InsertBlackList(ctx context.Context, refreshToken strin
 	return nil
 }
 
-func (r *AuthRepository) Cleanup() {
+func (r *AuthMysqlRepository) Cleanup() {
 	r.dbCleanup()
 }

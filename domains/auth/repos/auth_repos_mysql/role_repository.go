@@ -13,20 +13,20 @@ import (
 
 var roleTableName = "roles"
 
-func NewRoleMysqlRepository() *RoleRepository {
+func NewRoleMysqlRepository() *RoleMysqlRepository {
 	db, cleanup := helpers_mysql.OpenMySqlConnection()
-	return &RoleRepository{
+	return &RoleMysqlRepository{
 		db:        db,
 		dbCleanup: cleanup,
 	}
 }
 
-type RoleRepository struct {
+type RoleMysqlRepository struct {
 	db        *sql.DB
 	dbCleanup func()
 }
 
-func (r *RoleRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.Role {
+func (r *RoleMysqlRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.Role {
 	q := r.getQueryFiltered(ctx, request)
 	if request.Take > 0 {
 		q.Skip(request.Skip)
@@ -35,10 +35,10 @@ func (r *RoleRepository) Get(ctx context.Context, request auth_requests.GetReque
 	q.OrderBy("nama")
 	return r.newEntitiesFromRows(q.Get())
 }
-func (r *RoleRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
+func (r *RoleMysqlRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
 	return r.getQueryFiltered(ctx, request).Count()
 }
-func (r *RoleRepository) FindById(ctx context.Context, id string) (*auth_entities.Role, error) {
+func (r *RoleMysqlRepository) FindById(ctx context.Context, id string) (*auth_entities.Role, error) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("id", "=", id)
 	q.Take(1)
@@ -49,14 +49,14 @@ func (r *RoleRepository) FindById(ctx context.Context, id string) (*auth_entitie
 	}
 	return models[0], nil
 }
-func (r *RoleRepository) CountByNama(ctx context.Context, nama string, exceptId string) (count int) {
+func (r *RoleMysqlRepository) CountByNama(ctx context.Context, nama string, exceptId string) (count int) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.Where("nama", "=", nama)
 	q.Where("id", "!=", exceptId)
 	q.Take(1)
 	return q.Count()
 }
-func (r *RoleRepository) Insert(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error) {
+func (r *RoleMysqlRepository) Insert(ctx context.Context, role *auth_entities.Role) (*auth_entities.Role, error) {
 	permissions, err := json.Marshal(role.Permissions)
 	helpers_error.PanicIfError(err)
 
@@ -75,7 +75,7 @@ func (r *RoleRepository) Insert(ctx context.Context, role *auth_entities.Role) (
 	model.Id = strconv.Itoa(lastId)
 	return model, nil
 }
-func (r *RoleRepository) Update(ctx context.Context, role *auth_entities.Role) (affected int, err error) {
+func (r *RoleMysqlRepository) Update(ctx context.Context, role *auth_entities.Role) (affected int, err error) {
 	permissions, err := json.Marshal(role.Permissions)
 	helpers_error.PanicIfError(err)
 
@@ -89,7 +89,7 @@ func (r *RoleRepository) Update(ctx context.Context, role *auth_entities.Role) (
 	})
 	return affected, nil
 }
-func (r *RoleRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
+func (r *RoleMysqlRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, roleTableName)
 	q.Where("id", "=", id)
 
@@ -99,7 +99,7 @@ func (r *RoleRepository) DeleteById(ctx context.Context, id string) (affected in
 	}
 	return affected, nil
 }
-func (r *RoleRepository) GetById(ctx context.Context, ids []string) ([]*auth_entities.Role, error) {
+func (r *RoleMysqlRepository) GetById(ctx context.Context, ids []string) ([]*auth_entities.Role, error) {
 	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
 	q.WhereIn("id", ids)
 	models := r.newEntitiesFromRows(q.Get())
@@ -111,10 +111,10 @@ func (r *RoleRepository) GetById(ctx context.Context, ids []string) ([]*auth_ent
 	return models, nil
 }
 
-func (r *RoleRepository) Cleanup() {
+func (r *RoleMysqlRepository) Cleanup() {
 	r.dbCleanup()
 }
-func (r *RoleRepository) getQueryFiltered(ctx context.Context, request auth_requests.GetRequest) *helpers_mysql.QueryBuilder {
+func (r *RoleMysqlRepository) getQueryFiltered(ctx context.Context, request auth_requests.GetRequest) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, roleTableName)
 	q.Select("id, nama, deskripsi, level, permissions")
 
@@ -124,7 +124,7 @@ func (r *RoleRepository) getQueryFiltered(ctx context.Context, request auth_requ
 
 	return q
 }
-func (r *RoleRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func()) []*auth_entities.Role {
+func (r *RoleMysqlRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func()) []*auth_entities.Role {
 	defer cleanup()
 
 	models := make([]*auth_entities.Role, 0)

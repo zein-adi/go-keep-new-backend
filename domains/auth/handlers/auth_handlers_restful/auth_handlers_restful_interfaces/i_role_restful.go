@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type IRoleRestful interface {
+type IRoleRestfulHandler interface {
 	Get(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	Insert(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	Update(w http.ResponseWriter, r *http.Request, p httprouter.Params)

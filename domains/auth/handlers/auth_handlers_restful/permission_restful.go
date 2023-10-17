@@ -10,15 +10,15 @@ import (
 	"time"
 )
 
-func NewPermissionRestful(service auth_service_interfaces.IPermissionServices) *PermissionRestful {
-	return &PermissionRestful{service: service}
+func NewPermissionRestfulHandler(service auth_service_interfaces.IPermissionServices) *PermissionRestfulHandler {
+	return &PermissionRestfulHandler{service: service}
 }
 
-type PermissionRestful struct {
+type PermissionRestfulHandler struct {
 	service auth_service_interfaces.IPermissionServices
 }
 
-func (x *PermissionRestful) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *PermissionRestfulHandler) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

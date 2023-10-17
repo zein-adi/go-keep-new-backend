@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type IAuthRestful interface {
+type IAuthRestfulHandler interface {
 	Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	Refresh(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	Logout(w http.ResponseWriter, r *http.Request, p httprouter.Params)
