@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-func NewMiddlewareAcl(service auth_handlers_local_interfaces.IRoleLocal) *MiddlewareAcl {
+func NewMiddlewareAcl(service auth_handlers_local_interfaces.IRoleLocalHandler) *MiddlewareAcl {
 	return &MiddlewareAcl{
 		services: service,
 	}
 }
 
 type MiddlewareAcl struct {
-	services    auth_handlers_local_interfaces.IRoleLocal
+	services    auth_handlers_local_interfaces.IRoleLocalHandler
 	roleCache   map[string][]string
 	roleCacheAt time.Time
 }

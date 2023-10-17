@@ -13,6 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/golang-migrate/migrate v3.5.4+incompatible // indirect
+	github.com/google/wire v0.5.0 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
