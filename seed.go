@@ -41,5 +41,5 @@ func RunSeed(username, password string) {
 		Password: auth_services.HashPassword(password),
 		RoleIds:  []string{role.Id},
 	}
-	userRepo.Insert(ctx, user)
+	_, _ = userRepo.Insert(ctx, user)
 }
