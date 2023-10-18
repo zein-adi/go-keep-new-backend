@@ -7,12 +7,16 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/app/components"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 func StartHttpServer() {
 	allowedOrigins := strings.Split(viper.GetString("CORS_ALLOWED_ORIGINS"), ",")
-	addr := viper.GetString("HTTP_SERVER_ADDR")
+	address := viper.GetString("HTTP_SERVER_ADDRESS")
+	port := viper.GetInt("HTTP_SERVER_PORT")
+	tlsCertPath := viper.GetString("HTTP_SERVER_TLS_CERT")
+	tlsKeyPath := viper.GetString("HTTP_SERVER_TLS_KEY")
 
 	opt := cors.Options{
 		AllowedOrigins:   allowedOrigins,
@@ -24,9 +28,14 @@ func StartHttpServer() {
 	r := components.NewRouter(opt)
 	injectRoutes(r)
 
-	fmt.Println("Listening " + addr + " ...")
-	err := http.ListenAndServe(addr, r)
-	helpers_error.PanicIfError(err)
+	fmt.Printf("Listening\nAddress: %s:%d \n...", address, port)
+	if port == 443 {
+		err := http.ListenAndServeTLS(address+":"+strconv.Itoa(port), tlsCertPath, tlsKeyPath, r)
+		helpers_error.PanicIfError(err)
+	} else {
+		err := http.ListenAndServe(address+":"+strconv.Itoa(port), r)
+		helpers_error.PanicIfError(err)
+	}
 }
 
 func injectRoutes(r *components.Router) {
