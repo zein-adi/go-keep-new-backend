@@ -20,10 +20,11 @@ func (x *Kantong) CalculateSaldoAktif() int {
 }
 
 type KantongHistory struct {
-	Waktu  int64  `json:"waktu,omitempty"`
-	Jumlah int    `json:"jumlah,omitempty"`
-	Uraian string `json:"uraian,omitempty"`
-	Saldo  int    `json:"saldo,omitempty"`
+	Id        string `json:"id,omitempty"`
+	KantongId string `json:"kantongId,omitempty" validate:"required,number"`
+	Jumlah    int    `json:"jumlah,omitempty"`
+	Uraian    string `json:"uraian,omitempty"`
+	Waktu     int64  `json:"waktu,omitempty"`
 }
 
 func (x *KantongHistory) Copy() *KantongHistory {

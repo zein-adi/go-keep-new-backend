@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -78,6 +79,7 @@ func (m *Router) SetMiddleware(middlewares ...MiddlewareFunc) {
 	m.middlewares = middlewares
 }
 func (m *Router) handle(method string, path string, handle httprouter.Handle, routeName string) {
+	fmt.Printf("%-10s\t%-30s\t%-40s\n", method, m.routeNamePrefix+routeName, m.pathPrefix+path)
 	m.router.Handle(method, m.pathPrefix+path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		for _, middleware := range m.middlewares {
 			if !middleware(w, r, p, m.routeNamePrefix+routeName) {

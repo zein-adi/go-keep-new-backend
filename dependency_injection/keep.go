@@ -27,6 +27,13 @@ var (
 		wire.Bind(new(keep_repo_interfaces.IKantongRepository), new(*keep_repos_mysql.KantongMysqlRepository)),
 		keep_repos_mysql.NewKantongMysqlRepository,
 	)
+	KeepKantongHistorySet = wire.NewSet(
+		keep_handlers_restful.NewKantongHistoryRestfulHandler,
+		wire.Bind(new(keep_service_interfaces.IKantongHistoryServices), new(*keep_services.KantongHistoryServices)),
+		keep_services.NewKantongHistoryServices,
+		wire.Bind(new(keep_repo_interfaces.IKantongHistoryRepository), new(*keep_repos_mysql.KantongHistoryMysqlRepository)),
+		keep_repos_mysql.NewKantongHistoryMysqlRepository,
+	)
 )
 
 func InitKeepPosRestful() *keep_handlers_restful.PosRestfulHandler {
@@ -35,5 +42,9 @@ func InitKeepPosRestful() *keep_handlers_restful.PosRestfulHandler {
 }
 func InitKeepKantongRestful() *keep_handlers_restful.KantongRestfulHandler {
 	wire.Build(KeepKantongSet)
+	return nil
+}
+func InitKeepKantongHistoryRestful() *keep_handlers_restful.KantongHistoryRestfulHandler {
+	wire.Build(KeepKantongHistorySet, KeepKantongSet)
 	return nil
 }

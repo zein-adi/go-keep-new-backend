@@ -8,23 +8,27 @@ import (
 
 func injectUserRoutes(r *components.Router) {
 	middlewareAcl := dependency_injection.InitAclMiddleware()
-	roleRestful := dependency_injection.InitUserRoleRestful()
-	userRestful := dependency_injection.InitUserUserRestful()
-	permissionRestful := dependency_injection.InitUserPermissionRestful()
 
 	r.Group("/user", "user.", func(r *components.Router) {
 
-		r.GET("/users", userRestful.Get, "user.get")
-		r.POST("/users", userRestful.Insert, "user.insert")
-		r.PUT("/users/:userId", userRestful.Update, "user.update")
-		r.PATCH("/users/:userId/password", userRestful.UpdatePassword, "user.update.password")
-		r.DELETE("/users/:userId", userRestful.DeleteById, "user.delete")
+		userRestful := dependency_injection.InitUserUserRestful()
+		r.Group("/users", "user.", func(r *components.Router) {
+			r.GET("/", userRestful.Get, "get")
+			r.POST("/", userRestful.Insert, "insert")
+			r.PUT("/:userId/", userRestful.Update, "update")
+			r.PATCH("/:userId/password/", userRestful.UpdatePassword, "update.password")
+			r.DELETE("/:userId/", userRestful.DeleteById, "delete")
+		})
 
-		r.GET("/roles", roleRestful.Get, "role.get")
-		r.POST("/roles", roleRestful.Insert, "role.insert")
-		r.PUT("/roles/:roleId", roleRestful.Update, "role.update")
-		r.DELETE("/roles/:roleId", roleRestful.DeleteById, "role.delete")
+		roleRestful := dependency_injection.InitUserRoleRestful()
+		r.Group("/roles", "role.", func(r *components.Router) {
+			r.GET("/", roleRestful.Get, "get")
+			r.POST("/", roleRestful.Insert, "insert")
+			r.PUT("/:roleId/", roleRestful.Update, "update")
+			r.DELETE("/:roleId/", roleRestful.DeleteById, "delete")
+		})
 
+		permissionRestful := dependency_injection.InitUserPermissionRestful()
 		r.GET("/permissions", permissionRestful.Get, "permission.get")
 
 	}).SetMiddleware(middlewares.AuthHandle, middlewareAcl.Handle)

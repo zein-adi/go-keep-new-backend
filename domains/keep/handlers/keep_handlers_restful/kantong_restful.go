@@ -22,7 +22,7 @@ type KantongRestfulHandler struct {
 	service keep_service_interfaces.IKantongServices
 }
 
-func (x *KantongRestfulHandler) Get(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongRestfulHandler) Get(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -30,7 +30,7 @@ func (x *KantongRestfulHandler) Get(w http.ResponseWriter, r *http.Request, p ht
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 
-func (x *KantongRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -61,6 +61,7 @@ func (x *KantongRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
+	input.Id = p.ByName("kantongId")
 	model, err := x.service.Update(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {
@@ -76,7 +77,7 @@ func (x *KantongRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
 
-func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, _ *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -93,7 +94,7 @@ func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Reques
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
 
-func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -101,7 +102,7 @@ func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, r *http.Reques
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 
-func (x *KantongRestfulHandler) RestoreTrashedById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongRestfulHandler) RestoreTrashedById(w http.ResponseWriter, _ *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -118,7 +119,7 @@ func (x *KantongRestfulHandler) RestoreTrashedById(w http.ResponseWriter, r *htt
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
 
-func (x *KantongRestfulHandler) DeleteTrashedById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongRestfulHandler) DeleteTrashedById(w http.ResponseWriter, _ *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

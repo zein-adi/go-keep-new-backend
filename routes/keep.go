@@ -9,25 +9,36 @@ import (
 func injectKeepRoutes(r *components.Router) {
 	middlewareAcl := dependency_injection.InitAclMiddleware()
 
-	pos := dependency_injection.InitKeepPosRestful()
-	kantong := dependency_injection.InitKeepKantongRestful()
 	r.Group("/keep", "keep.", func(r *components.Router) {
 
-		r.GET("/posts", pos.Get, "pos.get")
-		r.GET("/posts/trash", pos.GetTrashed, "pos.trash")
-		r.POST("/posts", pos.Insert, "pos.insert")
-		r.PATCH("/posts/:posId", pos.Update, "pos.update")
-		r.PATCH("/posts/:posId/trash", pos.RestoreTrashedById, "pos.trash")
-		r.DELETE("/posts/:posId", pos.DeleteById, "pos.delete")
-		r.DELETE("/posts/:posId/trash", pos.DeleteTrashedById, "pos.trash")
+		pos := dependency_injection.InitKeepPosRestful()
+		r.Group("/posts", "pos.", func(r *components.Router) {
+			r.GET("/", pos.Get, "get")
+			r.GET("/trash/", pos.GetTrashed, "trash")
+			r.POST("/", pos.Insert, "insert")
+			r.PATCH("/:posId/", pos.Update, "update")
+			r.PATCH("/:posId/trash/", pos.RestoreTrashedById, "trash")
+			r.DELETE("/:posId/", pos.DeleteById, "delete")
+			r.DELETE("/:posId/trash/", pos.DeleteTrashedById, "trash")
+		})
 
-		r.GET("/kantong", kantong.Get, "pos.get")
-		r.GET("/kantong/trash", kantong.GetTrashed, "pos.trash")
-		r.POST("/kantong", kantong.Insert, "pos.insert")
-		r.PATCH("/kantong/:kantongId", kantong.Update, "pos.update")
-		r.PATCH("/kantong/:kantongId/trash", kantong.RestoreTrashedById, "pos.trash")
-		r.DELETE("/kantong/:kantongId", kantong.DeleteById, "pos.delete")
-		r.DELETE("/kantong/:kantongId/trash", kantong.DeleteTrashedById, "pos.trash")
+		kantong := dependency_injection.InitKeepKantongRestful()
+		r.Group("/kantong", "kantong.", func(r *components.Router) {
+			r.GET("/", kantong.Get, "get")
+			r.GET("/trash", kantong.GetTrashed, "trash")
+			r.POST("/", kantong.Insert, "insert")
+			r.PATCH("/:kantongId/", kantong.Update, "update")
+			r.PATCH("/:kantongId/trash/", kantong.RestoreTrashedById, "trash")
+			r.DELETE("/:kantongId/", kantong.DeleteById, "delete")
+			r.DELETE("/:kantongId/trash/", kantong.DeleteTrashedById, "trash")
 
+			kantongHistory := dependency_injection.InitKeepKantongHistoryRestful()
+			r.Group("/:kantongId/history", "history.", func(r *components.Router) {
+				r.GET("/", kantongHistory.Get, "get")
+				r.POST("/", kantongHistory.Insert, "insert")
+				r.PATCH("/:kantongHistoryId/", kantongHistory.Update, "update")
+				r.DELETE("/:kantongHistoryId/", kantongHistory.DeleteById, "delete")
+			})
+		})
 	}).SetMiddleware(middlewares.AuthHandle, middlewareAcl.Handle)
 }
