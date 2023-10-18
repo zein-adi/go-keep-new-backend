@@ -11,25 +11,25 @@ import (
 
 var posEntityName = "pos"
 
-func NewPosMemoryRepository() *PosRepository {
-	return &PosRepository{}
+func NewPosMemoryRepository() *PosMemoryRepository {
+	return &PosMemoryRepository{}
 }
 
-type PosRepository struct {
+type PosMemoryRepository struct {
 	data []*keep_entities.Pos
 }
 
-func (x *PosRepository) Get(_ context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos {
+func (x *PosMemoryRepository) Get(_ context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos {
 	models := x.newQueryRequest(request, "aktif")
 	return helpers.Map(models, func(d *keep_entities.Pos) *keep_entities.Pos {
 		return d.Copy()
 	})
 }
-func (x *PosRepository) FindById(_ context.Context, id string) (*keep_entities.Pos, error) {
+func (x *PosMemoryRepository) FindById(_ context.Context, id string) (*keep_entities.Pos, error) {
 	model, err := x.findById(id, "aktif")
 	return model.Copy(), err
 }
-func (x *PosRepository) Insert(_ context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
+func (x *PosMemoryRepository) Insert(_ context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
 	lastId := helpers.Reduce(x.data, 0, func(accumulator int, pos *keep_entities.Pos) int {
 		datumId, _ := strconv.Atoi(pos.Id)
 		return max(accumulator, datumId)
@@ -40,7 +40,7 @@ func (x *PosRepository) Insert(_ context.Context, pos *keep_entities.Pos) (*keep
 	x.data = append(x.data, model)
 	return model, nil
 }
-func (x *PosRepository) Update(_ context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
+func (x *PosMemoryRepository) Update(_ context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
 	model := &keep_entities.Pos{}
 	_, err := x.findById(pos.Id, "aktif")
 	if err != nil {
@@ -53,35 +53,35 @@ func (x *PosRepository) Update(_ context.Context, pos *keep_entities.Pos) (*keep
 	x.data[index] = model
 	return model, nil
 }
-func (x *PosRepository) SoftDeleteById(_ context.Context, id string) (affected int, err error) {
+func (x *PosMemoryRepository) SoftDeleteById(_ context.Context, id string) (affected int, err error) {
 	model, _ := x.findById(id, "aktif")
 	model.Status = "trashed"
 	return 1, nil
 }
-func (x *PosRepository) DeleteById(_ context.Context, id string) (affected int, err error) {
+func (x *PosMemoryRepository) DeleteById(_ context.Context, id string) (affected int, err error) {
 	index, _ := helpers.FindIndex(x.data, func(p *keep_entities.Pos) bool {
 		return p.Id == id
 	})
 	x.data = append(x.data[:index], x.data[index+1:]...)
 	return 1, nil
 }
-func (x *PosRepository) GetTrashed(_ context.Context) []*keep_entities.Pos {
+func (x *PosMemoryRepository) GetTrashed(_ context.Context) []*keep_entities.Pos {
 	models := x.newQueryRequest(keep_request.NewPosGetRequest(), "trashed")
 	return helpers.Map(models, func(d *keep_entities.Pos) *keep_entities.Pos {
 		return d.Copy()
 	})
 }
-func (x *PosRepository) FindTrashedById(_ context.Context, id string) (*keep_entities.Pos, error) {
+func (x *PosMemoryRepository) FindTrashedById(_ context.Context, id string) (*keep_entities.Pos, error) {
 	model, err := x.findById(id, "trashed")
 	return model.Copy(), err
 }
-func (x *PosRepository) RestoreTrashedById(_ context.Context, id string) (affected int, err error) {
+func (x *PosMemoryRepository) RestoreTrashedById(_ context.Context, id string) (affected int, err error) {
 	model, _ := x.findById(id, "trashed")
 	model.Status = "aktif"
 	return 1, nil
 }
 
-func (x *PosRepository) newQueryRequest(request *keep_request.PosGetRequest, status string) []*keep_entities.Pos {
+func (x *PosMemoryRepository) newQueryRequest(request *keep_request.PosGetRequest, status string) []*keep_entities.Pos {
 	return helpers.Filter(x.data, func(pos *keep_entities.Pos) bool {
 		res := true
 		if request.IsLeafOnly == true {
@@ -93,7 +93,7 @@ func (x *PosRepository) newQueryRequest(request *keep_request.PosGetRequest, sta
 		return res
 	})
 }
-func (x *PosRepository) findById(id string, status string) (*keep_entities.Pos, error) {
+func (x *PosMemoryRepository) findById(id string, status string) (*keep_entities.Pos, error) {
 	models := helpers.Filter(x.data, func(pos *keep_entities.Pos) bool {
 		res := pos.Id == id
 		if status != "" {

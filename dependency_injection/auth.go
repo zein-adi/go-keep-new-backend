@@ -20,39 +20,36 @@ import (
 
 var (
 	UserRoleSet = wire.NewSet(
-		auth_repos_mysql.NewRoleMysqlRepository,
-		wire.Bind(new(auth_repo_interfaces.IRoleRepository), new(*auth_repos_mysql.RoleMysqlRepository)),
-		auth_services.NewRoleServices,
-		wire.Bind(new(auth_service_interfaces.IRoleServices), new(*auth_services.RoleServices)),
-		auth_handlers_restful.NewRoleRestfulHandler,
-		wire.Bind(new(auth_handlers_restful_interfaces.IRoleRestfulHandler), new(*auth_handlers_restful.RoleRestfulHandler)),
-		auth_handlers_local.NewRoleLocalHandler,
-		wire.Bind(new(auth_handlers_local_interfaces.IRoleLocalHandler), new(*auth_handlers_local.RoleLocalHandler)),
 		middlewares.NewMiddlewareAcl,
+		wire.Bind(new(auth_handlers_local_interfaces.IRoleLocalHandler), new(*auth_handlers_local.RoleLocalHandler)),
+		auth_handlers_local.NewRoleLocalHandler,
+		wire.Bind(new(auth_handlers_restful_interfaces.IRoleRestfulHandler), new(*auth_handlers_restful.RoleRestfulHandler)),
+		auth_handlers_restful.NewRoleRestfulHandler,
+		wire.Bind(new(auth_service_interfaces.IRoleServices), new(*auth_services.RoleServices)),
+		auth_services.NewRoleServices,
+		wire.Bind(new(auth_repo_interfaces.IRoleRepository), new(*auth_repos_mysql.RoleMysqlRepository)),
+		auth_repos_mysql.NewRoleMysqlRepository,
 	)
 	UserPermissionSet = wire.NewSet(
-		auth_repos_memory.NewPermissionMemoryRepository,
-		wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)),
-		auth_services.NewPermissionServices,
-		wire.Bind(new(auth_service_interfaces.IPermissionServices), new(*auth_services.PermissionServices)),
 		auth_handlers_restful.NewPermissionRestfulHandler,
-		wire.Bind(new(auth_handlers_restful_interfaces.IPermissionRestfulHandler), new(*auth_handlers_restful.PermissionRestfulHandler)),
+		wire.Bind(new(auth_service_interfaces.IPermissionServices), new(*auth_services.PermissionServices)),
+		auth_services.NewPermissionServices,
+		wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)),
+		auth_repos_memory.NewPermissionMemoryRepository,
 	)
 	UserAuthSet = wire.NewSet(
-		auth_repos_redis.NewAuthRedisRepository,
-		wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)),
-		auth_services.NewAuthServices,
-		wire.Bind(new(auth_service_interfaces.IAuthServices), new(*auth_services.AuthServices)),
 		auth_handlers_restful.NewAuthRestfulHandler,
-		wire.Bind(new(auth_handlers_restful_interfaces.IAuthRestfulHandler), new(*auth_handlers_restful.AuthRestfulHandler)),
+		wire.Bind(new(auth_service_interfaces.IAuthServices), new(*auth_services.AuthServices)),
+		auth_services.NewAuthServices,
+		wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)),
+		auth_repos_redis.NewAuthRedisRepository,
 	)
 	UserUserSet = wire.NewSet(
-		auth_repos_mysql.NewUserMysqlRepository,
-		wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)),
-		auth_services.NewUserServices,
-		wire.Bind(new(auth_service_interfaces.IUserServices), new(*auth_services.UserServices)),
 		auth_handlers_restful.NewUserRestfulHandler,
-		wire.Bind(new(auth_handlers_restful_interfaces.IUserRestfulHandler), new(*auth_handlers_restful.UserRestfulHandler)),
+		wire.Bind(new(auth_service_interfaces.IUserServices), new(*auth_services.UserServices)),
+		auth_services.NewUserServices,
+		wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)),
+		auth_repos_mysql.NewUserMysqlRepository,
 	)
 )
 

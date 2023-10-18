@@ -23,7 +23,6 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/handlers/keep_handlers_restful"
-	"github.com/zein-adi/go-keep-new-backend/domains/keep/handlers/keep_handlers_restful/keep_handlers_restful_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 )
 
@@ -97,17 +96,25 @@ func InitKeepPosRestful() *keep_handlers_restful.PosRestfulHandler {
 	return posRestfulHandler
 }
 
+func InitKeepKantongRestful() *keep_handlers_restful.KantongRestfulHandler {
+	kantongMysqlRepository := keep_repos_mysql.NewKantongMysqlRepository()
+	kantongServices := keep_services.NewKantongServices(kantongMysqlRepository)
+	kantongRestfulHandler := keep_handlers_restful.NewKantongRestfulHandler(kantongServices)
+	return kantongRestfulHandler
+}
+
 // auth.go:
 
 var (
-	UserRoleSet       = wire.NewSet(auth_repos_mysql.NewRoleMysqlRepository, wire.Bind(new(auth_repo_interfaces.IRoleRepository), new(*auth_repos_mysql.RoleMysqlRepository)), auth_services.NewRoleServices, wire.Bind(new(auth_service_interfaces.IRoleServices), new(*auth_services.RoleServices)), auth_handlers_restful.NewRoleRestfulHandler, wire.Bind(new(auth_handlers_restful_interfaces.IRoleRestfulHandler), new(*auth_handlers_restful.RoleRestfulHandler)), auth_handlers_local.NewRoleLocalHandler, wire.Bind(new(auth_handlers_local_interfaces.IRoleLocalHandler), new(*auth_handlers_local.RoleLocalHandler)), middlewares.NewMiddlewareAcl)
-	UserPermissionSet = wire.NewSet(auth_repos_memory.NewPermissionMemoryRepository, wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)), auth_services.NewPermissionServices, wire.Bind(new(auth_service_interfaces.IPermissionServices), new(*auth_services.PermissionServices)), auth_handlers_restful.NewPermissionRestfulHandler, wire.Bind(new(auth_handlers_restful_interfaces.IPermissionRestfulHandler), new(*auth_handlers_restful.PermissionRestfulHandler)))
-	UserAuthSet       = wire.NewSet(auth_repos_redis.NewAuthRedisRepository, wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)), auth_services.NewAuthServices, wire.Bind(new(auth_service_interfaces.IAuthServices), new(*auth_services.AuthServices)), auth_handlers_restful.NewAuthRestfulHandler, wire.Bind(new(auth_handlers_restful_interfaces.IAuthRestfulHandler), new(*auth_handlers_restful.AuthRestfulHandler)))
-	UserUserSet       = wire.NewSet(auth_repos_mysql.NewUserMysqlRepository, wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)), auth_services.NewUserServices, wire.Bind(new(auth_service_interfaces.IUserServices), new(*auth_services.UserServices)), auth_handlers_restful.NewUserRestfulHandler, wire.Bind(new(auth_handlers_restful_interfaces.IUserRestfulHandler), new(*auth_handlers_restful.UserRestfulHandler)))
+	UserRoleSet       = wire.NewSet(middlewares.NewMiddlewareAcl, wire.Bind(new(auth_handlers_local_interfaces.IRoleLocalHandler), new(*auth_handlers_local.RoleLocalHandler)), auth_handlers_local.NewRoleLocalHandler, wire.Bind(new(auth_handlers_restful_interfaces.IRoleRestfulHandler), new(*auth_handlers_restful.RoleRestfulHandler)), auth_handlers_restful.NewRoleRestfulHandler, wire.Bind(new(auth_service_interfaces.IRoleServices), new(*auth_services.RoleServices)), auth_services.NewRoleServices, wire.Bind(new(auth_repo_interfaces.IRoleRepository), new(*auth_repos_mysql.RoleMysqlRepository)), auth_repos_mysql.NewRoleMysqlRepository)
+	UserPermissionSet = wire.NewSet(auth_handlers_restful.NewPermissionRestfulHandler, wire.Bind(new(auth_service_interfaces.IPermissionServices), new(*auth_services.PermissionServices)), auth_services.NewPermissionServices, wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)), auth_repos_memory.NewPermissionMemoryRepository)
+	UserAuthSet       = wire.NewSet(auth_handlers_restful.NewAuthRestfulHandler, wire.Bind(new(auth_service_interfaces.IAuthServices), new(*auth_services.AuthServices)), auth_services.NewAuthServices, wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)), auth_repos_redis.NewAuthRedisRepository)
+	UserUserSet       = wire.NewSet(auth_handlers_restful.NewUserRestfulHandler, wire.Bind(new(auth_service_interfaces.IUserServices), new(*auth_services.UserServices)), auth_services.NewUserServices, wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)), auth_repos_mysql.NewUserMysqlRepository)
 )
 
 // keep.go:
 
 var (
-	KeepPosSet = wire.NewSet(keep_repos_mysql.NewPosMySqlRepository, wire.Bind(new(keep_repo_interfaces.IPosRepository), new(*keep_repos_mysql.PosMysqlRepository)), keep_services.NewPosServices, wire.Bind(new(keep_service_interfaces.IPosServices), new(*keep_services.PosServices)), keep_handlers_restful.NewPosRestfulHandler, wire.Bind(new(keep_handlers_restful_interfaces.IPosRestfulHandler), new(*keep_handlers_restful.PosRestfulHandler)))
+	KeepPosSet     = wire.NewSet(keep_handlers_restful.NewPosRestfulHandler, wire.Bind(new(keep_service_interfaces.IPosServices), new(*keep_services.PosServices)), keep_services.NewPosServices, wire.Bind(new(keep_repo_interfaces.IPosRepository), new(*keep_repos_mysql.PosMysqlRepository)), keep_repos_mysql.NewPosMySqlRepository)
+	KeepKantongSet = wire.NewSet(keep_handlers_restful.NewKantongRestfulHandler, wire.Bind(new(keep_service_interfaces.IKantongServices), new(*keep_services.KantongServices)), keep_services.NewKantongServices, wire.Bind(new(keep_repo_interfaces.IKantongRepository), new(*keep_repos_mysql.KantongMysqlRepository)), keep_repos_mysql.NewKantongMysqlRepository)
 )
