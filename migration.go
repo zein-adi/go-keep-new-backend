@@ -85,7 +85,10 @@ func (m *Migration) Down() {
 		fmt.Println("Success")
 	}
 	version, _, err := m.Version()
-	fmt.Printf("Version      : %d %s", version, err)
+	fmt.Printf("Version      : %d", version)
+	if err != nil {
+		fmt.Printf(" %s", err)
+	}
 }
 func (m *Migration) Force(version int) {
 	helpers_error.PanicIfError(m.Migrate.Force(version))
