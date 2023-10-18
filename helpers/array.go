@@ -14,7 +14,7 @@ func FindIndex[D any](data []D, f func(D) bool) (int, error) {
 		}
 	}
 	if lastId == -1 {
-		return 0, errors.New("not found")
+		return lastId, errors.New("not found")
 	}
 	return lastId, nil
 }
