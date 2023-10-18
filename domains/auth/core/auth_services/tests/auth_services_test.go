@@ -9,11 +9,14 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
+	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_redis"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"testing"
 	"time"
 )
 
 func TestAuth(t *testing.T) {
+	helpers_env.Init(5)
 	r := AuthServicesTest{}
 
 	t.Run("LoginSuccess", func(t *testing.T) {
@@ -257,13 +260,15 @@ type AuthServicesTest struct {
 
 func (r *AuthServicesTest) setup() {
 	r.setMemoryRepository()
+	r.userRepo = auth_repos_memory.NewUserMemoryRepository()
+	r.roleRepo = auth_repos_memory.NewRoleMemoryRepository()
 	r.services = auth_services.NewAuthServices(r.repo, r.userRepo, r.roleRepo)
 }
 func (r *AuthServicesTest) setMemoryRepository() {
 	r.repo = auth_repos_memory.NewAuthMemoryRepository()
-	//r.repo = auth_repos_redis.NewAuthRedisRepository()
-	r.userRepo = auth_repos_memory.NewUserMemoryRepository()
-	r.roleRepo = auth_repos_memory.NewRoleMemoryRepository()
+}
+func (r *AuthServicesTest) setRedisRepository() {
+	r.repo = auth_repos_redis.NewAuthRedisRepository()
 }
 func (r *AuthServicesTest) populateRole() []*auth_entities.Role {
 	input := []*auth_entities.Role{

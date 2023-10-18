@@ -7,10 +7,12 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"testing"
 )
 
 func TestRoleRepositoryTests(t *testing.T) {
+	helpers_env.Init(5)
 	repo := auth_repos_mysql.NewRoleMysqlRepository()
 	defer repo.Cleanup()
 	s := RoleRepositoryTest{repo: repo}

@@ -10,11 +10,13 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"testing"
 )
 
 func TestRole(t *testing.T) {
+	helpers_env.Init(5)
 	r := RoleServicesTest{}
 	r.setup()
 	defer r.dbCleanup()

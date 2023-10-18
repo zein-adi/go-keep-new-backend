@@ -2,10 +2,15 @@ package main
 
 import (
 	"flag"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/routes"
 )
 
+/*
+ * APP_ENV: production (default), development, testing
+ */
 func main() {
+	helpers_env.Init(0)
 	cliHandler()
 }
 

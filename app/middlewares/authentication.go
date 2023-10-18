@@ -4,6 +4,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
@@ -16,10 +17,9 @@ var (
 	JwtTokenError = errors.New("jwt token error")
 )
 
-// TODO get from env
 var (
-	refreshTokenSecret = "123456789"
-	accessTokenSecret  = "123456789"
+	refreshTokenSecret = viper.GetString("AUTH_ACCESS_TOKEN_SECRET")
+	accessTokenSecret  = viper.GetString("AUTH_REFRESH_TOKEN_SECRET")
 )
 
 func AuthHandle(writer http.ResponseWriter, request *http.Request, _ httprouter.Params, _ string) bool {

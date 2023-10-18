@@ -4,17 +4,20 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/spf13/viper"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"time"
 )
 
 func OpenMySqlConnection() (*sql.DB, func()) {
-	// TODO: get from env
-	username := "root"
-	password := "root"
-	hostname := "127.0.0.1"
-	port := 33612
-	database := "keep_new"
+	viper.SetDefault("MYSQL_HOSTNAME", "127.0.0.1")
+	viper.SetDefault("MYSQL_PORT", 3306)
+
+	username := viper.GetString("MYSQL_USERNAME")
+	password := viper.GetString("MYSQL_PASSWORD")
+	hostname := viper.GetString("MYSQL_HOSTNAME")
+	port := viper.GetInt("MYSQL_PORT")
+	database := viper.GetString("MYSQL_DBNAME")
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", username, password, hostname, port, database)
 	db, err := sql.Open("mysql", dsn)

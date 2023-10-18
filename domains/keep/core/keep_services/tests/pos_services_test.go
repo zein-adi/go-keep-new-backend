@@ -11,11 +11,13 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"testing"
 )
 
 func TestPos(t *testing.T) {
+	helpers_env.Init(5)
 	x := NewPosServicesTest()
 
 	t.Run("GetSuccessAll", func(t *testing.T) {

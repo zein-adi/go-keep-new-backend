@@ -3,17 +3,21 @@ package helpers_redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"strconv"
 )
 
 func OpenRedisConnection() (*redis.Client, func()) {
-	// TODO: get from env
-	username := ""
-	password := ""
-	hostname := "127.0.0.1"
-	port := 6379
-	database := 0
+	viper.SetDefault("REDIS_HOSTNAME", "127.0.0.1")
+	viper.SetDefault("REDIS_PORT", 6379)
+	viper.SetDefault("REDIS_DBNAME", 0)
+
+	username := viper.GetString("REDIS_USERNAME")
+	password := viper.GetString("REDIS_PASSWORD")
+	hostname := viper.GetString("REDIS_HOSTNAME")
+	port := viper.GetInt("REDIS_PORT")
+	database := viper.GetInt("REDIS_DBNAME")
 
 	db := redis.NewClient(&redis.Options{
 		Addr:     hostname + ":" + strconv.Itoa(port),
