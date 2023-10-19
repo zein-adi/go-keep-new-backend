@@ -2,7 +2,6 @@ package auth_handlers_restful
 
 import (
 	"context"
-	"github.com/julienschmidt/httprouter"
 	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
@@ -18,7 +17,7 @@ type PermissionRestfulHandler struct {
 	service auth_service_interfaces.IPermissionServices
 }
 
-func (x *PermissionRestfulHandler) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *PermissionRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

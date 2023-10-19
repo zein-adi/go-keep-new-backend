@@ -2,7 +2,7 @@ package keep_handlers_restful
 
 import (
 	"context"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
@@ -22,7 +22,7 @@ type KantongHistoryRestfulHandler struct {
 	service keep_service_interfaces.IKantongHistoryServices
 }
 
-func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -30,7 +30,7 @@ func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, _ *http.Reques
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 
-func (x *KantongHistoryRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *KantongHistoryRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -52,7 +52,7 @@ func (x *KantongHistoryRestfulHandler) Insert(w http.ResponseWriter, r *http.Req
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
 
-func (x *KantongHistoryRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *KantongHistoryRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -61,7 +61,8 @@ func (x *KantongHistoryRestfulHandler) Update(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	input.Id = p.ByName("kantongHistoryId")
+	vars := mux.Vars(r)
+	input.Id = vars["kantongHistoryId"]
 	model, err := x.service.Update(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {
@@ -77,11 +78,12 @@ func (x *KantongHistoryRestfulHandler) Update(w http.ResponseWriter, r *http.Req
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
 
-func (x *KantongHistoryRestfulHandler) DeleteById(w http.ResponseWriter, _ *http.Request, p httprouter.Params) {
+func (x *KantongHistoryRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	id := p.ByName("kantongHistoryId")
+	vars := mux.Vars(r)
+	id := vars["kantongHistoryId"]
 	affected, err := x.service.DeleteById(ctx, id)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {

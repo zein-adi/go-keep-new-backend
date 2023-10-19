@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
@@ -22,7 +21,7 @@ var (
 	accessTokenSecret  = viper.GetString("AUTH_REFRESH_TOKEN_SECRET")
 )
 
-func AuthHandle(writer http.ResponseWriter, request *http.Request, _ httprouter.Params, _ string) bool {
+func AuthHandle(writer http.ResponseWriter, request *http.Request, _ string) bool {
 	tokenString, err := GetAuthorizationToken(request)
 	if err != nil {
 		helpers_http.SendErrorResponse(writer, http.StatusUnauthorized, err.Error())
@@ -36,7 +35,7 @@ func AuthHandle(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	return true
 }
 
-func AuthRefreshHandle(writer http.ResponseWriter, request *http.Request, _ httprouter.Params, _ string) bool {
+func AuthRefreshHandle(writer http.ResponseWriter, request *http.Request, _ string) bool {
 	tokenString, err := GetAuthorizationToken(request)
 	if err != nil {
 		helpers_http.SendErrorResponse(writer, http.StatusUnauthorized, err.Error())
