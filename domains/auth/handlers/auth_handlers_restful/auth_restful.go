@@ -2,7 +2,6 @@ package auth_handlers_restful
 
 import (
 	"context"
-	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
@@ -22,7 +21,7 @@ type AuthRestfulHandler struct {
 	service auth_service_interfaces.IAuthServices
 }
 
-func (x *AuthRestfulHandler) Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 
@@ -47,7 +46,7 @@ func (x *AuthRestfulHandler) Login(w http.ResponseWriter, r *http.Request, _ htt
 	}
 	h.SendSingleResponse(w, http.StatusOK, response)
 }
-func (x *AuthRestfulHandler) Refresh(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 
@@ -63,7 +62,7 @@ func (x *AuthRestfulHandler) Refresh(w http.ResponseWriter, r *http.Request, _ h
 	}
 	h.SendSingleResponse(w, http.StatusOK, response)
 }
-func (x *AuthRestfulHandler) Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 
@@ -75,7 +74,7 @@ func (x *AuthRestfulHandler) Logout(w http.ResponseWriter, r *http.Request, _ ht
 	}
 	h.SendSingleResponse(w, http.StatusOK, "")
 }
-func (x *AuthRestfulHandler) Profile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *AuthRestfulHandler) Profile(w http.ResponseWriter, r *http.Request) {
 	ctx, timeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer timeout()
 

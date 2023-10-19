@@ -1,8 +1,8 @@
-package components
+package gorillamux_router
 
 import (
 	"fmt"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
@@ -14,7 +14,7 @@ func NewRouter(corsOptions cors.Options) *Router {
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
 	m := &Router{
-		router:          httprouter.New(),
+		router:          mux.NewRouter(),
 		cors:            cors.New(corsOptions),
 		logger:          logger,
 		pathPrefix:      "",
@@ -22,13 +22,14 @@ func NewRouter(corsOptions cors.Options) *Router {
 	}
 	m.initNotFoundHandler()
 	m.initNotAllowedHandler()
-	m.initPanicHandler()
+
 	return m
 }
 
-type MiddlewareFunc func(writer http.ResponseWriter, request *http.Request, params httprouter.Params, routeName string) bool
+type MiddlewareFunc func(writer http.ResponseWriter, request *http.Request, routeName string) bool
+type HttpHandler func(writer http.ResponseWriter, request *http.Request)
 type Router struct {
-	router          *httprouter.Router
+	router          *mux.Router
 	middlewares     []MiddlewareFunc
 	cors            *cors.Cors
 	logger          *logrus.Logger
@@ -37,27 +38,33 @@ type Router struct {
 }
 
 func (m *Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			m.panicHandler(writer, request)
+		}
+	}()
 	m.cors.ServeHTTP(writer, request, m.router.ServeHTTP)
 }
-func (m *Router) GET(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) GET(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodGet, path, handle, routeName)
 }
-func (m *Router) HEAD(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) HEAD(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodHead, path, handle, routeName)
 }
-func (m *Router) OPTIONS(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) OPTIONS(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodOptions, path, handle, routeName)
 }
-func (m *Router) POST(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) POST(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodPost, path, handle, routeName)
 }
-func (m *Router) PUT(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) PUT(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodPut, path, handle, routeName)
 }
-func (m *Router) PATCH(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) PATCH(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodPatch, path, handle, routeName)
 }
-func (m *Router) DELETE(path string, handle httprouter.Handle, routeName string) {
+func (m *Router) DELETE(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodDelete, path, handle, routeName)
 }
 func (m *Router) Group(pathPrefix string, routeNamePrefix string, handleGroup func(router *Router)) *Router {
@@ -78,19 +85,19 @@ func (m *Router) AddMiddleware(middlewares ...MiddlewareFunc) {
 func (m *Router) SetMiddleware(middlewares ...MiddlewareFunc) {
 	m.middlewares = middlewares
 }
-func (m *Router) handle(method string, path string, handle httprouter.Handle, routeName string) {
+func (m *Router) handle(method string, path string, handle HttpHandler, routeName string) {
 	fmt.Printf("%-10s\t%-30s\t%-40s\n", method, m.routeNamePrefix+routeName, m.pathPrefix+path)
-	m.router.Handle(method, m.pathPrefix+path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	m.router.HandleFunc(m.pathPrefix+path, func(w http.ResponseWriter, r *http.Request) {
 		for _, middleware := range m.middlewares {
-			if !middleware(w, r, p, m.routeNamePrefix+routeName) {
+			if !middleware(w, r, m.routeNamePrefix+routeName) {
 				return
 			}
 		}
-		handle(w, r, p)
-	})
+		handle(w, r)
+	}).Methods(method)
 }
 func (m *Router) initNotFoundHandler() {
-	m.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	m.router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		m.logger.WithFields(logrus.Fields{
 			"method": r.Method,
 			"uri":    r.RequestURI,
@@ -100,7 +107,7 @@ func (m *Router) initNotFoundHandler() {
 	})
 }
 func (m *Router) initNotAllowedHandler() {
-	m.router.MethodNotAllowed = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	m.router.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		m.logger.WithFields(logrus.Fields{
 			"method": r.Method,
 			"uri":    r.RequestURI,
@@ -109,13 +116,12 @@ func (m *Router) initNotAllowedHandler() {
 		helpers_http.SendResponseJson(w, http.StatusMethodNotAllowed, nil)
 	})
 }
-func (m *Router) initPanicHandler() {
-	m.router.PanicHandler = func(w http.ResponseWriter, r *http.Request, p any) {
-		m.logger.WithFields(logrus.Fields{
-			"method": r.Method,
-			"uri":    r.RequestURI,
-		}).Error(p)
+func (m *Router) panicHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	m.logger.WithFields(logrus.Fields{
+		"method": r.Method,
+		"uri":    r.RequestURI,
+	}).Error(vars)
 
-		helpers_http.SendResponseJson(w, http.StatusInternalServerError, nil)
-	}
+	helpers_http.SendResponseJson(w, http.StatusInternalServerError, nil)
 }

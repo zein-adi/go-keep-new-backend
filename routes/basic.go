@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
-	"github.com/zein-adi/go-keep-new-backend/app/components"
+	"github.com/zein-adi/go-keep-new-backend/app/components/gorillamux_router"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"net/http"
 	"strconv"
@@ -25,7 +25,7 @@ func StartHttpServer() {
 		AllowCredentials: true,
 		Debug:            false,
 	}
-	r := components.NewRouter(opt)
+	r := gorillamux_router.NewRouter(opt)
 	injectRoutes(r)
 
 	fmt.Printf("Listening\nAddress: %s:%d \n...", address, port)
@@ -38,7 +38,7 @@ func StartHttpServer() {
 	}
 }
 
-func injectRoutes(r *components.Router) {
+func injectRoutes(r *gorillamux_router.Router) {
 	injectAuthRoutes(r)
 	injectUserRoutes(r)
 	injectKeepRoutes(r)

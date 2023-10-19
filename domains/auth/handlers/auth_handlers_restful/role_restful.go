@@ -2,7 +2,7 @@ package auth_handlers_restful
 
 import (
 	"context"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
@@ -24,7 +24,7 @@ type RoleRestfulHandler struct {
 	service auth_service_interfaces.IRoleServices
 }
 
-func (x *RoleRestfulHandler) Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *RoleRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -46,7 +46,7 @@ func (x *RoleRestfulHandler) Get(w http.ResponseWriter, r *http.Request, _ httpr
 
 	h.SendMultiResponse(w, http.StatusOK, models, count)
 }
-func (x *RoleRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (x *RoleRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -71,7 +71,7 @@ func (x *RoleRestfulHandler) Insert(w http.ResponseWriter, r *http.Request, _ ht
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *RoleRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *RoleRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -79,7 +79,8 @@ func (x *RoleRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p ht
 	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
 		return
 	}
-	input.Id = p.ByName("roleId")
+	vars := mux.Vars(r)
+	input.Id = vars["roleId"]
 
 	accessToken, _ := middlewares.GetAuthorizationToken(r)
 	accessClaim, _ := middlewares.GetJwtClaims(accessToken)
@@ -99,11 +100,12 @@ func (x *RoleRestfulHandler) Update(w http.ResponseWriter, r *http.Request, p ht
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-func (x *RoleRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (x *RoleRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	id := p.ByName("roleId")
+	vars := mux.Vars(r)
+	id := vars["roleId"]
 	accessToken, _ := middlewares.GetAuthorizationToken(r)
 	accessClaim, _ := middlewares.GetJwtClaims(accessToken)
 	affected, err := x.service.DeleteById(ctx, id, accessClaim.RoleIds)

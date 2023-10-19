@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"github.com/julienschmidt/httprouter"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_local/auth_handlers_local_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
@@ -21,7 +20,7 @@ type MiddlewareAcl struct {
 	roleCacheAt time.Time
 }
 
-func (x *MiddlewareAcl) Handle(writer http.ResponseWriter, request *http.Request, _ httprouter.Params, routeName string) bool {
+func (x *MiddlewareAcl) Handle(writer http.ResponseWriter, request *http.Request, routeName string) bool {
 	tokenString, _ := GetAuthorizationToken(request)
 	claims, _ := GetJwtClaims(tokenString)
 
