@@ -4,13 +4,13 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/app/components/gorillamux_router"
 	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/dependency_injection"
+	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_restful"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
 	"net/http"
 )
 
 func injectAuthRoutes(r *gorillamux_router.Router) {
-	authRestful := dependency_injection.InitUserAuthRestful()
-
+	authRestful := auth_handlers_restful.NewAuthRestfulHandler(dependency_injection.InitUserAuthServices())
 	r.GET("/", defHandler, "")
 	r.Group("/auth", "", func(r *gorillamux_router.Router) {
 

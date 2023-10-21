@@ -8,21 +8,14 @@ package dependency_injection
 
 import (
 	"github.com/google/wire"
-	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_repo_interfaces"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_local"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_local/auth_handlers_local_interfaces"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_restful"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/handlers/auth_handlers_restful/auth_handlers_restful_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_redis"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
-	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
-	"github.com/zein-adi/go-keep-new-backend/domains/keep/handlers/keep_handlers_restful"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 )
 
@@ -34,20 +27,18 @@ func InitUserUserMysqlRepository() *auth_repos_mysql.UserMysqlRepository {
 	return userMysqlRepository
 }
 
-func InitUserUserRestful() *auth_handlers_restful.UserRestfulHandler {
+func InitUserUserServices() *auth_services.UserServices {
 	userMysqlRepository := auth_repos_mysql.NewUserMysqlRepository()
 	roleMysqlRepository := auth_repos_mysql.NewRoleMysqlRepository()
 	userServices := auth_services.NewUserServices(userMysqlRepository, roleMysqlRepository)
-	userRestfulHandler := auth_handlers_restful.NewUserRestfulHandler(userServices)
-	return userRestfulHandler
+	return userServices
 }
 
 // Role
-func InitUserRoleRestful() *auth_handlers_restful.RoleRestfulHandler {
+func InitUserRoleServices() *auth_services.RoleServices {
 	roleMysqlRepository := auth_repos_mysql.NewRoleMysqlRepository()
 	roleServices := auth_services.NewRoleServices(roleMysqlRepository)
-	roleRestfulHandler := auth_handlers_restful.NewRoleRestfulHandler(roleServices)
-	return roleRestfulHandler
+	return roleServices
 }
 
 func InitUserRoleMysqlRepository() *auth_repos_mysql.RoleMysqlRepository {
@@ -61,69 +52,82 @@ func InitUserPermissionMemoryRepository() *auth_repos_memory.PermissionMemoryRep
 	return permissionMemoryRepository
 }
 
-func InitUserPermissionRestful() *auth_handlers_restful.PermissionRestfulHandler {
+func InitUserPermissionServices() *auth_services.PermissionServices {
 	permissionMemoryRepository := auth_repos_memory.NewPermissionMemoryRepository()
 	roleMysqlRepository := auth_repos_mysql.NewRoleMysqlRepository()
 	permissionServices := auth_services.NewPermissionServices(permissionMemoryRepository, roleMysqlRepository)
-	permissionRestfulHandler := auth_handlers_restful.NewPermissionRestfulHandler(permissionServices)
-	return permissionRestfulHandler
+	return permissionServices
 }
 
 // Auth
-func InitUserAuthRestful() *auth_handlers_restful.AuthRestfulHandler {
+func InitUserAuthServices() *auth_services.AuthServices {
 	authMysqlRepository := auth_repos_redis.NewAuthRedisRepository()
 	userMysqlRepository := auth_repos_mysql.NewUserMysqlRepository()
 	roleMysqlRepository := auth_repos_mysql.NewRoleMysqlRepository()
 	authServices := auth_services.NewAuthServices(authMysqlRepository, userMysqlRepository, roleMysqlRepository)
-	authRestfulHandler := auth_handlers_restful.NewAuthRestfulHandler(authServices)
-	return authRestfulHandler
-}
-
-func InitAclMiddleware() *middlewares.MiddlewareAcl {
-	roleMysqlRepository := auth_repos_mysql.NewRoleMysqlRepository()
-	roleServices := auth_services.NewRoleServices(roleMysqlRepository)
-	roleLocalHandler := auth_handlers_local.NewRoleLocalHandler(roleServices)
-	middlewareAcl := middlewares.NewMiddlewareAcl(roleLocalHandler)
-	return middlewareAcl
+	return authServices
 }
 
 // Injectors from keep.go:
 
-func InitKeepPosRestful() *keep_handlers_restful.PosRestfulHandler {
+func InitKeepPosServices() *keep_services.PosServices {
 	posMysqlRepository := keep_repos_mysql.NewPosMySqlRepository()
-	posServices := keep_services.NewPosServices(posMysqlRepository)
-	posRestfulHandler := keep_handlers_restful.NewPosRestfulHandler(posServices)
-	return posRestfulHandler
+	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
+	posServices := keep_services.NewPosServices(posMysqlRepository, transaksiMemoryRepository)
+	return posServices
 }
 
-func InitKeepKantongRestful() *keep_handlers_restful.KantongRestfulHandler {
+func InitKeepKantongServices() *keep_services.KantongServices {
 	kantongMysqlRepository := keep_repos_mysql.NewKantongMysqlRepository()
 	kantongServices := keep_services.NewKantongServices(kantongMysqlRepository)
-	kantongRestfulHandler := keep_handlers_restful.NewKantongRestfulHandler(kantongServices)
-	return kantongRestfulHandler
+	return kantongServices
 }
 
-func InitKeepKantongHistoryRestful() *keep_handlers_restful.KantongHistoryRestfulHandler {
+func InitKeepKantongHistoryServices() *keep_services.KantongHistoryServices {
 	kantongHistoryMysqlRepository := keep_repos_mysql.NewKantongHistoryMysqlRepository()
 	kantongMysqlRepository := keep_repos_mysql.NewKantongMysqlRepository()
 	kantongHistoryServices := keep_services.NewKantongHistoryServices(kantongHistoryMysqlRepository, kantongMysqlRepository)
-	kantongHistoryRestfulHandler := keep_handlers_restful.NewKantongHistoryRestfulHandler(kantongHistoryServices)
-	return kantongHistoryRestfulHandler
+	return kantongHistoryServices
+}
+
+func InitKeepTransaksiServices() *keep_services.TransaksiServices {
+	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
+	posMysqlRepository := keep_repos_mysql.NewPosMySqlRepository()
+	kantongMysqlRepository := keep_repos_mysql.NewKantongMysqlRepository()
+	transaksiServices := keep_services.NewTransaksiServices(transaksiMemoryRepository, posMysqlRepository, kantongMysqlRepository)
+	return transaksiServices
+}
+
+func InitKeepLokasiServices() *keep_services.LokasiServices {
+	lokasiMemoryRepository := keep_repos_memory.NewLokasiMemoryRepository()
+	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
+	lokasiServices := keep_services.NewLokasiServices(lokasiMemoryRepository, transaksiMemoryRepository)
+	return lokasiServices
+}
+
+func InitKeepBarangServices() *keep_services.BarangServices {
+	barangMemoryRepository := keep_repos_memory.NewBarangMemoryRepository()
+	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
+	barangServices := keep_services.NewBarangServices(barangMemoryRepository, transaksiMemoryRepository)
+	return barangServices
 }
 
 // auth.go:
 
 var (
-	UserRoleSet       = wire.NewSet(middlewares.NewMiddlewareAcl, wire.Bind(new(auth_handlers_local_interfaces.IRoleLocalHandler), new(*auth_handlers_local.RoleLocalHandler)), auth_handlers_local.NewRoleLocalHandler, wire.Bind(new(auth_handlers_restful_interfaces.IRoleRestfulHandler), new(*auth_handlers_restful.RoleRestfulHandler)), auth_handlers_restful.NewRoleRestfulHandler, wire.Bind(new(auth_service_interfaces.IRoleServices), new(*auth_services.RoleServices)), auth_services.NewRoleServices, wire.Bind(new(auth_repo_interfaces.IRoleRepository), new(*auth_repos_mysql.RoleMysqlRepository)), auth_repos_mysql.NewRoleMysqlRepository)
-	UserPermissionSet = wire.NewSet(auth_handlers_restful.NewPermissionRestfulHandler, wire.Bind(new(auth_service_interfaces.IPermissionServices), new(*auth_services.PermissionServices)), auth_services.NewPermissionServices, wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)), auth_repos_memory.NewPermissionMemoryRepository)
-	UserAuthSet       = wire.NewSet(auth_handlers_restful.NewAuthRestfulHandler, wire.Bind(new(auth_service_interfaces.IAuthServices), new(*auth_services.AuthServices)), auth_services.NewAuthServices, wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)), auth_repos_redis.NewAuthRedisRepository)
-	UserUserSet       = wire.NewSet(auth_handlers_restful.NewUserRestfulHandler, wire.Bind(new(auth_service_interfaces.IUserServices), new(*auth_services.UserServices)), auth_services.NewUserServices, wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)), auth_repos_mysql.NewUserMysqlRepository)
+	UserRoleSet       = wire.NewSet(auth_services.NewRoleServices, wire.Bind(new(auth_repo_interfaces.IRoleRepository), new(*auth_repos_mysql.RoleMysqlRepository)), auth_repos_mysql.NewRoleMysqlRepository)
+	UserPermissionSet = wire.NewSet(auth_services.NewPermissionServices, wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)), auth_repos_memory.NewPermissionMemoryRepository)
+	UserAuthSet       = wire.NewSet(auth_services.NewAuthServices, wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)), auth_repos_redis.NewAuthRedisRepository)
+	UserUserSet       = wire.NewSet(auth_services.NewUserServices, wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)), auth_repos_mysql.NewUserMysqlRepository)
 )
 
 // keep.go:
 
 var (
-	KeepPosSet            = wire.NewSet(keep_handlers_restful.NewPosRestfulHandler, wire.Bind(new(keep_service_interfaces.IPosServices), new(*keep_services.PosServices)), keep_services.NewPosServices, wire.Bind(new(keep_repo_interfaces.IPosRepository), new(*keep_repos_mysql.PosMysqlRepository)), keep_repos_mysql.NewPosMySqlRepository)
-	KeepKantongSet        = wire.NewSet(keep_handlers_restful.NewKantongRestfulHandler, wire.Bind(new(keep_service_interfaces.IKantongServices), new(*keep_services.KantongServices)), keep_services.NewKantongServices, wire.Bind(new(keep_repo_interfaces.IKantongRepository), new(*keep_repos_mysql.KantongMysqlRepository)), keep_repos_mysql.NewKantongMysqlRepository)
-	KeepKantongHistorySet = wire.NewSet(keep_handlers_restful.NewKantongHistoryRestfulHandler, wire.Bind(new(keep_service_interfaces.IKantongHistoryServices), new(*keep_services.KantongHistoryServices)), keep_services.NewKantongHistoryServices, wire.Bind(new(keep_repo_interfaces.IKantongHistoryRepository), new(*keep_repos_mysql.KantongHistoryMysqlRepository)), keep_repos_mysql.NewKantongHistoryMysqlRepository)
+	KeepPosSet            = wire.NewSet(keep_services.NewPosServices, wire.Bind(new(keep_repo_interfaces.IPosRepository), new(*keep_repos_mysql.PosMysqlRepository)), keep_repos_mysql.NewPosMySqlRepository)
+	KeepKantongSet        = wire.NewSet(keep_services.NewKantongServices, wire.Bind(new(keep_repo_interfaces.IKantongRepository), new(*keep_repos_mysql.KantongMysqlRepository)), keep_repos_mysql.NewKantongMysqlRepository)
+	KeepKantongHistorySet = wire.NewSet(keep_services.NewKantongHistoryServices, wire.Bind(new(keep_repo_interfaces.IKantongHistoryRepository), new(*keep_repos_mysql.KantongHistoryMysqlRepository)), keep_repos_mysql.NewKantongHistoryMysqlRepository)
+	KeepTransaksiSet      = wire.NewSet(keep_services.NewTransaksiServices, wire.Bind(new(keep_repo_interfaces.ITransaksiRepository), new(*keep_repos_memory.TransaksiMemoryRepository)), keep_repos_memory.NewTransaksiMemoryRepository)
+	KeepLokasiSet         = wire.NewSet(keep_services.NewLokasiServices, wire.Bind(new(keep_repo_interfaces.ILokasiRepository), new(*keep_repos_memory.LokasiMemoryRepository)), keep_repos_memory.NewLokasiMemoryRepository)
+	KeepBarangSet         = wire.NewSet(keep_services.NewBarangServices, wire.Bind(new(keep_repo_interfaces.IBarangRepository), new(*keep_repos_memory.BarangMemoryRepository)), keep_repos_memory.NewBarangMemoryRepository)
 )
