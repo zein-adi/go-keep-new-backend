@@ -44,7 +44,7 @@ func TestUser(t *testing.T) {
 	})
 	t.Run("GetSuccess", func(t *testing.T) {
 		r.setupAndPopulate()
-		models := r.services.Get(context.Background(), auth_requests.NewGetRequest())
+		models := r.services.Get(context.Background(), auth_requests.NewGet())
 		assert.Len(t, models, 2)
 	})
 	t.Run("UpdateSuccess", func(t *testing.T) {
@@ -93,14 +93,14 @@ func TestUser(t *testing.T) {
 		users, roles := r.setupAndPopulate()
 		id := users[1].Id
 		currentUserRoleIds := []string{roles[0].Id}
-		models := r.repo.Get(context.Background(), auth_requests.NewGetRequest())
+		models := r.repo.Get(context.Background(), auth_requests.NewGet())
 		assert.Len(t, models, 2)
 
 		aff, err := r.services.DeleteById(context.Background(), id, currentUserRoleIds)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, aff)
 
-		models = r.repo.Get(context.Background(), auth_requests.NewGetRequest())
+		models = r.repo.Get(context.Background(), auth_requests.NewGet())
 		assert.Len(t, models, 1)
 	})
 	t.Run("InsertUpdateFailedValidationsUsername", func(t *testing.T) {
@@ -305,11 +305,11 @@ func (x *UserServicesTest) setMysqlRepository() {
 	x.repo = repo
 	x.roleRepo = roleRepo
 
-	models := x.repo.Get(context.Background(), auth_requests.NewGetRequest())
+	models := x.repo.Get(context.Background(), auth_requests.NewGet())
 	for _, model := range models {
 		_, _ = x.repo.DeleteById(context.Background(), model.Id)
 	}
-	models2 := x.roleRepo.Get(context.Background(), auth_requests.NewGetRequest())
+	models2 := x.roleRepo.Get(context.Background(), auth_requests.NewGet())
 	for _, model := range models2 {
 		_, _ = x.repo.DeleteById(context.Background(), model.Id)
 	}

@@ -7,8 +7,8 @@ import (
 )
 
 type IUserRepository interface {
-	Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.User
-	Count(ctx context.Context, request auth_requests.GetRequest) (count int)
+	Get(ctx context.Context, request auth_requests.Get) []*auth_entities.User
+	Count(ctx context.Context, request auth_requests.Get) (count int)
 	FindById(ctx context.Context, id string) (*auth_entities.User, error)
 	FindByUsername(ctx context.Context, username string) (*auth_entities.User, error)
 	CountByUsername(ctx context.Context, username string, exceptId string) (count int)

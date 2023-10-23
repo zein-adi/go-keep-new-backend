@@ -37,12 +37,12 @@ func TestRoleRepositoryTests(t *testing.T) {
 	})
 	t.Run("CountSuccess", func(t *testing.T) {
 		s.ClearAndPopulate()
-		count := repo.Count(context.Background(), auth_requests.NewGetRequest())
+		count := repo.Count(context.Background(), auth_requests.NewGet())
 		assert.Equal(t, 2, count)
 	})
 	t.Run("GetSuccess", func(t *testing.T) {
 		s.ClearAndPopulate()
-		models := repo.Get(context.Background(), auth_requests.NewGetRequest())
+		models := repo.Get(context.Background(), auth_requests.NewGet())
 		assert.Len(t, models, 2)
 	})
 	t.Run("UpdateSuccess", func(t *testing.T) {
@@ -64,14 +64,14 @@ func TestRoleRepositoryTests(t *testing.T) {
 	t.Run("DeleteSuccess", func(t *testing.T) {
 		ori := s.ClearAndPopulate()[0]
 
-		count := repo.Count(context.Background(), auth_requests.NewGetRequest())
+		count := repo.Count(context.Background(), auth_requests.NewGet())
 		assert.Equal(t, 2, count)
 
 		affected, err := repo.DeleteById(context.Background(), ori.Id)
 		assert.Equal(t, nil, err)
 		assert.Equal(t, 1, affected)
 
-		count = repo.Count(context.Background(), auth_requests.NewGetRequest())
+		count = repo.Count(context.Background(), auth_requests.NewGet())
 		assert.Equal(t, 1, count)
 	})
 }
@@ -82,7 +82,7 @@ type RoleRepositoryTest struct {
 
 func (x *RoleRepositoryTest) Clear() {
 	ctx := context.Background()
-	models := x.repo.Get(ctx, auth_requests.NewGetRequest())
+	models := x.repo.Get(ctx, auth_requests.NewGet())
 	for _, model := range models {
 		_, _ = x.repo.DeleteById(ctx, model.Id)
 	}

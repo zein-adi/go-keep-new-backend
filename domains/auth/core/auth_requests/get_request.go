@@ -1,14 +1,14 @@
 package auth_requests
 
-func NewGetRequest() GetRequest {
-	return GetRequest{
+func NewGet() Get {
+	return Get{
 		Skip:   0,
 		Take:   10,
 		Search: "",
 	}
 }
 
-type GetRequest struct {
+type Get struct {
 	Skip   int
 	Take   int
 	Search string

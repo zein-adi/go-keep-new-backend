@@ -20,7 +20,7 @@ func (x *RoleLocalHandler) Get() []*auth_entities.Role {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	request := auth_requests.NewGetRequest()
+	request := auth_requests.NewGet()
 	request.Take = 0
 	return x.service.Get(ctx, request)
 }

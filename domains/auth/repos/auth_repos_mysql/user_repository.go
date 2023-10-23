@@ -26,18 +26,18 @@ type UserMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (r *UserMysqlRepository) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_entities.User {
+func (r *UserMysqlRepository) Get(ctx context.Context, request auth_requests.Get) []*auth_entities.User {
 	q := r.getQueryFiltered(ctx, request)
 	q.Skip(request.Skip)
 	q.Take(request.Take)
 	q.OrderBy("nama")
 	return r.newEntitiesFromRows(q.Get())
 }
-func (r *UserMysqlRepository) Count(ctx context.Context, request auth_requests.GetRequest) (count int) {
+func (r *UserMysqlRepository) Count(ctx context.Context, request auth_requests.Get) (count int) {
 	return r.getQueryFiltered(ctx, request).Count()
 }
 func (r *UserMysqlRepository) FindById(ctx context.Context, id string) (*auth_entities.User, error) {
-	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
+	q := r.getQueryFiltered(ctx, auth_requests.NewGet())
 	q.Where("id", "=", id)
 	q.Take(1)
 	models := r.newEntitiesFromRows(q.Get())
@@ -47,7 +47,7 @@ func (r *UserMysqlRepository) FindById(ctx context.Context, id string) (*auth_en
 	return models[0], nil
 }
 func (r *UserMysqlRepository) FindByUsername(ctx context.Context, username string) (*auth_entities.User, error) {
-	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
+	q := r.getQueryFiltered(ctx, auth_requests.NewGet())
 	q.Where("username", "=", username)
 	q.Take(1)
 	models := r.newEntitiesFromRows(q.Get())
@@ -57,7 +57,7 @@ func (r *UserMysqlRepository) FindByUsername(ctx context.Context, username strin
 	return models[0], nil
 }
 func (r *UserMysqlRepository) CountByUsername(ctx context.Context, username string, exceptId string) (count int) {
-	q := r.getQueryFiltered(ctx, auth_requests.NewGetRequest())
+	q := r.getQueryFiltered(ctx, auth_requests.NewGet())
 	q.Where("username", "=", username)
 	q.Where("id", "!=", exceptId)
 	q.Take(1)
@@ -117,7 +117,7 @@ func (r *UserMysqlRepository) DeleteById(ctx context.Context, id string) (affect
 func (r *UserMysqlRepository) Cleanup() {
 	r.dbCleanup()
 }
-func (r *UserMysqlRepository) getQueryFiltered(ctx context.Context, request auth_requests.GetRequest) *helpers_mysql.QueryBuilder {
+func (r *UserMysqlRepository) getQueryFiltered(ctx context.Context, request auth_requests.Get) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, userTableName)
 	q.Select("id, username, password, nama, role_ids")
 

@@ -25,13 +25,13 @@ type UserServices struct {
 	roleRepo auth_repo_interfaces.IRoleRepository
 }
 
-func (x *UserServices) Get(ctx context.Context, request auth_requests.GetRequest) []*auth_responses.UserResponse {
+func (x *UserServices) Get(ctx context.Context, request auth_requests.Get) []*auth_responses.UserResponse {
 	models := x.userRepo.Get(ctx, request)
 	return helpers.Map(models, func(d *auth_entities.User) *auth_responses.UserResponse {
 		return x.newUserResponseFromUserEntity(d)
 	})
 }
-func (x *UserServices) Count(ctx context.Context, request auth_requests.GetRequest) int {
+func (x *UserServices) Count(ctx context.Context, request auth_requests.Get) int {
 	return x.userRepo.Count(ctx, request)
 }
 func (x *UserServices) Insert(ctx context.Context, request *auth_requests.UserInputRequest, currentUserRoleIds []string) (*auth_responses.UserResponse, error) {

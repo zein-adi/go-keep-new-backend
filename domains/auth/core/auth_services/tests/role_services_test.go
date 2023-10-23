@@ -24,7 +24,7 @@ func TestRole(t *testing.T) {
 	t.Run("GetSuccess", func(t *testing.T) {
 		ori := r.setupAndPopulate()
 
-		req := auth_requests.NewGetRequest()
+		req := auth_requests.NewGet()
 		models := r.services.Get(context.Background(), req)
 		assert.Len(t, models, 3)
 
@@ -39,7 +39,7 @@ func TestRole(t *testing.T) {
 	t.Run("DeleteSuccess", func(t *testing.T) {
 		ctx := context.Background()
 		ori := r.setupAndPopulate()
-		models := r.repo.Get(ctx, auth_requests.NewGetRequest())
+		models := r.repo.Get(ctx, auth_requests.NewGet())
 		assert.Len(t, models, 3)
 		currentRoleIds := []string{ori[0].Id}
 
@@ -47,7 +47,7 @@ func TestRole(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		models = r.repo.Get(ctx, auth_requests.NewGetRequest())
+		models = r.repo.Get(ctx, auth_requests.NewGet())
 		assert.Len(t, models, 2)
 		assert.Equal(t, ori[2].Id, models[1].Id)
 	})
@@ -86,7 +86,7 @@ func TestRole(t *testing.T) {
 	t.Run("InsertSuccess", func(t *testing.T) {
 		ori := r.setupAndPopulate()
 		ctx := context.Background()
-		models := r.repo.Get(ctx, auth_requests.NewGetRequest())
+		models := r.repo.Get(ctx, auth_requests.NewGet())
 		assert.Len(t, models, 3)
 
 		nama := "Staf 2"
@@ -114,7 +114,7 @@ func TestRole(t *testing.T) {
 		assert.Equal(t, level, model.Level)
 		assert.Equal(t, permissions, model.Permissions)
 
-		models = r.repo.Get(ctx, auth_requests.NewGetRequest())
+		models = r.repo.Get(ctx, auth_requests.NewGet())
 		assert.Len(t, models, 4)
 		model = models[3]
 
@@ -127,7 +127,7 @@ func TestRole(t *testing.T) {
 	t.Run("UpdateSuccess", func(t *testing.T) {
 		ori := r.setupAndPopulate()
 		ctx := context.Background()
-		models := r.repo.Get(ctx, auth_requests.NewGetRequest())
+		models := r.repo.Get(ctx, auth_requests.NewGet())
 		assert.Len(t, models, 3)
 
 		currentUserRoleIds := []string{ori[0].Id}
@@ -272,7 +272,7 @@ func (r *RoleServicesTest) setMysqlRepository() {
 	repo := auth_repos_mysql.NewRoleMysqlRepository()
 	r.dbCleanup = repo.Cleanup
 	r.repo = repo
-	models := r.repo.Get(context.Background(), auth_requests.NewGetRequest())
+	models := r.repo.Get(context.Background(), auth_requests.NewGet())
 	for _, model := range models {
 		_, _ = r.repo.DeleteById(context.Background(), model.Id)
 	}

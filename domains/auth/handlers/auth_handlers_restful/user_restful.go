@@ -27,7 +27,7 @@ func (x *UserRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	request := auth_requests.NewGetRequest()
+	request := auth_requests.NewGet()
 	q := r.URL.Query()
 
 	if q.Has("skip") {

@@ -20,7 +20,7 @@ type UserRepository struct {
 	data []*auth_entities.User
 }
 
-func (r *UserRepository) Get(_ context.Context, request auth_requests.GetRequest) []*auth_entities.User {
+func (r *UserRepository) Get(_ context.Context, request auth_requests.Get) []*auth_entities.User {
 	data := r.getDataFiltered(request)
 	data = helpers.Slice(data, request.Skip, request.Take)
 	return helpers.Map(data, func(d *auth_entities.User) *auth_entities.User {
@@ -28,7 +28,7 @@ func (r *UserRepository) Get(_ context.Context, request auth_requests.GetRequest
 	})
 }
 
-func (r *UserRepository) Count(_ context.Context, request auth_requests.GetRequest) (count int) {
+func (r *UserRepository) Count(_ context.Context, request auth_requests.Get) (count int) {
 	return len(r.getDataFiltered(request))
 }
 
@@ -107,7 +107,7 @@ func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected in
 	return 1, nil
 }
 
-func (r *UserRepository) getDataFiltered(request auth_requests.GetRequest) []*auth_entities.User {
+func (r *UserRepository) getDataFiltered(request auth_requests.Get) []*auth_entities.User {
 	return helpers.Filter(r.data, func(user *auth_entities.User) bool {
 		res := true
 		if request.Search != "" {
