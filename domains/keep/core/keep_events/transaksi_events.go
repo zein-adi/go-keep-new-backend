@@ -66,7 +66,7 @@ func NewTransaksiSoftDeleteEventDataFromDispatcher(eventData any) (*TransaksiSof
 	data, ok := eventData.(TransaksiSoftDeletedEventData)
 	if !ok {
 		err := errors.New(fmt.Sprintf("failed to cast %s eventdata from any to %s",
-			"TransaksiSoftDelete",
+			"TransaksiSoftDeleted",
 			"TransaksiSoftDeletedEventData"))
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func NewTransaksiRestoreEventDataFromDispatcher(eventData any) (*TransaksiRestor
 	data, ok := eventData.(TransaksiRestoredEventData)
 	if !ok {
 		err := errors.New(fmt.Sprintf("failed to cast %s eventdata from any to %s",
-			"TransaksiRestore",
+			"TransaksiRestored",
 			"TransaksiRestoredEventData"))
 		return nil, err
 	}

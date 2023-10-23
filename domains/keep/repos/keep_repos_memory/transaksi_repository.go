@@ -111,19 +111,19 @@ func (x *TransaksiMemoryRepository) GetJumlahByPosId(_ context.Context, posId st
 }
 
 func (x *TransaksiMemoryRepository) newQueryRequest(status string, request *keep_request.GetTransaksi) []*keep_entities.Transaksi {
-	return helpers.Filter(x.Data, func(pos *keep_entities.Transaksi) bool {
+	return helpers.Filter(x.Data, func(v *keep_entities.Transaksi) bool {
 		res := true
 		if status != "" {
-			res = res && pos.Status == status
+			res = res && v.Status == status
 		}
 		if request.PosId != "" {
-			res = res && (pos.PosAsalId == request.PosId || pos.PosTujuanId == request.PosId)
+			res = res && (v.PosAsalId == request.PosId || v.PosTujuanId == request.PosId)
 		}
 		if request.KantongId != "" {
-			res = res && (pos.KantongAsalId == request.KantongId || pos.KantongTujuanId == request.KantongId)
+			res = res && (v.KantongAsalId == request.KantongId || v.KantongTujuanId == request.KantongId)
 		}
 		if request.JenisTanggal != "" && request.Tanggal != 0 {
-			waktuTime := time.Unix(pos.Waktu, 0)
+			waktuTime := time.Unix(v.Waktu, 0)
 			requestTanggal := time.Unix(request.Tanggal, 0)
 			format := time.DateTime
 			switch request.JenisTanggal {
@@ -135,6 +135,9 @@ func (x *TransaksiMemoryRepository) newQueryRequest(status string, request *keep
 				format = "2006-01-02"
 			}
 			res = res && waktuTime.Format(format) == requestTanggal.Format(format)
+		}
+		if request.WaktuAwal > 0 {
+			res = res && v.Waktu >= request.WaktuAwal
 		}
 		return res
 	})

@@ -38,8 +38,7 @@ func (x *KantongHistoryMysqlRepository) FindById(ctx context.Context, id string)
 func (x *KantongHistoryMysqlRepository) Insert(ctx context.Context, kantongHistory *keep_entities.KantongHistory) (*keep_entities.KantongHistory, error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongHistoryTable)
 
-	timezone := +7 * time.Hour
-	waktuString := time.Unix(kantongHistory.Waktu, 0).Add(-timezone).Format(time.DateTime)
+	waktuString := time.Unix(kantongHistory.Waktu, 0).Format(time.DateTime)
 	insertId, err := q.Insert(map[string]any{
 		"kantong_id": kantongHistory.KantongId,
 		"jumlah":     kantongHistory.Jumlah,
@@ -58,8 +57,7 @@ func (x *KantongHistoryMysqlRepository) Update(ctx context.Context, kantongHisto
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongHistoryTable)
 	q.Where("id", "=", kantongHistory.Id)
 
-	timezone := +7 * time.Hour
-	waktuString := time.Unix(kantongHistory.Waktu, 0).Add(-timezone).Format(time.DateTime)
+	waktuString := time.Unix(kantongHistory.Waktu, 0).Format(time.DateTime)
 	affected = q.Update(map[string]any{
 		"kantong_id": kantongHistory.KantongId,
 		"jumlah":     kantongHistory.Jumlah,

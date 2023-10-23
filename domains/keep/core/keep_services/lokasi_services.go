@@ -21,9 +21,13 @@ type LokasiServices struct {
 	transaksiRepo keep_repo_interfaces.ITransaksiRepository
 }
 
+func (x *LokasiServices) Get(ctx context.Context, search string) []*keep_entities.Lokasi {
+	return x.repo.Get(ctx, search)
+}
+
 func (x *LokasiServices) UpdateLokasiFromTransaksi(ctx context.Context) (affected int, err error) {
 	request := keep_request.NewGetTransaksi()
-	request.WaktuAwal = time.Now().AddDate(0, 6, 0).Unix()
+	request.WaktuAwal = time.Now().AddDate(0, -6, 0).Unix()
 	transaksis := x.transaksiRepo.Get(ctx, request)
 	transaksiMap := make(map[string]*keep_entities.Lokasi)
 	for _, transaksi := range transaksis {

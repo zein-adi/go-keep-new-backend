@@ -34,7 +34,7 @@ func (x *LokasiEventListenerHandler) TransaksiUpdated(eventData any) {
 	}
 	x.updateLokasi("updated")
 }
-func (x *LokasiEventListenerHandler) TransaksiSoftDelete(eventData any) {
+func (x *LokasiEventListenerHandler) TransaksiSoftDeleted(eventData any) {
 	_, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -42,7 +42,7 @@ func (x *LokasiEventListenerHandler) TransaksiSoftDelete(eventData any) {
 	}
 	x.updateLokasi("softDelete")
 }
-func (x *LokasiEventListenerHandler) TransaksiRestore(eventData any) {
+func (x *LokasiEventListenerHandler) TransaksiRestored(eventData any) {
 	_, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
