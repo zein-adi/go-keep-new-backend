@@ -1,16 +1,16 @@
 package keep_request
 
-func NewPosGetRequest() *PosGetRequest {
-	return &PosGetRequest{
+func NewGetPos() *GetPos {
+	return &GetPos{
 		IsLeafOnly: false,
 	}
 }
 
-type PosGetRequest struct {
+type GetPos struct {
 	IsLeafOnly bool
 }
 
-type PosInputUpdateRequest struct {
+type PosInputUpdate struct {
 	Id       string `json:"id,omitempty" validate:""`
 	Nama     string `json:"nama,omitempty" validate:"required"`
 	Urutan   int    `json:"urutan,omitempty" validate:"required,number,min=1"`

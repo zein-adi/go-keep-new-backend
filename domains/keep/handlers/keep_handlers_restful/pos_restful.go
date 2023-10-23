@@ -26,7 +26,7 @@ func (x *PosRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	request := keep_request.NewPosGetRequest()
+	request := keep_request.NewGetPos()
 	q := r.URL.Query()
 	if q.Has("isLeafOnly") {
 		request.IsLeafOnly = true
@@ -39,7 +39,7 @@ func (x *PosRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	input := &keep_request.PosInputUpdateRequest{}
+	input := &keep_request.PosInputUpdate{}
 	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
 		return
 	}
@@ -60,7 +60,7 @@ func (x *PosRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	input := &keep_request.PosInputUpdateRequest{}
+	input := &keep_request.PosInputUpdate{}
 	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
 		return
 	}

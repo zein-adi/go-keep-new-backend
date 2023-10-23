@@ -22,13 +22,13 @@ type PosServices struct {
 	transaksiRepo keep_repo_interfaces.ITransaksiRepository
 }
 
-func (x *PosServices) Get(ctx context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos {
+func (x *PosServices) Get(ctx context.Context, request *keep_request.GetPos) []*keep_entities.Pos {
 	return x.repo.Get(ctx, request)
 }
 func (x *PosServices) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {
-	return x.FindById(ctx, id)
+	return x.repo.FindById(ctx, id)
 }
-func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosInputUpdateRequest) (*keep_entities.Pos, error) {
+func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosInputUpdate) (*keep_entities.Pos, error) {
 	pos := &keep_entities.Pos{}
 	v := validator.New()
 	err := v.ValidateStruct(posRequest)
@@ -54,7 +54,7 @@ func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosIn
 
 	return x.repo.Insert(ctx, pos)
 }
-func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosInputUpdateRequest) (*keep_entities.Pos, error) {
+func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosInputUpdate) (*keep_entities.Pos, error) {
 	model, err := x.repo.FindById(ctx, posRequest.Id)
 	if err != nil {
 		return model, err
@@ -120,29 +120,47 @@ func (x *PosServices) UpdateSaldoFromTransaksi(ctx context.Context, ids []string
 			continue
 		}
 
-		af, err2 := x.updateSaldoAndParentsFromTransaksi(ctx, id)
-		affected += af
+		_, err2 := x.repo.FindById(ctx, id)
 		if err2 != nil {
-			return affected, err2
+			return 0, err2
 		}
+		jumlah := x.transaksiRepo.GetJumlahByPosId(ctx, id)
+		aff := x.repo.UpdateSaldo(ctx, id, jumlah)
+		affected += aff
+		aff, err2 = x.updateParentSaldo(ctx, id)
+		if err2 != nil {
+			return 0, err2
+		}
+		affected += aff
 	}
 	return affected, nil
 }
 
-func (x *PosServices) updateSaldoAndParentsFromTransaksi(ctx context.Context, id string) (affected int, err error) {
+func (x *PosServices) updateParentSaldo(ctx context.Context, id string) (affected int, err error) {
+	m, err := x.repo.FindById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	id = m.ParentId
+	if id == "" {
+		return 0, nil
+	}
+
 	for {
-		m, err2 := x.repo.FindById(ctx, id)
+		parent, err2 := x.repo.FindById(ctx, id)
 		if err2 != nil {
 			return 0, err2
 		}
-		saldo := x.transaksiRepo.GetJumlahByPosId(ctx, id)
-		aff := x.repo.UpdateSaldo(ctx, id, saldo)
+
+		jumlah := x.repo.GetJumlahById(ctx, parent.Id)
+		aff := x.repo.UpdateSaldo(ctx, parent.Id, jumlah)
 		affected += aff
 
-		id = m.ParentId
+		id = parent.ParentId
 		if id == "" {
 			break
 		}
 	}
+
 	return affected, nil
 }

@@ -4,16 +4,20 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_events"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/handlers/keep_handlers_events"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_events"
 	"testing"
+	"time"
 )
 
 func TestPos(t *testing.T) {
@@ -21,14 +25,14 @@ func TestPos(t *testing.T) {
 	x := NewPosServicesTest()
 
 	t.Run("GetSuccessAll", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		oriKey := helpers.KeyBy(ori, func(d *keep_entities.Pos) string {
 			return d.Id
 		})
 
-		models := x.services.Get(context.Background(), keep_request.NewPosGetRequest())
+		models := x.services.Get(context.Background(), keep_request.NewGetPos())
 		assert.Len(t, models, 3)
 
 		for _, m := range models {
@@ -44,14 +48,14 @@ func TestPos(t *testing.T) {
 		}
 	})
 	t.Run("GetSuccessLeafOnly", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		oriKeyBy := helpers.KeyBy(ori, func(d *keep_entities.Pos) string {
 			return d.Id
 		})
 
-		req := keep_request.NewPosGetRequest()
+		req := keep_request.NewGetPos()
 		req.IsLeafOnly = true
 		models := x.services.Get(context.Background(), req)
 		assert.Len(t, models, 2)
@@ -69,8 +73,8 @@ func TestPos(t *testing.T) {
 		}
 	})
 	t.Run("GetTrashedSuccess", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		models := x.services.GetTrashed(context.Background())
 		assert.Len(t, models, 1)
@@ -87,13 +91,13 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, "trashed", m.Status)
 	})
 	t.Run("InsertSuccess", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		nama := "Mas Luxman"
 		urutan := 1
 		parentId := ori[0].Id
-		input := &keep_request.PosInputUpdateRequest{
+		input := &keep_request.PosInputUpdate{
 			Nama:     nama,
 			Urutan:   urutan,
 			ParentId: parentId,
@@ -108,14 +112,14 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, 2, model.Level)
 	})
 	t.Run("UpdateSuccess", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		id := ori[0].Id
 		nama := "Mas Luxman"
 		urutan := 1
 		parentId := ori[1].Id
-		input := &keep_request.PosInputUpdateRequest{
+		input := &keep_request.PosInputUpdate{
 			Id:       id,
 			Nama:     nama,
 			Urutan:   urutan,
@@ -132,8 +136,8 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, 2, model.Level)
 	})
 	t.Run("DeleteSuccess", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		affected, err := x.services.DeleteById(context.Background(), ori[0].Id)
 		assert.Nil(t, err)
@@ -147,8 +151,8 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, "trashed", model.Status)
 	})
 	t.Run("RestoreTrashedSuccess", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		affected, err := x.services.RestoreTrashedById(context.Background(), ori[3].Id)
 		assert.Nil(t, err)
@@ -159,8 +163,8 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, "aktif", model.Status)
 	})
 	t.Run("DeleteTrashedSuccess", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		affected, err := x.services.DeleteTrashedById(context.Background(), ori[3].Id)
 		assert.Nil(t, err)
@@ -173,10 +177,10 @@ func TestPos(t *testing.T) {
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 	t.Run("UpdateFailedCauseParentToItself", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
-		pos := &keep_request.PosInputUpdateRequest{
+		pos := &keep_request.PosInputUpdate{
 			Id:       ori[0].Id,
 			ParentId: ori[0].Id,
 			Nama:     "Pemasukan",
@@ -188,8 +192,8 @@ func TestPos(t *testing.T) {
 		assert.ErrorContains(t, err, "parent_to_self")
 	})
 	t.Run("RestoreTrashedDeleteTrashedFailedCauseStatusAktif", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		id := ori[0].Id
 		affected, err := x.services.RestoreTrashedById(context.Background(), id)
@@ -203,8 +207,8 @@ func TestPos(t *testing.T) {
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 	t.Run("UpdateDeleteFailedCauseTrashed", func(t *testing.T) {
-		ori := x.setUpAndPopulate()
-		defer x.dbCleanup()
+		ori := x.reset()
+		defer x.truncate()
 
 		id := ori[3].Id
 		affected, err := x.services.DeleteById(context.Background(), id)
@@ -212,7 +216,7 @@ func TestPos(t *testing.T) {
 		assert.Empty(t, affected)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 
-		input := &keep_request.PosInputUpdateRequest{
+		input := &keep_request.PosInputUpdate{
 			Id:     id,
 			Nama:   "Pemasukan",
 			Urutan: 1,
@@ -223,8 +227,8 @@ func TestPos(t *testing.T) {
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 	t.Run("UpdateDeleteFailedCauseNotFound", func(t *testing.T) {
-		x.setUpAndPopulate()
-		defer x.dbCleanup()
+		x.reset()
+		defer x.truncate()
 
 		id := "9999"
 		affected, err := x.services.DeleteById(context.Background(), id)
@@ -232,7 +236,7 @@ func TestPos(t *testing.T) {
 		assert.Empty(t, affected)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 
-		input := &keep_request.PosInputUpdateRequest{
+		input := &keep_request.PosInputUpdate{
 			Id:     id,
 			Nama:   "Pemasukan",
 			Urutan: 1,
@@ -242,44 +246,349 @@ func TestPos(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
+
+	/*
+	 * Testing Listener
+	 */
+	l := keep_handlers_events.NewPosEventListenerHandler(x.services)
+	d := helpers_events.GetDispatcher()
+	_ = d.Register(keep_events.TransaksiCreated, l.TransaksiCreated)
+	_ = d.Register(keep_events.TransaksiUpdated, l.TransaksiUpdated)
+	_ = d.Register(keep_events.TransaksiSoftDeleted, l.TransaksiSoftDeleted)
+	_ = d.Register(keep_events.TransaksiRestored, l.TransaksiRestored)
+
+	t.Run("UpdateSaldoFromTransaksi", func(t *testing.T) {
+		poses := x.reset()
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		ctx := context.Background()
+
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      1000000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      100000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:     "pengeluaran",
+			Jumlah:    10000,
+			PosAsalId: posPemasukan.Id,
+			Status:    "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:     "pengeluaran",
+			Jumlah:    1000000,
+			PosAsalId: posPemasukan.Id,
+			Status:    "trashed",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "mutasi",
+			Jumlah:      10000,
+			PosAsalId:   posPemasukan.Id,
+			PosTujuanId: posMain.Id,
+			Status:      "aktif",
+		})
+
+		affected, err := x.services.UpdateSaldoFromTransaksi(ctx, []string{posPemasukan.Id, posMain.Id})
+		assert.Nil(t, err)
+		assert.Equal(t, 3, affected)
+
+		model, err := x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 1080000, model.Saldo)
+
+		model, err = x.repo.FindById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 10000, model.Saldo)
+
+		model, err = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 10000, model.Saldo)
+	})
+	t.Run("ListenerTransaksiCreated", func(t *testing.T) {
+		poses := x.reset()
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		ctx := context.Background()
+
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      1000000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      100000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:     "pengeluaran",
+			Jumlah:    10000,
+			PosAsalId: posPemasukan.Id,
+			Status:    "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:     "pengeluaran",
+			Jumlah:    1000000,
+			PosAsalId: posPemasukan.Id,
+			Status:    "trashed",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "mutasi",
+			Jumlah:      10000,
+			PosAsalId:   posPemasukan.Id,
+			PosTujuanId: posMain.Id,
+			Status:      "aktif",
+		})
+
+		_ = d.Dispatch(keep_events.TransaksiCreated, keep_events.TransaksiCreatedEventData{
+			Data: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		model, err := x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 1080000, model.Saldo)
+
+		model, err = x.repo.FindById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 10000, model.Saldo)
+
+		model, err = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 10000, model.Saldo)
+	})
+	t.Run("ListenerTransaksiUpdated", func(t *testing.T) {
+		poses := x.reset()
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		ctx := context.Background()
+
+		// Basic
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      1000000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "mutasi",
+			Jumlah:      10000,
+			PosAsalId:   posPemasukan.Id,
+			PosTujuanId: posMain.Id,
+			Status:      "aktif",
+		})
+		_, err := x.services.UpdateSaldoFromTransaksi(ctx, []string{posPemasukan.Id, posMain.Id})
+		assert.Nil(t, err)
+
+		model, _ := x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Equal(t, 990000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.Equal(t, 10000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Equal(t, 10000, model.Saldo)
+
+		// Update
+		transaksi.Jenis = "pengeluaran"
+		transaksi.PosAsalId = posPemasukan.Id
+		transaksi.PosTujuanId = ""
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{
+			Old: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+			New: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		model, _ = x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Equal(t, 990000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.Equal(t, 0, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Equal(t, 0, model.Saldo)
+	})
+	t.Run("ListenerTransaksiSoftDeleted", func(t *testing.T) {
+		poses := x.reset()
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		ctx := context.Background()
+
+		// Basic
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      1000000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "mutasi",
+			Jumlah:      10000,
+			PosAsalId:   posPemasukan.Id,
+			PosTujuanId: posMain.Id,
+			Status:      "aktif",
+		})
+		_, err := x.services.UpdateSaldoFromTransaksi(ctx, []string{posPemasukan.Id, posMain.Id})
+		assert.Nil(t, err)
+
+		model, _ := x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Equal(t, 990000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.Equal(t, 10000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Equal(t, 10000, model.Saldo)
+
+		// Update
+		transaksi.Status = "trashed"
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{
+			Old: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+			New: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		model, _ = x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Equal(t, 1000000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.Equal(t, 0, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Equal(t, 0, model.Saldo)
+	})
+	t.Run("ListenerTransaksiRestored", func(t *testing.T) {
+		poses := x.reset()
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		ctx := context.Background()
+
+		// Basic
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "pemasukan",
+			Jumlah:      1000000,
+			PosTujuanId: posPemasukan.Id,
+			Status:      "aktif",
+		})
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:       "mutasi",
+			Jumlah:      10000,
+			PosAsalId:   posPemasukan.Id,
+			PosTujuanId: posMain.Id,
+			Status:      "trashed",
+		})
+		_, err := x.services.UpdateSaldoFromTransaksi(ctx, []string{posPemasukan.Id, posMain.Id})
+		assert.Nil(t, err)
+
+		model, _ := x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Equal(t, 1000000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.Equal(t, 0, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Equal(t, 0, model.Saldo)
+
+		// Update
+		transaksi.Status = "aktif"
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{
+			Old: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+			New: keep_events.TransaksiEventData{
+				PosAsalId:   posPemasukan.Id,
+				PosTujuanId: posMain.Id,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		model, _ = x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Equal(t, 990000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.Equal(t, 10000, model.Saldo)
+		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Equal(t, 10000, model.Saldo)
+	})
 }
 
 func NewPosServicesTest() *PosServicesTest {
-	return &PosServicesTest{}
+	t := &PosServicesTest{}
+	t.setUp()
+	return t
 }
 
 type PosServicesTest struct {
-	repo      keep_repo_interfaces.IPosRepository
-	services  keep_service_interfaces.IPosServices
-	dbCleanup func()
+	repo          keep_repo_interfaces.IPosRepository
+	transaksiRepo keep_repo_interfaces.ITransaksiRepository
+	services      keep_service_interfaces.IPosServices
+	truncate      func()
+	cleanup       func()
 }
 
 func (x *PosServicesTest) setUp() {
 	x.setUpMemoryRepository()
-
-	transaksiRepo := keep_repos_memory.NewTransaksiMemoryRepository()
-	x.services = keep_services.NewPosServices(x.repo, transaksiRepo)
+	x.services = keep_services.NewPosServices(x.repo, x.transaksiRepo)
 }
 func (x *PosServicesTest) setUpMemoryRepository() {
-	x.repo = keep_repos_memory.NewPosMemoryRepository()
-	x.dbCleanup = func() {}
-}
-func (x *PosServicesTest) setUpMysqlRepository() {
-	repo := keep_repos_mysql.NewPosMySqlRepository()
-	x.dbCleanup = repo.Cleanup
+	transaksiRepo := keep_repos_memory.NewTransaksiMemoryRepository()
+	x.transaksiRepo = transaksiRepo
+	repo := keep_repos_memory.NewPosMemoryRepository()
 	x.repo = repo
 
-	models := repo.Get(context.Background(), keep_request.NewPosGetRequest())
-	for _, m := range models {
-		_, _ = repo.SoftDeleteById(context.Background(), m.Id)
+	x.cleanup = func() {
 	}
-	models = repo.GetTrashed(context.Background())
-	for _, m := range models {
-		_, _ = repo.DeleteById(context.Background(), m.Id)
+	x.truncate = func() {
+		transaksiRepo.Data = make([]*keep_entities.Transaksi, 0)
+		repo.Data = make([]*keep_entities.Pos, 0)
 	}
 }
-func (x *PosServicesTest) setUpAndPopulate() []*keep_entities.Pos {
-	x.setUp()
+func (x *PosServicesTest) setUpMysqlRepository() {
+	transaksiRepo := keep_repos_memory.NewTransaksiMemoryRepository()
+	x.transaksiRepo = transaksiRepo
+	repo := keep_repos_mysql.NewPosMySqlRepository()
+	x.repo = repo
+
+	x.cleanup = func() {
+		repo.Cleanup()
+	}
+	x.truncate = func() {
+		transaksiRepo.Data = make([]*keep_entities.Transaksi, 0)
+
+		models := repo.Get(context.Background(), keep_request.NewGetPos())
+		for _, m := range models {
+			_, err := repo.SoftDeleteById(context.Background(), m.Id)
+			helpers_error.PanicIfError(err)
+		}
+		models = repo.GetTrashed(context.Background())
+		for _, m := range models {
+			_, err := repo.DeleteById(context.Background(), m.Id)
+			helpers_error.PanicIfError(err)
+		}
+	}
+}
+func (x *PosServicesTest) reset() []*keep_entities.Pos {
+	x.truncate()
+
 	posInput := []*keep_entities.Pos{
 		{
 			Nama:     "Pemasukan",

@@ -1,4 +1,4 @@
-CREATE TABLE `pos` (
+CREATE TABLE `keep_pos` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `nama` VARCHAR(100) NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',
     `urutan` SMALLINT(6) NOT NULL DEFAULT '0',

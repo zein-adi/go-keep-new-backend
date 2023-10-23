@@ -34,7 +34,7 @@ func (x *PosEventListenerHandler) TransaksiUpdated(eventData any) {
 	}
 	x.updateSaldo("updated", data.Old.PosAsalId, data.Old.PosTujuanId, data.New.PosAsalId, data.New.PosTujuanId)
 }
-func (x *PosEventListenerHandler) TransaksiSoftDelete(eventData any) {
+func (x *PosEventListenerHandler) TransaksiSoftDeleted(eventData any) {
 	data, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -42,7 +42,7 @@ func (x *PosEventListenerHandler) TransaksiSoftDelete(eventData any) {
 	}
 	x.updateSaldo("softDelete", data.Data.PosAsalId, data.Data.PosTujuanId)
 }
-func (x *PosEventListenerHandler) TransaksiRestore(eventData any) {
+func (x *PosEventListenerHandler) TransaksiRestored(eventData any) {
 	data, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())

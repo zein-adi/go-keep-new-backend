@@ -74,7 +74,7 @@ func TestLokasi(t *testing.T) {
 	_ = d.Register(keep_events.TransaksiSoftDeleted, l.TransaksiSoftDeleted)
 	_ = d.Register(keep_events.TransaksiRestored, l.TransaksiRestored)
 
-	updateFromTransaksi := func(t *testing.T) {
+	t.Run("UpdateFromTransakasi", func(t *testing.T) {
 		x.reset()
 		ctx := context.Background()
 
@@ -91,12 +91,75 @@ func TestLokasi(t *testing.T) {
 		assert.Len(t, models, 2)
 		models = x.repo.Get(ctx, "hero")
 		assert.Len(t, models, 1)
-	}
-	t.Run("UpdateFromTransakasi", updateFromTransaksi)
-	t.Run("ListenerTransaksiCreated", updateFromTransaksi)
-	t.Run("ListenerTransaksiUpdated", updateFromTransaksi)
-	t.Run("ListenerTransaksiSoftDeleted", updateFromTransaksi)
-	t.Run("ListenerTransaksiRestored", updateFromTransaksi)
+	})
+	t.Run("ListenerTransaksiCreated", func(t *testing.T) {
+		x.reset()
+		ctx := context.Background()
+
+		models := x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "avan")
+		assert.Len(t, models, 1)
+
+		_ = d.Dispatch(keep_events.TransaksiCreated, keep_events.TransaksiCreatedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+	})
+	t.Run("ListenerTransaksiUpdated", func(t *testing.T) {
+		x.reset()
+		ctx := context.Background()
+
+		models := x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "avan")
+		assert.Len(t, models, 1)
+
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+	})
+	t.Run("ListenerTransaksiSoftDeleted", func(t *testing.T) {
+		x.reset()
+		ctx := context.Background()
+
+		models := x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "avan")
+		assert.Len(t, models, 1)
+
+		_ = d.Dispatch(keep_events.TransaksiSoftDeleted, keep_events.TransaksiSoftDeletedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+	})
+	t.Run("ListenerTransaksiRestored", func(t *testing.T) {
+		x.reset()
+		ctx := context.Background()
+
+		models := x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "avan")
+		assert.Len(t, models, 1)
+
+		_ = d.Dispatch(keep_events.TransaksiRestored, keep_events.TransaksiRestoredEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "")
+		assert.Len(t, models, 2)
+		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+	})
 }
 
 func NewLokasiServicesTest() *LokasiServicesTest {

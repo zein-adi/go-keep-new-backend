@@ -1,1 +1,1 @@
-DROP TABLE `pos`;
+DROP TABLE `keep_pos`;

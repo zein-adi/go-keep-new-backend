@@ -74,13 +74,13 @@ func RegisterKeepListeners(
 		barang.TransaksiUpdated,
 	)
 	_ = d.Register(keep_events.TransaksiSoftDeleted,
-		pos.TransaksiSoftDelete,
+		pos.TransaksiSoftDeleted,
 		kantong.TransaksiSoftDelete,
 		lokasi.TransaksiSoftDeleted,
 		barang.TransaksiSoftDeleted,
 	)
 	_ = d.Register(keep_events.TransaksiRestored,
-		pos.TransaksiRestore,
+		pos.TransaksiRestored,
 		kantong.TransaksiRestore,
 		lokasi.TransaksiRestored,
 		barang.TransaksiRestored,

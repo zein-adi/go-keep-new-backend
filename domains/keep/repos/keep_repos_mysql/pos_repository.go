@@ -3,6 +3,7 @@ package keep_repos_mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
@@ -11,6 +12,7 @@ import (
 )
 
 var posEntityName = "pos"
+var posTableName = "keep_pos"
 
 func NewPosMySqlRepository() *PosMysqlRepository {
 	db, dbCleanup := helpers_mysql.OpenMySqlConnection()
@@ -25,12 +27,12 @@ type PosMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (x *PosMysqlRepository) Get(ctx context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos {
+func (x *PosMysqlRepository) Get(ctx context.Context, request *keep_request.GetPos) []*keep_entities.Pos {
 	q := x.newQueryRequest(ctx, "aktif", request)
 	return x.newEntitiesFromRows(q.Get())
 }
 func (x *PosMysqlRepository) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewPosGetRequest())
+	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
 	q.Where("id", "=", id)
 	models := x.newEntitiesFromRows(q.Get())
 	model := &keep_entities.Pos{}
@@ -55,7 +57,7 @@ func (x *PosMysqlRepository) Insert(ctx context.Context, pos *keep_entities.Pos)
 		parentId = &pos.ParentId
 	}
 
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	insertId, err := q.Insert(map[string]any{
 		"nama":      pos.Nama,
 		"urutan":    pos.Urutan,
@@ -89,7 +91,7 @@ func (x *PosMysqlRepository) Update(ctx context.Context, pos *keep_entities.Pos)
 		parentId = &pos.ParentId
 	}
 
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", pos.Id)
 	affected := q.Update(map[string]any{
 		"nama":      pos.Nama,
@@ -107,7 +109,7 @@ func (x *PosMysqlRepository) Update(ctx context.Context, pos *keep_entities.Pos)
 	return pos.Copy(), nil
 }
 func (x *PosMysqlRepository) SoftDeleteById(ctx context.Context, id string) (affected int, err error) {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", id)
 	q.Where("status", "=", "aktif")
 	affected = q.Update(map[string]any{
@@ -119,7 +121,7 @@ func (x *PosMysqlRepository) SoftDeleteById(ctx context.Context, id string) (aff
 	return affected, nil
 }
 func (x *PosMysqlRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", id)
 	q.Where("status", "=", "trashed")
 	affected = q.Delete()
@@ -129,11 +131,11 @@ func (x *PosMysqlRepository) DeleteById(ctx context.Context, id string) (affecte
 	return affected, nil
 }
 func (x *PosMysqlRepository) GetTrashed(ctx context.Context) []*keep_entities.Pos {
-	q := x.newQueryRequest(ctx, "trashed", keep_request.NewPosGetRequest())
+	q := x.newQueryRequest(ctx, "trashed", keep_request.NewGetPos())
 	return x.newEntitiesFromRows(q.Get())
 }
 func (x *PosMysqlRepository) FindTrashedById(ctx context.Context, id string) (*keep_entities.Pos, error) {
-	q := x.newQueryRequest(ctx, "trashed", keep_request.NewPosGetRequest())
+	q := x.newQueryRequest(ctx, "trashed", keep_request.NewGetPos())
 	q.Where("id", "=", id)
 	models := x.newEntitiesFromRows(q.Get())
 	model := &keep_entities.Pos{}
@@ -143,7 +145,7 @@ func (x *PosMysqlRepository) FindTrashedById(ctx context.Context, id string) (*k
 	return models[0], nil
 }
 func (x *PosMysqlRepository) RestoreTrashedById(ctx context.Context, id string) (affected int, err error) {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", id)
 	q.Where("status", "=", "trashed")
 	affected = q.Update(map[string]any{
@@ -155,7 +157,7 @@ func (x *PosMysqlRepository) RestoreTrashedById(ctx context.Context, id string) 
 	return affected, nil
 }
 func (x *PosMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int) {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", id)
 	affected = q.Update(map[string]any{
 		"saldo": saldo,
@@ -163,8 +165,26 @@ func (x *PosMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo i
 	return affected
 }
 
-func (x *PosMysqlRepository) newQueryRequest(ctx context.Context, status string, request *keep_request.PosGetRequest) *helpers_mysql.QueryBuilder {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (saldo int) {
+	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
+	q.Select("IFNULL(SUM(saldo), 0)")
+	q.Where("parent_id", "=", id)
+	rows, cleanup := q.Get()
+	defer cleanup()
+
+	if !rows.Next() {
+		panic(fmt.Errorf("next failed"))
+	}
+
+	saldo = 0
+	err := rows.Scan(&saldo)
+	helpers_error.PanicIfError(err)
+
+	return saldo
+}
+
+func (x *PosMysqlRepository) newQueryRequest(ctx context.Context, status string, request *keep_request.GetPos) *helpers_mysql.QueryBuilder {
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Select("id, nama, urutan, saldo, parent_id, level, is_show, is_leaf, status")
 
 	if status != "" {

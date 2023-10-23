@@ -19,7 +19,7 @@ type PosMemoryRepository struct {
 	Data []*keep_entities.Pos
 }
 
-func (x *PosMemoryRepository) Get(_ context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos {
+func (x *PosMemoryRepository) Get(_ context.Context, request *keep_request.GetPos) []*keep_entities.Pos {
 	models := x.newQueryRequest(request, "aktif")
 	return helpers.Map(models, func(d *keep_entities.Pos) *keep_entities.Pos {
 		return d.Copy()
@@ -66,7 +66,7 @@ func (x *PosMemoryRepository) DeleteById(_ context.Context, id string) (affected
 	return 1, nil
 }
 func (x *PosMemoryRepository) GetTrashed(_ context.Context) []*keep_entities.Pos {
-	models := x.newQueryRequest(keep_request.NewPosGetRequest(), "trashed")
+	models := x.newQueryRequest(keep_request.NewGetPos(), "trashed")
 	return helpers.Map(models, func(d *keep_entities.Pos) *keep_entities.Pos {
 		return d.Copy()
 	})
@@ -86,7 +86,16 @@ func (x *PosMemoryRepository) UpdateSaldo(_ context.Context, id string, saldo in
 	return 1
 }
 
-func (x *PosMemoryRepository) newQueryRequest(request *keep_request.PosGetRequest, status string) []*keep_entities.Pos {
+func (x *PosMemoryRepository) GetJumlahById(_ context.Context, id string) (saldo int) {
+	models := helpers.Filter(x.Data, func(v *keep_entities.Pos) bool {
+		return v.ParentId == id
+	})
+	return helpers.Reduce(models, 0, func(accumulator int, v *keep_entities.Pos) int {
+		return accumulator + v.Saldo
+	})
+}
+
+func (x *PosMemoryRepository) newQueryRequest(request *keep_request.GetPos, status string) []*keep_entities.Pos {
 	return helpers.Filter(x.Data, func(pos *keep_entities.Pos) bool {
 		res := true
 		if request.IsLeafOnly == true {

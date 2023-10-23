@@ -7,7 +7,7 @@ import (
 )
 
 type IPosRepository interface {
-	Get(ctx context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos
+	Get(ctx context.Context, request *keep_request.GetPos) []*keep_entities.Pos
 	FindById(ctx context.Context, id string) (*keep_entities.Pos, error)
 	Insert(ctx context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error)
 	Update(ctx context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error)
@@ -19,4 +19,5 @@ type IPosRepository interface {
 	RestoreTrashedById(ctx context.Context, id string) (affected int, err error)
 
 	UpdateSaldo(ctx context.Context, id string, saldo int) (affected int)
+	GetJumlahById(ctx context.Context, id string) (saldo int)
 }
