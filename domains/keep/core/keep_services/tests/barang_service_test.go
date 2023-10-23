@@ -84,9 +84,93 @@ func TestBarang(t *testing.T) {
 	_ = d.Register(keep_events.TransaksiSoftDeleted, l.TransaksiSoftDeleted)
 	_ = d.Register(keep_events.TransaksiRestored, l.TransaksiRestored)
 
-	updateFromTransaksi := func(t *testing.T) {
+	t.Run("UpdateFromTransakasi", func(t *testing.T) {
 		x.reset()
 		ctx := context.Background()
+
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:  "pengeluaran",
+			Lokasi: "Hero",
+			Waktu:  time.Now().Add(-time.Second).Unix(),
+			Status: "aktif",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        3300,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5.5,
+					Keterangan:   "",
+				},
+			},
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:  "pengeluaran",
+			Lokasi: "Avan",
+			Waktu:  time.Now().Unix(),
+			Status: "aktif",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        3300,
+					Jumlah:       1,
+					Diskon:       300,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5,
+					Keterangan:   "",
+				},
+				{
+					Uraian:       "Aqua 600ml",
+					Harga:        3500,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5.8333333333,
+					Keterangan:   "",
+				},
+			},
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Waktu: time.Now().AddDate(0, -6, -1).Unix(),
+
+			Jenis:  "pengeluaran",
+			Lokasi: "Avan",
+			Status: "aktif",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        2000,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  3.33,
+					Keterangan:   "",
+				},
+			},
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Status: "trashed",
+			Jenis:  "pengeluaran",
+			Lokasi: "Avan",
+			Waktu:  time.Now().Unix(),
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        1000,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  1.67,
+					Keterangan:   "",
+				},
+			},
+		})
 
 		models := x.repo.Get(ctx, "", "")
 		assert.Len(t, models, 2)
@@ -109,12 +193,161 @@ func TestBarang(t *testing.T) {
 		models = x.repo.Get(ctx, "miner", "avan")
 		assert.Len(t, models, 1)
 		assert.Len(t, models[0].Details, 1)
-	}
-	t.Run("UpdateFromTransakasi", updateFromTransaksi)
-	t.Run("ListenerTransaksiCreated", updateFromTransaksi)
-	t.Run("ListenerTransaksiUpdated", updateFromTransaksi)
-	t.Run("ListenerTransaksiSoftDeleted", updateFromTransaksi)
-	t.Run("ListenerTransaksiRestored", updateFromTransaksi)
+	})
+	t.Run("ListenerTransaksiCreated", func(t *testing.T) {
+		x.truncate()
+		ctx := context.Background()
+
+		models := x.repo.Get(ctx, "", "")
+		assert.Len(t, models, 0)
+
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:  "pengeluaran",
+			Lokasi: "Hero",
+			Waktu:  time.Now().Add(-time.Second).Unix(),
+			Status: "aktif",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        3300,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5.5,
+					Keterangan:   "",
+				},
+			},
+		})
+
+		_ = d.Dispatch(keep_events.TransaksiCreated, keep_events.TransaksiCreatedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "", "")
+		assert.Len(t, models, 1)
+		models = x.repo.Get(ctx, "miner", "")
+		assert.Len(t, models, 1)
+		assert.Len(t, models[0].Details, 1)
+		assert.EqualValues(t, 5.5, models[0].SatuanHarga)
+		models = x.repo.Get(ctx, "miner", "hero")
+		assert.Len(t, models, 1)
+		assert.Len(t, models[0].Details, 1)
+	})
+	t.Run("ListenerTransaksiUpdated", func(t *testing.T) {
+		x.truncate()
+		ctx := context.Background()
+
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:  "pengeluaran",
+			Lokasi: "Avan",
+			Waktu:  time.Now().Add(-time.Second).Unix(),
+			Status: "aktif",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        3300,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5.5,
+					Keterangan:   "",
+				},
+			},
+		})
+		_, _ = x.services.UpdateBarangFromTransaksi(ctx)
+		models := x.repo.Get(ctx, "minerale", "")
+		assert.Len(t, models, 1)
+
+		transaksi.Details[0].Uraian = "Aqua 600ml"
+		transaksi.Details[0].Harga = 3000
+		transaksi.Details[0].SatuanHarga = 5
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "", "")
+		assert.Len(t, models, 1)
+		models = x.repo.Get(ctx, "aqua", "")
+		assert.Len(t, models, 1)
+		assert.Len(t, models[0].Details, 1)
+		assert.EqualValues(t, 5, models[0].SatuanHarga)
+		models = x.repo.Get(ctx, "aqua", "avan")
+		assert.Len(t, models, 1)
+		assert.Len(t, models[0].Details, 1)
+	})
+	t.Run("ListenerTransaksiSoftDeleted", func(t *testing.T) {
+		x.reset()
+		ctx := context.Background()
+
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:  "pengeluaran",
+			Lokasi: "Avan",
+			Waktu:  time.Now().Add(-time.Second).Unix(),
+			Status: "aktif",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        3300,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5.5,
+					Keterangan:   "",
+				},
+			},
+		})
+		_, _ = x.services.UpdateBarangFromTransaksi(ctx)
+		models := x.repo.Get(ctx, "minerale", "")
+		assert.Len(t, models, 1)
+
+		transaksi.Status = "trashed"
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "", "")
+		assert.Len(t, models, 0)
+	})
+	t.Run("ListenerTransaksiRestored", func(t *testing.T) {
+		x.reset()
+		ctx := context.Background()
+
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Jenis:  "pengeluaran",
+			Lokasi: "Avan",
+			Waktu:  time.Now().Add(-time.Second).Unix(),
+			Status: "trashed",
+			Details: []*keep_entities.TransaksiDetail{
+				{
+					Uraian:       "Le Minerale 600ml",
+					Harga:        3300,
+					Jumlah:       1,
+					Diskon:       0,
+					SatuanNama:   "ml",
+					SatuanJumlah: 600,
+					SatuanHarga:  5.5,
+					Keterangan:   "",
+				},
+			},
+		})
+		_, _ = x.services.UpdateBarangFromTransaksi(ctx)
+		models := x.repo.Get(ctx, "", "")
+		assert.Len(t, models, 0)
+
+		transaksi.Status = "aktif"
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{})
+		time.Sleep(time.Millisecond * 10)
+
+		models = x.repo.Get(ctx, "", "")
+		assert.Len(t, models, 1)
+		models = x.repo.Get(ctx, "minerale", "")
+		assert.Len(t, models, 1)
+		assert.Len(t, models[0].Details, 1)
+		assert.EqualValues(t, 5.5, models[0].SatuanHarga)
+		models = x.repo.Get(ctx, "minerale", "avan")
+		assert.Len(t, models, 1)
+		assert.Len(t, models[0].Details, 1)
+	})
 }
 
 func NewBarangServicesTest() *BarangServicesTest {
@@ -168,90 +401,6 @@ func (x *BarangServicesTest) setUpMysqlRepository() {
 func (x *BarangServicesTest) reset() []*keep_entities.Barang {
 	x.truncate()
 	ctx := context.Background()
-
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Jenis:  "pengeluaran",
-		Lokasi: "Hero",
-		Waktu:  time.Now().Add(-time.Second).Unix(),
-		Status: "aktif",
-		Details: []*keep_entities.TransaksiDetail{
-			{
-				Uraian:       "Le Minerale 600ml",
-				Harga:        3300,
-				Jumlah:       1,
-				Diskon:       0,
-				SatuanNama:   "ml",
-				SatuanJumlah: 600,
-				SatuanHarga:  5.5,
-				Keterangan:   "",
-			},
-		},
-	})
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Jenis:  "pengeluaran",
-		Lokasi: "Avan",
-		Waktu:  time.Now().Unix(),
-		Status: "aktif",
-		Details: []*keep_entities.TransaksiDetail{
-			{
-				Uraian:       "Le Minerale 600ml",
-				Harga:        3300,
-				Jumlah:       1,
-				Diskon:       300,
-				SatuanNama:   "ml",
-				SatuanJumlah: 600,
-				SatuanHarga:  5,
-				Keterangan:   "",
-			},
-			{
-				Uraian:       "Aqua 600ml",
-				Harga:        3500,
-				Jumlah:       1,
-				Diskon:       0,
-				SatuanNama:   "ml",
-				SatuanJumlah: 600,
-				SatuanHarga:  5.8333333333,
-				Keterangan:   "",
-			},
-		},
-	})
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Waktu: time.Now().AddDate(0, -6, -1).Unix(),
-
-		Jenis:  "pengeluaran",
-		Lokasi: "Avan",
-		Status: "aktif",
-		Details: []*keep_entities.TransaksiDetail{
-			{
-				Uraian:       "Le Minerale 600ml",
-				Harga:        2000,
-				Jumlah:       1,
-				Diskon:       0,
-				SatuanNama:   "ml",
-				SatuanJumlah: 600,
-				SatuanHarga:  3.33,
-				Keterangan:   "",
-			},
-		},
-	})
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Status: "trashed",
-		Jenis:  "pengeluaran",
-		Lokasi: "Avan",
-		Waktu:  time.Now().Unix(),
-		Details: []*keep_entities.TransaksiDetail{
-			{
-				Uraian:       "Le Minerale 600ml",
-				Harga:        1000,
-				Jumlah:       1,
-				Diskon:       0,
-				SatuanNama:   "ml",
-				SatuanJumlah: 600,
-				SatuanHarga:  1.67,
-				Keterangan:   "",
-			},
-		},
-	})
 
 	barangs := []*keep_entities.Barang{
 		{
