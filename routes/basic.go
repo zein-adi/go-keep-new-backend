@@ -5,6 +5,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
 	"github.com/zein-adi/go-keep-new-backend/app/components/gorillamux_router"
+	"github.com/zein-adi/go-keep-new-backend/dependency_injection"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"net/http"
 	"strconv"
@@ -12,6 +13,11 @@ import (
 )
 
 func StartHttpServer() {
+	RegisterListeners()
+	startServer()
+}
+
+func startServer() {
 	allowedOrigins := strings.Split(viper.GetString("CORS_ALLOWED_ORIGINS"), ",")
 	address := viper.GetString("HTTP_SERVER_ADDRESS")
 	port := viper.GetInt("HTTP_SERVER_PORT")
@@ -37,9 +43,17 @@ func StartHttpServer() {
 		helpers_error.PanicIfError(err)
 	}
 }
-
 func injectRoutes(r *gorillamux_router.Router) {
 	injectAuthRoutes(r)
 	injectUserRoutes(r)
 	injectKeepRoutes(r)
+}
+
+func RegisterListeners() {
+	RegisterKeepListeners(
+		dependency_injection.InitKeepPosServices(),
+		dependency_injection.InitKeepKantongServices(),
+		dependency_injection.InitKeepLokasiServices(),
+		dependency_injection.InitKeepBarangServices(),
+	)
 }

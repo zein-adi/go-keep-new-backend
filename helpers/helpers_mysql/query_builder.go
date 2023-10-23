@@ -10,19 +10,24 @@ import (
 )
 
 func NewQueryBuilder(ctx context.Context, db *sql.DB, table string) *QueryBuilder {
-	return &QueryBuilder{
+	q := &QueryBuilder{
 		table: table,
 		skip:  0,
 		take:  0,
 		db:    db,
 		ctx:   ctx,
+		where: &Where{
+			whereType: "AND",
+			wheres:    make([]*Where, 0),
+		},
 	}
+	return q
 }
 
 type QueryBuilder struct {
 	table   string
 	fields  []string
-	wheres  []Where
+	where   *Where
 	joins   []Join
 	groupBy []string
 	orderBy []string
@@ -30,14 +35,6 @@ type QueryBuilder struct {
 	take    int
 	db      *sql.DB
 	ctx     context.Context
-}
-type Where struct {
-	whereType string
-	field     string
-	operator  string
-	argument  any
-	isRaw     bool
-	wheres    []Where
 }
 type Join struct {
 	table    string
@@ -188,13 +185,13 @@ func (x *QueryBuilder) Delete() (affected int) {
  */
 
 func (x *QueryBuilder) renderWhere() (where string, arguments []any) {
-	if len(x.wheres) == 0 {
+	if len(x.where.wheres) == 0 {
 		return "", nil
 	}
-	where, arguments = x.renderSubWhere(x.wheres)
+	where, arguments = x.renderSubWhere(x.where.wheres)
 	return "WHERE " + where, arguments
 }
-func (x *QueryBuilder) renderSubWhere(wheres []Where) (where string, arguments []any) {
+func (x *QueryBuilder) renderSubWhere(wheres []*Where) (where string, arguments []any) {
 	if len(wheres) == 0 {
 		return "", nil
 	}
@@ -267,8 +264,11 @@ func (x *QueryBuilder) renderLimit() string {
  */
 
 func (x *QueryBuilder) Select(fields ...string) {
+	x.fields = fields
+}
+func (x *QueryBuilder) AddSelect(fields ...string) {
 	for _, f := range fields {
-		x.fields = append(x.groupBy, f)
+		x.fields = append(x.fields, f)
 	}
 }
 func (x *QueryBuilder) GroupBy(groupBy ...string) {
@@ -287,18 +287,70 @@ func (x *QueryBuilder) Skip(skip int) {
 func (x *QueryBuilder) Take(take int) {
 	x.take = take
 }
+func (x *QueryBuilder) WhereSub() *Where {
+	return x.where.WhereSub()
+}
+func (x *QueryBuilder) OrWhereSub() *Where {
+	return x.where.WhereSub()
+}
 func (x *QueryBuilder) Where(field string, operator string, argument any) {
-	x.wheres = append(x.wheres, Where{
-		whereType: "AND",
-		field:     field,
-		operator:  operator,
-		argument:  argument,
-		isRaw:     false,
-		wheres:    nil,
-	})
+	x.where.Where(field, operator, argument)
 }
 func (x *QueryBuilder) OrWhere(field string, operator string, argument any) {
-	x.wheres = append(x.wheres, Where{
+	x.where.OrWhere(field, operator, argument)
+}
+func (x *QueryBuilder) WhereRaw(field string, operator string, argument any) {
+	x.where.WhereRaw(field, operator, argument)
+}
+func (x *QueryBuilder) OrWhereRaw(field string, operator string, argument any) {
+	x.where.OrWhereRaw(field, operator, argument)
+}
+func (x *QueryBuilder) WhereIn(field string, arguments []string) {
+	x.where.WhereIn(field, arguments)
+}
+
+/*
+ * Where
+ */
+
+type Where struct {
+	whereType string
+	field     string
+	operator  string
+	argument  any
+	isRaw     bool
+	wheres    []*Where
+}
+
+func (x *Where) WhereSub() *Where {
+	w := &Where{
+		whereType: "AND",
+		wheres:    make([]*Where, 0),
+	}
+	x.wheres = append(x.wheres, w)
+	return w
+}
+func (x *Where) OrWhereSub() *Where {
+	w := &Where{
+		whereType: "OR",
+		wheres:    make([]*Where, 0),
+	}
+	x.wheres = append(x.wheres, w)
+	return w
+}
+
+func (x *Where) Where(field string, operator string, argument any) {
+	x.wheres = append(x.wheres, &Where{
+		whereType: "AND",
+		field:     field,
+		operator:  operator,
+		argument:  argument,
+		isRaw:     false,
+		wheres:    nil,
+	})
+}
+func (x *Where) OrWhere(field string, operator string, argument any) {
+	x.wheres = append(x.wheres, &Where{
 		whereType: "OR",
 		field:     field,
 		operator:  operator,
@@ -307,8 +359,8 @@ func (x *QueryBuilder) OrWhere(field string, operator string, argument any) {
 		wheres:    nil,
 	})
 }
-func (x *QueryBuilder) WhereRaw(field string, operator string, argument any) {
-	x.wheres = append(x.wheres, Where{
+func (x *Where) WhereRaw(field string, operator string, argument any) {
+	x.wheres = append(x.wheres, &Where{
 		whereType: "AND",
 		field:     field,
 		operator:  operator,
@@ -317,8 +369,8 @@ func (x *QueryBuilder) WhereRaw(field string, operator string, argument any) {
 		wheres:    nil,
 	})
 }
-func (x *QueryBuilder) OrWhereRaw(field string, operator string, argument any) {
-	x.wheres = append(x.wheres, Where{
+func (x *Where) OrWhereRaw(field string, operator string, argument any) {
+	x.wheres = append(x.wheres, &Where{
 		whereType: "OR",
 		field:     field,
 		operator:  operator,
@@ -327,13 +379,13 @@ func (x *QueryBuilder) OrWhereRaw(field string, operator string, argument any) {
 		wheres:    nil,
 	})
 }
-func (x *QueryBuilder) WhereIn(field string, arguments []string) {
+func (x *Where) WhereIn(field string, arguments []string) {
 	var inArguments []any
 	for _, inArg := range arguments {
 		inArguments = append(inArguments, inArg)
 	}
 
-	x.wheres = append(x.wheres, Where{
+	x.wheres = append(x.wheres, &Where{
 		whereType: "AND",
 		field:     field,
 		operator:  "in",

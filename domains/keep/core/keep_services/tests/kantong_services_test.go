@@ -238,10 +238,6 @@ func TestKantong(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
-
-	t.Run("NotImplementedYet_DeleteTrashedFailedBecauseDataUsed", func(t *testing.T) {
-		// TODO implement after transaksi
-	})
 }
 
 func NewKantongServicesTest() *KantongServicesTest {

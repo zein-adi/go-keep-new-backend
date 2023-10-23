@@ -22,7 +22,7 @@ type KantongHistoryRestfulHandler struct {
 	service keep_service_interfaces.IKantongHistoryServices
 }
 
-func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

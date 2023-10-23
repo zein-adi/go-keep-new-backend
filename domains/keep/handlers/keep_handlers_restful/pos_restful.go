@@ -98,7 +98,7 @@ func (x *PosRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	}
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
-func (x *PosRestfulHandler) GetTrashed(w http.ResponseWriter, r *http.Request) {
+func (x *PosRestfulHandler) GetTrashed(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

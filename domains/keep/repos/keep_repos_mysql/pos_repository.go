@@ -154,6 +154,14 @@ func (x *PosMysqlRepository) RestoreTrashedById(ctx context.Context, id string) 
 	}
 	return affected, nil
 }
+func (x *PosMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int) {
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"saldo": saldo,
+	})
+	return affected
+}
 
 func (x *PosMysqlRepository) newQueryRequest(ctx context.Context, status string, request *keep_request.PosGetRequest) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posEntityName)

@@ -8,6 +8,7 @@ import (
 
 type IPosServices interface {
 	Get(ctx context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos
+	FindById(ctx context.Context, id string) (*keep_entities.Pos, error)
 	Insert(ctx context.Context, posRequest *keep_request.PosInputUpdateRequest) (*keep_entities.Pos, error)
 	Update(ctx context.Context, posRequest *keep_request.PosInputUpdateRequest) (*keep_entities.Pos, error)
 	DeleteById(ctx context.Context, id string) (affected int, err error)
@@ -15,4 +16,6 @@ type IPosServices interface {
 	GetTrashed(ctx context.Context) []*keep_entities.Pos
 	RestoreTrashedById(ctx context.Context, id string) (affected int, err error)
 	DeleteTrashedById(ctx context.Context, id string) (affected int, err error)
+
+	UpdateSaldoFromTransaksi(ctx context.Context, ids []string) (affected int, err error)
 }

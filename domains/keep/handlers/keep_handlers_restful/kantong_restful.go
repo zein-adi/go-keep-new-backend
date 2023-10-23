@@ -22,7 +22,7 @@ type KantongRestfulHandler struct {
 	service keep_service_interfaces.IKantongServices
 }
 
-func (x *KantongRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (x *KantongRestfulHandler) Get(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -96,7 +96,7 @@ func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Reques
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
 
-func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, r *http.Request) {
+func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 

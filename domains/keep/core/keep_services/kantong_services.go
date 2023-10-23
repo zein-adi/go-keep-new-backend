@@ -21,6 +21,9 @@ type KantongServices struct {
 func (x *KantongServices) Get(ctx context.Context) []*keep_entities.Kantong {
 	return x.repo.Get(ctx)
 }
+func (x *KantongServices) FindById(ctx context.Context, id string) (*keep_entities.Kantong, error) {
+	return x.repo.FindById(ctx, id)
+}
 func (x *KantongServices) Insert(ctx context.Context, kantongRequest *keep_request.KantongInsert) (*keep_entities.Kantong, error) {
 	err := validator.New().ValidateStruct(kantongRequest)
 	if err != nil {
@@ -85,4 +88,45 @@ func (x *KantongServices) DeleteTrashedById(ctx context.Context, id string) (aff
 		return 0, err
 	}
 	return x.repo.HardDeleteTrashedById(ctx, id)
+}
+func (x *KantongServices) UpdateSaldo(ctx context.Context, asalId, tujuanId string, jumlah int, oldAsalId, oldTujuanId string, oldJumlah int) (affected int, err error) {
+	update := map[string]int{
+		asalId:      0,
+		tujuanId:    0,
+		oldAsalId:   0,
+		oldTujuanId: 0,
+	}
+
+	if oldAsalId != "" {
+		// Dulu berkurang sekarang bertambah (revert)
+		update[oldAsalId] -= -1 * oldJumlah
+	}
+	if oldTujuanId != "" {
+		// Dulu bertambah sekarang berkurang (revert)
+		update[oldTujuanId] += -1 * oldJumlah
+	}
+	if asalId != "" {
+		// Berkurang
+		update[asalId] -= jumlah
+	}
+	if tujuanId != "" {
+		// Bertambah
+		update[tujuanId] += jumlah
+	}
+
+	for kantongId, saldo := range update {
+		if kantongId == "" {
+			continue
+		}
+		d, err2 := x.repo.FindById(ctx, kantongId)
+		if err2 != nil {
+			return 0, err2
+		}
+		af, err2 := x.repo.UpdateSaldo(ctx, kantongId, d.Saldo+saldo)
+		if err2 != nil {
+			return 0, err2
+		}
+		affected += af
+	}
+	return affected, nil
 }

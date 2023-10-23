@@ -19,7 +19,7 @@ func OpenMySqlConnection() (*sql.DB, func()) {
 	port := viper.GetInt("MYSQL_PORT")
 	database := viper.GetString("MYSQL_DBNAME")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", username, password, hostname, port, database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=Local", username, password, hostname, port, database)
 	db, err := sql.Open("mysql", dsn)
 	helpers_error.PanicIfError(err)
 	cleanup := func() {
