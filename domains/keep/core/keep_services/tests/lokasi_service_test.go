@@ -78,6 +78,27 @@ func TestLokasi(t *testing.T) {
 		x.reset()
 		ctx := context.Background()
 
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Hero",
+			Waktu:  time.Now().Unix(),
+			Status: "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Dea Bakery",
+			Waktu:  time.Now().Unix(),
+			Status: "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Superindo",
+			Waktu:  time.Now().AddDate(0, -6, -1).Unix(),
+			Status: "aktif",
+		})
+		_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Superindo",
+			Waktu:  time.Now().Unix(),
+			Status: "trashed",
+		})
+
 		models := x.repo.Get(ctx, "")
 		assert.Len(t, models, 2)
 		models = x.repo.Get(ctx, "avan")
@@ -101,63 +122,89 @@ func TestLokasi(t *testing.T) {
 		models = x.repo.Get(ctx, "avan")
 		assert.Len(t, models, 1)
 
+		// Proses
+		_, err := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Alfamart",
+			Waktu:  time.Now().Unix(),
+			Status: "aktif",
+		})
+		assert.Nil(t, err)
 		_ = d.Dispatch(keep_events.TransaksiCreated, keep_events.TransaksiCreatedEventData{})
 		time.Sleep(time.Millisecond * 10)
 
 		models = x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+		models = x.repo.Get(ctx, "alfa")
 		assert.Len(t, models, 1)
 	})
 	t.Run("ListenerTransaksiUpdated", func(t *testing.T) {
 		x.reset()
 		ctx := context.Background()
 
+		transaksi, err := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Alfamart",
+			Waktu:  time.Now().Unix(),
+			Status: "aktif",
+		})
+		_, _ = x.services.UpdateLokasiFromTransaksi(ctx)
 		models := x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "avan")
 		assert.Len(t, models, 1)
 
+		// Proses
+		transaksi.Lokasi = "Indomaret"
+		assert.Nil(t, err)
 		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{})
 		time.Sleep(time.Millisecond * 10)
 
 		models = x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+		models = x.repo.Get(ctx, "indo")
 		assert.Len(t, models, 1)
 	})
 	t.Run("ListenerTransaksiSoftDeleted", func(t *testing.T) {
 		x.reset()
 		ctx := context.Background()
 
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Alfamart",
+			Waktu:  time.Now().Unix(),
+			Status: "aktif",
+		})
+		_, _ = x.services.UpdateLokasiFromTransaksi(ctx)
 		models := x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "avan")
 		assert.Len(t, models, 1)
 
+		// Proses
+		transaksi.Status = "trashed"
+		_, _ = x.transaksiRepo.Update(ctx, transaksi)
 		_ = d.Dispatch(keep_events.TransaksiSoftDeleted, keep_events.TransaksiSoftDeletedEventData{})
 		time.Sleep(time.Millisecond * 10)
 
 		models = x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "hero")
-		assert.Len(t, models, 1)
+		assert.Len(t, models, 0)
 	})
 	t.Run("ListenerTransaksiRestored", func(t *testing.T) {
 		x.reset()
 		ctx := context.Background()
 
+		transaksi, _ := x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
+			Lokasi: "Alfamart",
+			Waktu:  time.Now().Unix(),
+			Status: "trashed",
+		})
+		_, _ = x.services.UpdateLokasiFromTransaksi(ctx)
 		models := x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "avan")
-		assert.Len(t, models, 1)
+		assert.Len(t, models, 0)
 
+		// Proses
+		transaksi.Status = "aktif"
+		_, _ = x.transaksiRepo.Update(ctx, transaksi)
 		_ = d.Dispatch(keep_events.TransaksiRestored, keep_events.TransaksiRestoredEventData{})
 		time.Sleep(time.Millisecond * 10)
 
 		models = x.repo.Get(ctx, "")
-		assert.Len(t, models, 2)
-		models = x.repo.Get(ctx, "hero")
+		assert.Len(t, models, 1)
+		models = x.repo.Get(ctx, "alfa")
 		assert.Len(t, models, 1)
 	})
 }
@@ -213,27 +260,6 @@ func (x *LokasiServicesTest) setUpMysqlRepository() {
 func (x *LokasiServicesTest) reset() []*keep_entities.Lokasi {
 	x.truncate()
 	ctx := context.Background()
-
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Lokasi: "Hero",
-		Waktu:  time.Now().Unix(),
-		Status: "aktif",
-	})
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Lokasi: "Dea Bakery",
-		Waktu:  time.Now().Unix(),
-		Status: "aktif",
-	})
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Lokasi: "Superindo",
-		Waktu:  time.Now().AddDate(0, -6, -1).Unix(),
-		Status: "aktif",
-	})
-	_, _ = x.transaksiRepo.Insert(ctx, &keep_entities.Transaksi{
-		Lokasi: "Superindo",
-		Waktu:  time.Now().Unix(),
-		Status: "trashed",
-	})
 
 	lokasis := []*keep_entities.Lokasi{
 		{
