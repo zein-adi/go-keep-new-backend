@@ -18,6 +18,27 @@ func injectKeepRoutes(r *gorillamux_router.Router) {
 
 	r.Group("/keep", "keep.", func(r *gorillamux_router.Router) {
 
+		transaksi := keep_handlers_restful.NewTransaksiRestfulHandler(dependency_injection.InitKeepTransaksiServices())
+		r.Group("/transaksi", "transaksi.", func(r *gorillamux_router.Router) {
+			r.GET("", transaksi.Get, "get")
+			r.GET("/trash", transaksi.GetTrashed, "trash")
+			r.POST("", transaksi.Insert, "insert")
+			r.PATCH("/{transaksiId:[0-9]+}", transaksi.Update, "update")
+			r.PATCH("/{transaksiId:[0-9]+}/trash", transaksi.RestoreTrashedById, "trash")
+			r.DELETE("/{transaksiId:[0-9]+}", transaksi.DeleteById, "delete")
+			r.DELETE("/{transaksiId:[0-9]+}/trash", transaksi.DeleteTrashedById, "trash") // Dangerous
+		})
+
+		lokasi := keep_handlers_restful.NewLokasiRestfulHandler(dependency_injection.InitKeepLokasiServices())
+		r.Group("/lokasi", "lokasi.", func(r *gorillamux_router.Router) {
+			r.GET("", lokasi.Get, "get")
+		})
+
+		barang := keep_handlers_restful.NewBarangRestfulHandler(dependency_injection.InitKeepBarangServices())
+		r.Group("/barang", "barang.", func(r *gorillamux_router.Router) {
+			r.GET("", barang.Get, "get")
+		})
+
 		pos := keep_handlers_restful.NewPosRestfulHandler(dependency_injection.InitKeepPosServices())
 		r.Group("/posts", "pos.", func(r *gorillamux_router.Router) {
 			r.GET("", pos.Get, "get")
