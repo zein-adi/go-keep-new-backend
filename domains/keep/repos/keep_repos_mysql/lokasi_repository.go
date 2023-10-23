@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_datetime"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_mysql"
 	"time"
@@ -32,11 +33,10 @@ func (x *LokasiMysqlRepository) Get(ctx context.Context, search string) []*keep_
 func (x *LokasiMysqlRepository) Insert(ctx context.Context, lokasi *keep_entities.Lokasi) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, lokasiTableName)
 
-	timezone := +7 * time.Hour
-	lastUpdateString := time.Unix(lokasi.LastUpdate, 0).Add(-timezone).Format(time.DateTime)
+	lastUpdateString := time.Unix(lokasi.LastUpdate, 0).Format(time.DateTime)
 	_, err = q.Insert(map[string]any{
-		"nama":       lokasi.Nama,
-		"lastUpdate": lastUpdateString,
+		"nama":        lokasi.Nama,
+		"last_update": lastUpdateString,
 	})
 	if err != nil {
 		return 0, err
@@ -47,11 +47,10 @@ func (x *LokasiMysqlRepository) Update(ctx context.Context, lokasi *keep_entitie
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, lokasiTableName)
 	q.Where("nama", "=", lokasi.Nama)
 
-	timezone := +7 * time.Hour
-	lastUpdateString := time.Unix(lokasi.LastUpdate, 0).Add(-timezone).Format(time.DateTime)
+	lastUpdateString := time.Unix(lokasi.LastUpdate, 0).Format(time.DateTime)
 	affected = q.Update(map[string]any{
-		"nama":       lokasi.Nama,
-		"lastUpdate": lastUpdateString,
+		"nama":        lokasi.Nama,
+		"last_update": lastUpdateString,
 	})
 	if affected == 0 {
 		return 0, helpers_error.NewEntryNotFoundError(lokasiEntityName, "nama", lokasi.Nama)
@@ -70,7 +69,7 @@ func (x *LokasiMysqlRepository) DeleteByNama(ctx context.Context, nama string) (
 
 func (x *LokasiMysqlRepository) newQueryRequest(ctx context.Context, search string) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, lokasiTableName)
-	q.Select("nama,lastUpdate")
+	q.Select("nama,last_update")
 
 	if search != "" {
 		q.Where("nama", "LIKE", "%"+search+"%")
@@ -96,9 +95,7 @@ func (x *LokasiMysqlRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func
 			&model.Nama,
 			&lastUpdateString,
 		))
-		t, err := time.Parse(time.RFC3339, lastUpdateString)
-		helpers_error.PanicIfError(err)
-		model.LastUpdate = t.Unix()
+		model.LastUpdate = helpers_datetime.ParseStringGmt(lastUpdateString)
 	}
 
 	return models
