@@ -72,6 +72,14 @@ func (x *KantongMysqlRepository) Update(ctx context.Context, kantong *keep_entit
 	})
 	return affected, nil
 }
+func (x *KantongMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int, err error) {
+	q := x.newQueryRequest(ctx, "aktif")
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"saldo": saldo,
+	})
+	return affected, nil
+}
 func (x *KantongMysqlRepository) SoftDeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := x.newQueryRequest(ctx, "aktif")
 	q.Where("id", "=", id)

@@ -5,22 +5,28 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
+	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 )
 
-func NewPosServices(repo keep_repo_interfaces.IPosRepository) *PosServices {
+func NewPosServices(repo keep_repo_interfaces.IPosRepository, transaksiRepo keep_repo_interfaces.ITransaksiRepository) *PosServices {
 	return &PosServices{
-		repo: repo,
+		repo:          repo,
+		transaksiRepo: transaksiRepo,
 	}
 }
 
 type PosServices struct {
-	repo keep_repo_interfaces.IPosRepository
+	repo          keep_repo_interfaces.IPosRepository
+	transaksiRepo keep_repo_interfaces.ITransaksiRepository
 }
 
 func (x *PosServices) Get(ctx context.Context, request *keep_request.PosGetRequest) []*keep_entities.Pos {
 	return x.repo.Get(ctx, request)
+}
+func (x *PosServices) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {
+	return x.FindById(ctx, id)
 }
 func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosInputUpdateRequest) (*keep_entities.Pos, error) {
 	pos := &keep_entities.Pos{}
@@ -106,4 +112,37 @@ func (x *PosServices) DeleteTrashedById(ctx context.Context, id string) (affecte
 		return 0, err
 	}
 	return x.repo.DeleteById(ctx, id)
+}
+func (x *PosServices) UpdateSaldoFromTransaksi(ctx context.Context, ids []string) (affected int, err error) {
+	ids = helpers.Unique(ids)
+	for _, id := range ids {
+		if id == "" {
+			continue
+		}
+
+		af, err2 := x.updateSaldoAndParentsFromTransaksi(ctx, id)
+		affected += af
+		if err2 != nil {
+			return affected, err2
+		}
+	}
+	return affected, nil
+}
+
+func (x *PosServices) updateSaldoAndParentsFromTransaksi(ctx context.Context, id string) (affected int, err error) {
+	for {
+		m, err2 := x.repo.FindById(ctx, id)
+		if err2 != nil {
+			return 0, err2
+		}
+		saldo := x.transaksiRepo.GetJumlahByPosId(ctx, id)
+		aff := x.repo.UpdateSaldo(ctx, id, saldo)
+		affected += aff
+
+		id = m.ParentId
+		if id == "" {
+			break
+		}
+	}
+	return affected, nil
 }

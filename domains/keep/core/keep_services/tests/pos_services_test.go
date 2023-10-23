@@ -256,7 +256,9 @@ type PosServicesTest struct {
 
 func (x *PosServicesTest) setUp() {
 	x.setUpMemoryRepository()
-	x.services = keep_services.NewPosServices(x.repo)
+
+	transaksiRepo := keep_repos_memory.NewTransaksiMemoryRepository()
+	x.services = keep_services.NewPosServices(x.repo, transaksiRepo)
 }
 func (x *PosServicesTest) setUpMemoryRepository() {
 	x.repo = keep_repos_memory.NewPosMemoryRepository()

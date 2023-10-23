@@ -10,6 +10,7 @@ type IKantongRepository interface {
 	FindById(ctx context.Context, id string) (*keep_entities.Kantong, error)
 	Insert(ctx context.Context, kantong *keep_entities.Kantong) (*keep_entities.Kantong, error)
 	Update(ctx context.Context, kantong *keep_entities.Kantong) (affected int, err error)
+	UpdateSaldo(ctx context.Context, id string, saldo int) (affected int, err error)
 	SoftDeleteById(ctx context.Context, id string) (affected int, err error)
 
 	GetTrashed(ctx context.Context) []*keep_entities.Kantong

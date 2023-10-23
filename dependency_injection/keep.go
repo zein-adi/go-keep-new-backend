@@ -7,7 +7,6 @@ import (
 	"github.com/google/wire"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
-	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 )
 
@@ -29,18 +28,18 @@ var (
 	)
 	KeepTransaksiSet = wire.NewSet(
 		keep_services.NewTransaksiServices,
-		wire.Bind(new(keep_repo_interfaces.ITransaksiRepository), new(*keep_repos_memory.TransaksiMemoryRepository)),
-		keep_repos_memory.NewTransaksiMemoryRepository,
+		wire.Bind(new(keep_repo_interfaces.ITransaksiRepository), new(*keep_repos_mysql.TransaksiMysqlRepository)),
+		keep_repos_mysql.NewTransaksiMySqlRepository,
 	)
 	KeepLokasiSet = wire.NewSet(
 		keep_services.NewLokasiServices,
-		wire.Bind(new(keep_repo_interfaces.ILokasiRepository), new(*keep_repos_memory.LokasiMemoryRepository)),
-		keep_repos_memory.NewLokasiMemoryRepository,
+		wire.Bind(new(keep_repo_interfaces.ILokasiRepository), new(*keep_repos_mysql.LokasiMysqlRepository)),
+		keep_repos_mysql.NewLokasiMySqlRepository,
 	)
 	KeepBarangSet = wire.NewSet(
 		keep_services.NewBarangServices,
-		wire.Bind(new(keep_repo_interfaces.IBarangRepository), new(*keep_repos_memory.BarangMemoryRepository)),
-		keep_repos_memory.NewBarangMemoryRepository,
+		wire.Bind(new(keep_repo_interfaces.IBarangRepository), new(*keep_repos_mysql.BarangMysqlRepository)),
+		keep_repos_mysql.NewBarangMySqlRepository,
 	)
 )
 

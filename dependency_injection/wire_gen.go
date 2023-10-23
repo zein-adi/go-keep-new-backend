@@ -15,7 +15,6 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_redis"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
-	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 )
 
@@ -72,8 +71,8 @@ func InitUserAuthServices() *auth_services.AuthServices {
 
 func InitKeepPosServices() *keep_services.PosServices {
 	posMysqlRepository := keep_repos_mysql.NewPosMySqlRepository()
-	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
-	posServices := keep_services.NewPosServices(posMysqlRepository, transaksiMemoryRepository)
+	transaksiMysqlRepository := keep_repos_mysql.NewTransaksiMySqlRepository()
+	posServices := keep_services.NewPosServices(posMysqlRepository, transaksiMysqlRepository)
 	return posServices
 }
 
@@ -91,24 +90,24 @@ func InitKeepKantongHistoryServices() *keep_services.KantongHistoryServices {
 }
 
 func InitKeepTransaksiServices() *keep_services.TransaksiServices {
-	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
+	transaksiMysqlRepository := keep_repos_mysql.NewTransaksiMySqlRepository()
 	posMysqlRepository := keep_repos_mysql.NewPosMySqlRepository()
 	kantongMysqlRepository := keep_repos_mysql.NewKantongMysqlRepository()
-	transaksiServices := keep_services.NewTransaksiServices(transaksiMemoryRepository, posMysqlRepository, kantongMysqlRepository)
+	transaksiServices := keep_services.NewTransaksiServices(transaksiMysqlRepository, posMysqlRepository, kantongMysqlRepository)
 	return transaksiServices
 }
 
 func InitKeepLokasiServices() *keep_services.LokasiServices {
-	lokasiMemoryRepository := keep_repos_memory.NewLokasiMemoryRepository()
-	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
-	lokasiServices := keep_services.NewLokasiServices(lokasiMemoryRepository, transaksiMemoryRepository)
+	lokasiMysqlRepository := keep_repos_mysql.NewLokasiMySqlRepository()
+	transaksiMysqlRepository := keep_repos_mysql.NewTransaksiMySqlRepository()
+	lokasiServices := keep_services.NewLokasiServices(lokasiMysqlRepository, transaksiMysqlRepository)
 	return lokasiServices
 }
 
 func InitKeepBarangServices() *keep_services.BarangServices {
-	barangMemoryRepository := keep_repos_memory.NewBarangMemoryRepository()
-	transaksiMemoryRepository := keep_repos_memory.NewTransaksiMemoryRepository()
-	barangServices := keep_services.NewBarangServices(barangMemoryRepository, transaksiMemoryRepository)
+	barangMysqlRepository := keep_repos_mysql.NewBarangMySqlRepository()
+	transaksiMysqlRepository := keep_repos_mysql.NewTransaksiMySqlRepository()
+	barangServices := keep_services.NewBarangServices(barangMysqlRepository, transaksiMysqlRepository)
 	return barangServices
 }
 
@@ -127,7 +126,7 @@ var (
 	KeepPosSet            = wire.NewSet(keep_services.NewPosServices, wire.Bind(new(keep_repo_interfaces.IPosRepository), new(*keep_repos_mysql.PosMysqlRepository)), keep_repos_mysql.NewPosMySqlRepository)
 	KeepKantongSet        = wire.NewSet(keep_services.NewKantongServices, wire.Bind(new(keep_repo_interfaces.IKantongRepository), new(*keep_repos_mysql.KantongMysqlRepository)), keep_repos_mysql.NewKantongMysqlRepository)
 	KeepKantongHistorySet = wire.NewSet(keep_services.NewKantongHistoryServices, wire.Bind(new(keep_repo_interfaces.IKantongHistoryRepository), new(*keep_repos_mysql.KantongHistoryMysqlRepository)), keep_repos_mysql.NewKantongHistoryMysqlRepository)
-	KeepTransaksiSet      = wire.NewSet(keep_services.NewTransaksiServices, wire.Bind(new(keep_repo_interfaces.ITransaksiRepository), new(*keep_repos_memory.TransaksiMemoryRepository)), keep_repos_memory.NewTransaksiMemoryRepository)
-	KeepLokasiSet         = wire.NewSet(keep_services.NewLokasiServices, wire.Bind(new(keep_repo_interfaces.ILokasiRepository), new(*keep_repos_memory.LokasiMemoryRepository)), keep_repos_memory.NewLokasiMemoryRepository)
-	KeepBarangSet         = wire.NewSet(keep_services.NewBarangServices, wire.Bind(new(keep_repo_interfaces.IBarangRepository), new(*keep_repos_memory.BarangMemoryRepository)), keep_repos_memory.NewBarangMemoryRepository)
+	KeepTransaksiSet      = wire.NewSet(keep_services.NewTransaksiServices, wire.Bind(new(keep_repo_interfaces.ITransaksiRepository), new(*keep_repos_mysql.TransaksiMysqlRepository)), keep_repos_mysql.NewTransaksiMySqlRepository)
+	KeepLokasiSet         = wire.NewSet(keep_services.NewLokasiServices, wire.Bind(new(keep_repo_interfaces.ILokasiRepository), new(*keep_repos_mysql.LokasiMysqlRepository)), keep_repos_mysql.NewLokasiMySqlRepository)
+	KeepBarangSet         = wire.NewSet(keep_services.NewBarangServices, wire.Bind(new(keep_repo_interfaces.IBarangRepository), new(*keep_repos_mysql.BarangMysqlRepository)), keep_repos_mysql.NewBarangMySqlRepository)
 )

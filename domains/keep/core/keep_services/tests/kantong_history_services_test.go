@@ -134,7 +134,7 @@ type KantongHistoryServicesTest struct {
 }
 
 func (x *KantongHistoryServicesTest) setUp() {
-	x.setUpMemoryRepository()
+	x.setUpMysqlRepository()
 	x.posRepo = keep_repos_memory.NewPosMemoryRepository()
 	x.services = keep_services.NewKantongHistoryServices(x.repo, x.kantongRepo)
 }

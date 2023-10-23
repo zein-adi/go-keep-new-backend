@@ -17,4 +17,6 @@ type IPosRepository interface {
 	GetTrashed(ctx context.Context) []*keep_entities.Pos
 	FindTrashedById(ctx context.Context, id string) (*keep_entities.Pos, error)
 	RestoreTrashedById(ctx context.Context, id string) (affected int, err error)
+
+	UpdateSaldo(ctx context.Context, id string, saldo int) (affected int)
 }

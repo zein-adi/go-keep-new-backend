@@ -52,6 +52,15 @@ func (x *KantongMemoryRepository) Update(_ context.Context, kantong *keep_entiti
 	x.Data[index] = model
 	return 1, nil
 }
+func (x *KantongMemoryRepository) UpdateSaldo(_ context.Context, id string, saldo int) (affected int, err error) {
+	index, err := x.findIndexById(id, "aktif")
+	if err != nil {
+		return 0, err
+	}
+
+	x.Data[index].Saldo = saldo
+	return 1, nil
+}
 func (x *KantongMemoryRepository) SoftDeleteById(_ context.Context, id string) (affected int, err error) {
 	index, err := x.findIndexById(id, "aktif")
 	if err != nil {
