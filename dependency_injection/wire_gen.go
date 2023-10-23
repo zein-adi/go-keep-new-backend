@@ -13,6 +13,9 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_redis"
+	"github.com/zein-adi/go-keep-new-backend/domains/basic/core/basic_repo_interfaces"
+	"github.com/zein-adi/go-keep-new-backend/domains/basic/core/basic_services"
+	"github.com/zein-adi/go-keep-new-backend/domains/basic/repos/basic_repos_file"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
@@ -67,6 +70,14 @@ func InitUserAuthServices() *auth_services.AuthServices {
 	return authServices
 }
 
+// Injectors from basic.go:
+
+func InitBasicChangelogServices() *basic_services.ChangelogServices {
+	changelogFileRepository := basic_repos_file.NewChangelogFileRepository()
+	changelogServices := basic_services.NewChangelogServices(changelogFileRepository)
+	return changelogServices
+}
+
 // Injectors from keep.go:
 
 func InitKeepPosServices() *keep_services.PosServices {
@@ -118,6 +129,12 @@ var (
 	UserPermissionSet = wire.NewSet(auth_services.NewPermissionServices, wire.Bind(new(auth_repo_interfaces.IPermissionRepository), new(*auth_repos_memory.PermissionMemoryRepository)), auth_repos_memory.NewPermissionMemoryRepository)
 	UserAuthSet       = wire.NewSet(auth_services.NewAuthServices, wire.Bind(new(auth_repo_interfaces.IAuthRepository), new(*auth_repos_redis.AuthMysqlRepository)), auth_repos_redis.NewAuthRedisRepository)
 	UserUserSet       = wire.NewSet(auth_services.NewUserServices, wire.Bind(new(auth_repo_interfaces.IUserRepository), new(*auth_repos_mysql.UserMysqlRepository)), auth_repos_mysql.NewUserMysqlRepository)
+)
+
+// basic.go:
+
+var (
+	BasicChangelogSet = wire.NewSet(basic_services.NewChangelogServices, wire.Bind(new(basic_repo_interfaces.IChangelogRepository), new(*basic_repos_file.ChangelogFileRepository)), basic_repos_file.NewChangelogFileRepository)
 )
 
 // keep.go:
