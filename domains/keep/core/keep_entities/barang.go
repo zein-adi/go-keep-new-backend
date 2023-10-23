@@ -11,7 +11,7 @@ type Barang struct {
 	SatuanHarga  float64         `json:"satuanHarga,omitempty"`
 	Keterangan   string          `json:"keterangan,omitempty"`
 	LastUpdate   int64           `json:"lastUpdate,omitempty"`
-	Details      []*BarangDetail `json:"detail,omitempty"`
+	Details      []*BarangDetail `json:"details,omitempty"`
 }
 
 func (x *Barang) Copy() *Barang {
@@ -23,13 +23,11 @@ func (x *Barang) Copy() *Barang {
 }
 
 type BarangDetail struct {
-	Lokasi       string
-	Harga        int
-	Diskon       int
-	SatuanNama   string
-	SatuanJumlah float64
-	SatuanHarga  float64
-	Keterangan   string
+	Lokasi      string
+	Harga       int
+	Diskon      int
+	SatuanHarga float64
+	Keterangan  string
 }
 
 func (x *BarangDetail) Copy() *BarangDetail {

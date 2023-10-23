@@ -42,21 +42,20 @@ func (x *BarangMysqlRepository) Get(ctx context.Context, search string, lokasi s
 func (x *BarangMysqlRepository) Insert(ctx context.Context, barang *keep_entities.Barang) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, barangTableName)
 
-	timezone := +7 * time.Hour
-	lastUpdateString := time.Unix(barang.LastUpdate, 0).Add(-timezone).Format(time.DateTime)
+	lastUpdateString := time.Unix(barang.LastUpdate, 0).Format(time.DateTime)
 	detailBytes, err := json.Marshal(barang.Details)
 	helpers_error.PanicIfError(err)
 	detailString := string(detailBytes)
 	_, err = q.Insert(map[string]any{
-		"nama":         barang.Nama,
-		"harga":        barang.Harga,
-		"diskon":       barang.Diskon,
-		"satuanNama":   barang.SatuanNama,
-		"satuanJumlah": barang.SatuanJumlah,
-		"satuanHarga":  barang.SatuanHarga,
-		"keterangan":   barang.Keterangan,
-		"lastUpdate":   lastUpdateString,
-		"detail":       detailString,
+		"nama":          barang.Nama,
+		"harga":         barang.Harga,
+		"diskon":        barang.Diskon,
+		"satuan_nama":   barang.SatuanNama,
+		"satuan_jumlah": barang.SatuanJumlah,
+		"satuan_harga":  barang.SatuanHarga,
+		"keterangan":    barang.Keterangan,
+		"last_update":   lastUpdateString,
+		"details":       detailString,
 	})
 	if err != nil {
 		return 0, err
@@ -67,21 +66,20 @@ func (x *BarangMysqlRepository) Update(ctx context.Context, barang *keep_entitie
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, barangTableName)
 	q.Where("nama", "=", barang.Nama)
 
-	timezone := +7 * time.Hour
-	lastUpdateString := time.Unix(barang.LastUpdate, 0).Add(-timezone).Format(time.DateTime)
+	lastUpdateString := time.Unix(barang.LastUpdate, 0).Format(time.DateTime)
 	detailBytes, err := json.Marshal(barang.Details)
 	helpers_error.PanicIfError(err)
 	detailString := string(detailBytes)
 	affected = q.Update(map[string]any{
-		"nama":         barang.Nama,
-		"harga":        barang.Harga,
-		"diskon":       barang.Diskon,
-		"satuanNama":   barang.SatuanNama,
-		"satuanJumlah": barang.SatuanJumlah,
-		"satuanHarga":  barang.SatuanHarga,
-		"keterangan":   barang.Keterangan,
-		"lastUpdate":   lastUpdateString,
-		"detail":       detailString,
+		"nama":          barang.Nama,
+		"harga":         barang.Harga,
+		"diskon":        barang.Diskon,
+		"satuan_nama":   barang.SatuanNama,
+		"satuan_jumlah": barang.SatuanJumlah,
+		"satuan_harga":  barang.SatuanHarga,
+		"keterangan":    barang.Keterangan,
+		"last_update":   lastUpdateString,
+		"details":       detailString,
 	})
 	if affected == 0 {
 		return 0, helpers_error.NewEntryNotFoundError(barangEntityName, "nama", barang.Nama)
@@ -100,7 +98,7 @@ func (x *BarangMysqlRepository) DeleteByNama(ctx context.Context, nama string) (
 
 func (x *BarangMysqlRepository) newQueryRequest(ctx context.Context, search string) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, barangTableName)
-	q.Select("nama,harga,diskon,satuanNama,satuanJumlah,satuanHarga,keterangan,lastUpdate,detail")
+	q.Select("nama,harga,diskon,satuan_nama,satuan_jumlah,satuan_harga,keterangan,last_update,details")
 
 	if search != "" {
 		q.Where("nama", "LIKE", "%"+search+"%")

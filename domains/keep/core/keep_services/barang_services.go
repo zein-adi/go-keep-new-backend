@@ -22,9 +22,13 @@ type BarangServices struct {
 	transaksiRepo keep_repo_interfaces.ITransaksiRepository
 }
 
+func (x *BarangServices) Get(ctx context.Context, search string, lokasi string) []*keep_entities.Barang {
+	return x.repo.Get(ctx, search, lokasi)
+}
+
 func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affected int, err error) {
 	request := keep_request.NewGetTransaksi()
-	request.WaktuAwal = time.Now().AddDate(0, 6, 0).Unix()
+	request.WaktuAwal = time.Now().AddDate(0, -6, 0).Unix()
 	request.Jenis = "pengeluaran"
 	transaksis := x.transaksiRepo.Get(ctx, request)
 	transaksiMap := make(map[string]*keep_entities.Barang)
@@ -35,6 +39,7 @@ func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affecte
 				continue
 			}
 
+			// Mapping Per Barang
 			_, ok := transaksiMap[k]
 			if !ok {
 				transaksiMap[k] = &keep_entities.Barang{
@@ -51,23 +56,30 @@ func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affecte
 			}
 
 			t := transaksiMap[k]
-			if t.LastUpdate < transaksi.CreatedAt {
-				t.LastUpdate = transaksi.CreatedAt
+			if t.LastUpdate < transaksi.Waktu {
+				t.LastUpdate = transaksi.Waktu
 			}
 
+			// Mapping Per Detail Barang / Lokasi
 			_, err2 := helpers.FindIndex(t.Details, func(detail *keep_entities.BarangDetail) bool {
 				return detail.Lokasi == transaksi.Lokasi && math.Ceil(detail.SatuanHarga) == math.Ceil(detail.SatuanHarga)
 			})
 			if err2 != nil {
-				t.Details = append(t.Details, &keep_entities.BarangDetail{
-					Lokasi:       transaksi.Lokasi,
-					Harga:        detail.Harga,
-					Diskon:       detail.Diskon,
-					SatuanNama:   detail.SatuanNama,
-					SatuanJumlah: detail.SatuanJumlah,
-					SatuanHarga:  detail.SatuanHarga,
-					Keterangan:   detail.Keterangan,
-				})
+				barangDetail := &keep_entities.BarangDetail{
+					Lokasi:      transaksi.Lokasi,
+					Harga:       detail.Harga,
+					Diskon:      detail.Diskon,
+					SatuanHarga: detail.SatuanHarga,
+					Keterangan:  detail.Keterangan,
+				}
+				t.Details = append(t.Details, barangDetail)
+
+				// Bila detail barang lebih murah dari yang tercatat saat ini, maka update
+				if barangDetail.SatuanHarga < t.SatuanHarga {
+					t.Harga = barangDetail.Harga
+					t.Diskon = barangDetail.Diskon
+					t.SatuanHarga = barangDetail.SatuanHarga
+				}
 			}
 		}
 	}

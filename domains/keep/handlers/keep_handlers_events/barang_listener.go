@@ -34,7 +34,7 @@ func (x *BarangEventListenerHandler) TransaksiUpdated(eventData any) {
 	}
 	x.updateBarang("updated")
 }
-func (x *BarangEventListenerHandler) TransaksiSoftDelete(eventData any) {
+func (x *BarangEventListenerHandler) TransaksiSoftDeleted(eventData any) {
 	_, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -42,7 +42,7 @@ func (x *BarangEventListenerHandler) TransaksiSoftDelete(eventData any) {
 	}
 	x.updateBarang("softDelete")
 }
-func (x *BarangEventListenerHandler) TransaksiRestore(eventData any) {
+func (x *BarangEventListenerHandler) TransaksiRestored(eventData any) {
 	_, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())

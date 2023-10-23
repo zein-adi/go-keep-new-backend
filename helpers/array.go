@@ -71,7 +71,7 @@ func KeyByMap[D any, K int | string, V any](data []D, k func(D) K, v func(D) V) 
 
 // Filter mengambil sejumlah nilai sesuai function yang dimasukkan
 func Filter[D any](data []D, f func(D) bool) []D {
-	var result []D
+	result := make([]D, 0)
 	for _, datum := range data {
 		if f(datum) {
 			result = append(result, datum)
