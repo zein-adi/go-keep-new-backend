@@ -36,7 +36,7 @@ func (x *KantongEventListenerHandler) TransaksiUpdated(eventData any) {
 	x.updateSaldo("updated", data.New.KantongAsalId, data.New.KantongTujuanId, data.New.Jumlah,
 		data.Old.KantongAsalId, data.Old.KantongTujuanId, data.Old.Jumlah)
 }
-func (x *KantongEventListenerHandler) TransaksiSoftDelete(eventData any) {
+func (x *KantongEventListenerHandler) TransaksiSoftDeleted(eventData any) {
 	data, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -45,7 +45,7 @@ func (x *KantongEventListenerHandler) TransaksiSoftDelete(eventData any) {
 	x.updateSaldo("softDelete", "", "", 0,
 		data.Data.KantongAsalId, data.Data.KantongTujuanId, data.Data.Jumlah)
 }
-func (x *KantongEventListenerHandler) TransaksiRestore(eventData any) {
+func (x *KantongEventListenerHandler) TransaksiRestored(eventData any) {
 	data, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())

@@ -4,16 +4,20 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_events"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_services"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/handlers/keep_handlers_events"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_memory"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/repos/keep_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_events"
 	"testing"
+	"time"
 )
 
 func TestKantong(t *testing.T) {
@@ -237,6 +241,170 @@ func TestKantong(t *testing.T) {
 		_, err = x.services.Update(context.Background(), input)
 		assert.NotNil(t, err)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+
+	/*
+	 * Testing Listener
+	 */
+	l := keep_handlers_events.NewKantongEventListenerHandler(x.services)
+	d := helpers_events.GetDispatcher()
+	_ = d.Register(keep_events.TransaksiCreated, l.TransaksiCreated)
+	_ = d.Register(keep_events.TransaksiUpdated, l.TransaksiUpdated)
+	_ = d.Register(keep_events.TransaksiSoftDeleted, l.TransaksiSoftDeleted)
+	_ = d.Register(keep_events.TransaksiRestored, l.TransaksiRestored)
+	t.Run("UpdateFromTransakasi", func(t *testing.T) {
+		_, kantongs := x.reset()
+		ctx := context.Background()
+
+		bca := kantongs[0]
+		mandiri := kantongs[1]
+
+		assert.Equal(t, 100000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 50000, mandiri.CalculateSaldoAktif())
+
+		asalId := bca.Id
+		tujuanId := mandiri.Id
+		jumlah := 10000
+		oldAsalId := ""
+		oldTujuanId := ""
+		oldJumlah := 0
+		affected, err := x.services.UpdateSaldo(ctx, asalId, tujuanId, jumlah, oldAsalId, oldTujuanId, oldJumlah)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, affected)
+
+		bca, _ = x.repo.FindById(ctx, bca.Id)
+		mandiri, _ = x.repo.FindById(ctx, mandiri.Id)
+		assert.Equal(t, 90000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 60000, mandiri.CalculateSaldoAktif())
+	})
+	t.Run("ListenerTransaksiCreated", func(t *testing.T) {
+		_, kantongs := x.reset()
+		ctx := context.Background()
+
+		bca := kantongs[0]
+		mandiri := kantongs[1]
+
+		assert.Equal(t, 100000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 50000, mandiri.CalculateSaldoAktif())
+
+		asalId := bca.Id
+		tujuanId := mandiri.Id
+		jumlah := 10000
+		_ = d.Dispatch(keep_events.TransaksiCreated, keep_events.TransaksiCreatedEventData{
+			Data: keep_events.TransaksiEventData{
+				KantongAsalId:   asalId,
+				KantongTujuanId: tujuanId,
+				Jumlah:          jumlah,
+				Lokasi:          "",
+				Details:         nil,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		bca, _ = x.repo.FindById(ctx, bca.Id)
+		mandiri, _ = x.repo.FindById(ctx, mandiri.Id)
+		assert.Equal(t, 90000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 60000, mandiri.CalculateSaldoAktif())
+	})
+	t.Run("ListenerTransaksiUpdated", func(t *testing.T) {
+		_, kantongs := x.reset()
+		ctx := context.Background()
+
+		bca := kantongs[0]
+		mandiri := kantongs[1]
+
+		assert.Equal(t, 100000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 50000, mandiri.CalculateSaldoAktif())
+
+		oldAsalId := mandiri.Id
+		oldTujuanId := bca.Id
+		oldJumlah := 10000
+		// Mandiri: 60000
+		// BCA: 900000
+
+		asalId := bca.Id
+		tujuanId := mandiri.Id
+		jumlah := 10000
+		// Mandiri: 70000
+		// BCA: 80000
+		_ = d.Dispatch(keep_events.TransaksiUpdated, keep_events.TransaksiUpdatedEventData{
+			Old: keep_events.TransaksiEventData{
+				KantongAsalId:   oldAsalId,
+				KantongTujuanId: oldTujuanId,
+				Jumlah:          oldJumlah,
+			},
+			New: keep_events.TransaksiEventData{
+				KantongAsalId:   asalId,
+				KantongTujuanId: tujuanId,
+				Jumlah:          jumlah,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		bca, _ = x.repo.FindById(ctx, bca.Id)
+		mandiri, _ = x.repo.FindById(ctx, mandiri.Id)
+		assert.Equal(t, 80000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 70000, mandiri.CalculateSaldoAktif())
+	})
+	t.Run("ListenerTransaksiSoftDeleted", func(t *testing.T) {
+		_, kantongs := x.reset()
+		ctx := context.Background()
+
+		bca := kantongs[0]
+		mandiri := kantongs[1]
+
+		assert.Equal(t, 100000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 50000, mandiri.CalculateSaldoAktif())
+
+		oldAsalId := mandiri.Id
+		oldTujuanId := bca.Id
+		oldJumlah := 10000
+		// Mandiri: 60000
+		// BCA: 900000
+
+		_ = d.Dispatch(keep_events.TransaksiSoftDeleted, keep_events.TransaksiSoftDeletedEventData{
+			Data: keep_events.TransaksiEventData{
+				KantongAsalId:   oldAsalId,
+				KantongTujuanId: oldTujuanId,
+				Jumlah:          oldJumlah,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		bca, _ = x.repo.FindById(ctx, bca.Id)
+		mandiri, _ = x.repo.FindById(ctx, mandiri.Id)
+		assert.Equal(t, 90000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 60000, mandiri.CalculateSaldoAktif())
+	})
+	t.Run("ListenerTransaksiRestored", func(t *testing.T) {
+		_, kantongs := x.reset()
+		ctx := context.Background()
+
+		bca := kantongs[0]
+		mandiri := kantongs[1]
+
+		assert.Equal(t, 100000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 50000, mandiri.CalculateSaldoAktif())
+
+		asalId := mandiri.Id
+		tujuanId := bca.Id
+		jumlah := 10000
+		// Mandiri: 40000
+		// BCA: 1100000
+
+		_ = d.Dispatch(keep_events.TransaksiRestored, keep_events.TransaksiRestoredEventData{
+			Data: keep_events.TransaksiEventData{
+				KantongAsalId:   asalId,
+				KantongTujuanId: tujuanId,
+				Jumlah:          jumlah,
+			},
+		})
+		time.Sleep(time.Millisecond * 10)
+
+		bca, _ = x.repo.FindById(ctx, bca.Id)
+		mandiri, _ = x.repo.FindById(ctx, mandiri.Id)
+		assert.Equal(t, 110000, bca.CalculateSaldoAktif())
+		assert.Equal(t, 40000, mandiri.CalculateSaldoAktif())
 	})
 }
 
