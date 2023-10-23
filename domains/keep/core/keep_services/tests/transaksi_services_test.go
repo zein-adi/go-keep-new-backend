@@ -57,6 +57,116 @@ func TestTransaksi(t *testing.T) {
 			assert.Equal(t, o.Status, m.Status)
 		}
 	})
+	t.Run("SoftDeleteSuccess", func(t *testing.T) {
+		ctx := context.Background()
+		transaksis, _, _ := x.reset()
+		m := transaksis[1]
+
+		affected, err := x.services.DeleteById(ctx, m.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		_, err = x.repo.FindById(ctx, m.Id)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+
+		model, err := x.repo.FindTrashedById(ctx, m.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, "trashed", model.Status)
+	})
+	t.Run("UpdateDeleteFailedCauseNotFound", func(t *testing.T) {
+		_, poses, _ := x.reset()
+		posPemasukan := poses[0]
+		id := "999999"
+
+		input := &keep_request.TransaksiInputUpdate{
+			Id:          id,
+			Jenis:       "pemasukan",
+			Jumlah:      1000,
+			PosTujuanId: posPemasukan.Id,
+			Uraian:      "Gajian",
+		}
+		_, err := x.services.Update(context.Background(), input)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+
+		affected, err := x.services.DeleteById(context.Background(), id)
+		assert.Equal(t, 0, affected)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+	t.Run("UpdateDeleteFailedCauseTrashed", func(t *testing.T) {
+		transaksis, poses, _ := x.reset()
+		posPemasukan := poses[0]
+		m := transaksis[2]
+
+		input := &keep_request.TransaksiInputUpdate{
+			Id:          m.Id,
+			Jenis:       "pemasukan",
+			Jumlah:      1000,
+			PosTujuanId: posPemasukan.Id,
+			Uraian:      "Gajian",
+		}
+		_, err := x.services.Update(context.Background(), input)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+
+		affected, err := x.services.DeleteById(context.Background(), m.Id)
+		assert.Equal(t, 0, affected)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+	t.Run("RestoreHardDeleteFailedCauseStatusActive", func(t *testing.T) {
+		transaksis, _, _ := x.reset()
+		m := transaksis[0]
+
+		affected, err := x.services.RestoreTrashedById(context.Background(), m.Id)
+		assert.Equal(t, 0, affected)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+
+		affected, err = x.services.DeleteTrashedById(context.Background(), m.Id)
+		assert.Equal(t, 0, affected)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+	t.Run("GetTrashedSuccess", func(t *testing.T) {
+		x.reset()
+		time.Sleep(time.Millisecond * 10)
+		now := time.Now()
+
+		models := x.services.GetTrashed(context.Background())
+		assert.Len(t, models, 1)
+
+		for _, m := range models {
+			assert.True(t, now.After(time.Unix(m.CreatedAt, 0)))
+			assert.True(t, now.After(time.Unix(m.UpdatedAt, 0)))
+			assert.Equal(t, "trashed", m.Status)
+		}
+	})
+	t.Run("RestoreTrashedSuccess", func(t *testing.T) {
+		ctx := context.Background()
+		transaksis, _, _ := x.reset()
+		m := transaksis[2]
+
+		affected, err := x.services.RestoreTrashedById(ctx, m.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		model, err := x.repo.FindById(ctx, m.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, "aktif", model.Status)
+
+		_, err = x.repo.FindTrashedById(ctx, m.Id)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+	t.Run("HardDeleteTrashedSuccess", func(t *testing.T) {
+		transaksis, _, _ := x.reset()
+		m := transaksis[2]
+
+		affected, err := x.services.DeleteTrashedById(context.Background(), m.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		_, err = x.repo.FindById(context.Background(), m.Id)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+
+		_, err = x.repo.FindTrashedById(context.Background(), m.Id)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
 	t.Run("InsertPemasukanSuccess", func(t *testing.T) {
 		ctx := context.Background()
 		_, poses, kantongs := x.reset()
@@ -590,116 +700,6 @@ func TestTransaksi(t *testing.T) {
 		assert.Equal(t, 0, affected)
 		assert.ErrorIs(t, err, helpers_error.ValidationError)
 		assert.ErrorContains(t, err, "is not leaf")
-	})
-	t.Run("SoftDeleteSuccess", func(t *testing.T) {
-		ctx := context.Background()
-		transaksis, _, _ := x.reset()
-		m := transaksis[1]
-
-		affected, err := x.services.DeleteById(ctx, m.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 1, affected)
-
-		_, err = x.repo.FindById(ctx, m.Id)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-
-		model, err := x.repo.FindTrashedById(ctx, m.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, "trashed", model.Status)
-	})
-	t.Run("UpdateDeleteFailedCauseNotFound", func(t *testing.T) {
-		_, poses, _ := x.reset()
-		posPemasukan := poses[0]
-		id := "999999"
-
-		input := &keep_request.TransaksiInputUpdate{
-			Id:          id,
-			Jenis:       "pemasukan",
-			Jumlah:      1000,
-			PosTujuanId: posPemasukan.Id,
-			Uraian:      "Gajian",
-		}
-		_, err := x.services.Update(context.Background(), input)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-
-		affected, err := x.services.DeleteById(context.Background(), id)
-		assert.Equal(t, 0, affected)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-	})
-	t.Run("UpdateDeleteFailedCauseTrashed", func(t *testing.T) {
-		transaksis, poses, _ := x.reset()
-		posPemasukan := poses[0]
-		m := transaksis[2]
-
-		input := &keep_request.TransaksiInputUpdate{
-			Id:          m.Id,
-			Jenis:       "pemasukan",
-			Jumlah:      1000,
-			PosTujuanId: posPemasukan.Id,
-			Uraian:      "Gajian",
-		}
-		_, err := x.services.Update(context.Background(), input)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-
-		affected, err := x.services.DeleteById(context.Background(), m.Id)
-		assert.Equal(t, 0, affected)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-	})
-	t.Run("RestoreHardDeleteFailedCauseStatusActive", func(t *testing.T) {
-		transaksis, _, _ := x.reset()
-		m := transaksis[0]
-
-		affected, err := x.services.RestoreTrashedById(context.Background(), m.Id)
-		assert.Equal(t, 0, affected)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-
-		affected, err = x.services.DeleteTrashedById(context.Background(), m.Id)
-		assert.Equal(t, 0, affected)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-	})
-	t.Run("GetTrashedSuccess", func(t *testing.T) {
-		x.reset()
-		time.Sleep(time.Millisecond * 10)
-		now := time.Now()
-
-		models := x.services.GetTrashed(context.Background())
-		assert.Len(t, models, 1)
-
-		for _, m := range models {
-			assert.True(t, now.After(time.Unix(m.CreatedAt, 0)))
-			assert.True(t, now.After(time.Unix(m.UpdatedAt, 0)))
-			assert.Equal(t, "trashed", m.Status)
-		}
-	})
-	t.Run("RestoreTrashedSuccess", func(t *testing.T) {
-		ctx := context.Background()
-		transaksis, _, _ := x.reset()
-		m := transaksis[2]
-
-		affected, err := x.services.RestoreTrashedById(ctx, m.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 1, affected)
-
-		model, err := x.repo.FindById(ctx, m.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, "aktif", model.Status)
-
-		_, err = x.repo.FindTrashedById(ctx, m.Id)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-	})
-	t.Run("HardDeleteTrashedSuccess", func(t *testing.T) {
-		transaksis, _, _ := x.reset()
-		m := transaksis[2]
-
-		affected, err := x.services.DeleteTrashedById(context.Background(), m.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 1, affected)
-
-		_, err = x.repo.FindById(context.Background(), m.Id)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
-
-		_, err = x.repo.FindTrashedById(context.Background(), m.Id)
-		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 }
 
