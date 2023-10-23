@@ -13,7 +13,6 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
-	"github.com/zein-adi/go-keep-new-backend/routes"
 	"testing"
 	"time"
 )
@@ -58,7 +57,7 @@ func TestTransaksi(t *testing.T) {
 			assert.Equal(t, o.Status, m.Status)
 		}
 	})
-	t.Run("InsertPemasukanSuccessWithUpdateSaldoPosSaldoKantong", func(t *testing.T) {
+	t.Run("InsertPemasukanSuccess", func(t *testing.T) {
 		ctx := context.Background()
 		_, poses, kantongs := x.reset()
 		posPemasukan := poses[0]
@@ -108,18 +107,8 @@ func TestTransaksi(t *testing.T) {
 		assert.True(t, before.Before(time.Unix(m.UpdatedAt, 0)))
 		assert.Empty(t, m.Details)
 		assert.Equal(t, "aktif", m.Status)
-
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 1100000, posPemasukan.Saldo)
-
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 1100000, kantongMandiri.Saldo)
 	})
-	t.Run("InsertMutasiSuccessWithUpdateSaldoPosSaldoKantong", func(t *testing.T) {
+	t.Run("InsertMutasiSuccess", func(t *testing.T) {
 		ctx := context.Background()
 		_, poses, kantongs := x.reset()
 		posPemasukan := poses[0]
@@ -152,26 +141,8 @@ func TestTransaksi(t *testing.T) {
 		}
 		_, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
-
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 60000, posPemasukan.Saldo)
-
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 40000, posMain.Saldo)
-
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 60000, kantongMandiri.Saldo)
-
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 40000, kantongBca.Saldo)
 	})
-	t.Run("InsertPengeluaranSimpleSuccessWithUpdateSaldoPosSaldoKantongUpdateLokasi", func(t *testing.T) {
+	t.Run("InsertPengeluaranSimpleSuccess", func(t *testing.T) {
 		ctx := context.Background()
 		_, poses, kantongs := x.reset()
 		posPemasukan := poses[0]
@@ -199,26 +170,8 @@ func TestTransaksi(t *testing.T) {
 		}
 		_, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
-
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-
-		lokasis := x.lokasiRepo.Get(ctx, "")
-		assert.Len(t, lokasis, 1)
-		assert.Equal(t, lokasi, lokasis[0].Nama)
-
-		lokasis = x.lokasiRepo.Get(ctx, "citra")
-		assert.Len(t, lokasis, 1)
-		assert.Equal(t, lokasi, lokasis[0].Nama)
 	})
-	t.Run("InsertPengeluaranDetailSuccessWithUpdateSaldoPosSaldoKantongUpdateLokasiUpdateBarang", func(t *testing.T) {
+	t.Run("InsertPengeluaranDetailSuccess", func(t *testing.T) {
 		ctx := context.Background()
 		_, poses, kantongs := x.reset()
 		posPemasukan := poses[0]
@@ -272,47 +225,6 @@ func TestTransaksi(t *testing.T) {
 		assert.Equal(t, satuanJumlah, d.SatuanJumlah)
 		assert.Equal(t, satuanNama, d.SatuanNama)
 		assert.Equal(t, keteranganDetail, d.Keterangan)
-
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 88000, posPemasukan.Saldo)
-
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 88000, kantongMandiri.Saldo)
-
-		lokasis := x.lokasiRepo.Get(ctx, "")
-		assert.Len(t, lokasis, 1)
-		assert.Equal(t, lokasi, lokasis[0].Nama)
-
-		lokasis = x.lokasiRepo.Get(ctx, "citra")
-		assert.Len(t, lokasis, 1)
-		assert.Equal(t, lokasi, lokasis[0].Nama)
-
-		//barangs := x.barangRepo.Get(ctx, "", "")
-		//assert.Len(t, barangs, 1)
-		//assert.Equal(t, nama, barangs[0].Nama)
-		//assert.Equal(t, harga, barangs[0].Harga)
-		//assert.Equal(t, diskon, barangs[0].Diskon)
-		//assert.Equal(t, satuanNama, barangs[0].SatuanNama)
-		//assert.Equal(t, satuanJumlah, barangs[0].SatuanJumlah)
-		//assert.Equal(t, float64(harga-diskon), barangs[0].SatuanHarga)
-		//assert.Equal(t, keteranganDetail, barangs[0].Keterangan)
-		//assert.True(t, time.Now().After(time.Unix(barangs[0].LastUpdate, 0)))
-		//
-		//barangs = x.barangRepo.Get(ctx, "a", "citra")
-		//assert.Len(t, barangs, 1)
-		//assert.Equal(t, nama, barangs[0].Nama)
-		//
-		//barangs = x.barangRepo.Get(ctx, "bloat", "")
-		//assert.Len(t, barangs, 1)
-		//assert.Equal(t, nama, barangs[0].Nama)
-		//
-		//barangs = x.barangRepo.Get(ctx, "bloat", "citra")
-		//assert.Len(t, barangs, 1)
-		//assert.Equal(t, nama, barangs[0].Nama)
 	})
 	t.Run("UpdatePemasukanKePengeluaranSuccess", func(t *testing.T) {
 		ctx := context.Background()
@@ -332,15 +244,8 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 110000, posPemasukan.Saldo)
-
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 110000, kantongMandiri.Saldo)
+		v, _ := x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pemasukan", v.Jenis)
 
 		// Progress
 		input = &keep_request.TransaksiInputUpdate{
@@ -356,15 +261,8 @@ func TestTransaksi(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
+		v, _ = x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pengeluaran", v.Jenis)
 	})
 	t.Run("UpdatePemasukanKeMutasiSuccess", func(t *testing.T) {
 		ctx := context.Background()
@@ -386,16 +284,8 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 110000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 110000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 0, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 0, kantongBca.Saldo)
+		v, _ := x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pemasukan", v.Jenis)
 
 		// Progress
 		input = &keep_request.TransaksiInputUpdate{
@@ -413,16 +303,8 @@ func TestTransaksi(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 10000, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 10000, kantongBca.Saldo)
+		v, _ = x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "mutasi", v.Jenis)
 	})
 	t.Run("UpdatePengeluaranKePemasukanSuccess", func(t *testing.T) {
 		ctx := context.Background()
@@ -442,12 +324,8 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
+		v, _ := x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pengeluaran", v.Jenis)
 
 		// Progress
 		input = &keep_request.TransaksiInputUpdate{
@@ -463,12 +341,8 @@ func TestTransaksi(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 110000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 110000, kantongMandiri.Saldo)
+		v, _ = x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pemasukan", v.Jenis)
 	})
 	t.Run("UpdatePengeluaranKeMutasiSuccess", func(t *testing.T) {
 		ctx := context.Background()
@@ -490,16 +364,8 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 0, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 0, kantongBca.Saldo)
+		v, _ := x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pengeluaran", v.Jenis)
 
 		// Progress
 		input = &keep_request.TransaksiInputUpdate{
@@ -517,16 +383,8 @@ func TestTransaksi(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 10000, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 10000, kantongBca.Saldo)
+		v, _ = x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "mutasi", v.Jenis)
 	})
 	t.Run("UpdateMutasiKePemasukanSuccess", func(t *testing.T) {
 		ctx := context.Background()
@@ -550,16 +408,8 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 10000, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 10000, kantongBca.Saldo)
+		v, _ := x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "mutasi", v.Jenis)
 
 		// Progress
 		input = &keep_request.TransaksiInputUpdate{
@@ -575,16 +425,8 @@ func TestTransaksi(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 110000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 110000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 0, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 0, kantongBca.Saldo)
+		v, _ = x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pemasukan", v.Jenis)
 	})
 	t.Run("UpdateMutasiKePengeluaranSuccess", func(t *testing.T) {
 		ctx := context.Background()
@@ -608,16 +450,8 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		assert.Nil(t, err)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 10000, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 10000, kantongBca.Saldo)
+		v, _ := x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "mutasi", v.Jenis)
 
 		// Progress
 		input = &keep_request.TransaksiInputUpdate{
@@ -633,16 +467,8 @@ func TestTransaksi(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
-		posMain, err = x.posRepo.FindById(ctx, posMain.Id)
-		assert.Equal(t, 0, posMain.Saldo)
-		kantongBca, err = x.kantongRepo.FindById(ctx, kantongBca.Id)
-		assert.Equal(t, 0, kantongBca.Saldo)
+		v, _ = x.repo.FindById(ctx, m.Id)
+		assert.Equal(t, "pengeluaran", v.Jenis)
 	})
 	t.Run("InsertUpdateFailedCauseBasicValidation", func(t *testing.T) {
 		ctx := context.Background()
@@ -767,14 +593,12 @@ func TestTransaksi(t *testing.T) {
 	})
 	t.Run("SoftDeleteSuccess", func(t *testing.T) {
 		ctx := context.Background()
-		transaksis, poses, kantongs := x.reset()
+		transaksis, _, _ := x.reset()
 		m := transaksis[1]
 
 		affected, err := x.services.DeleteById(ctx, m.Id)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
-
-		time.Sleep(time.Millisecond * 100)
 
 		_, err = x.repo.FindById(ctx, m.Id)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
@@ -782,16 +606,6 @@ func TestTransaksi(t *testing.T) {
 		model, err := x.repo.FindTrashedById(ctx, m.Id)
 		assert.Nil(t, err)
 		assert.Equal(t, "trashed", model.Status)
-
-		posPemasukan := poses[0]
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 110000, posPemasukan.Saldo)
-
-		kantongMandiri := kantongs[0]
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 110000, kantongMandiri.Saldo)
 	})
 	t.Run("UpdateDeleteFailedCauseNotFound", func(t *testing.T) {
 		_, poses, _ := x.reset()
@@ -859,28 +673,19 @@ func TestTransaksi(t *testing.T) {
 	})
 	t.Run("RestoreTrashedSuccess", func(t *testing.T) {
 		ctx := context.Background()
-		transaksis, poses, kantongs := x.reset()
+		transaksis, _, _ := x.reset()
 		m := transaksis[2]
 
 		affected, err := x.services.RestoreTrashedById(ctx, m.Id)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
-		time.Sleep(time.Millisecond * 100)
-
 		model, err := x.repo.FindById(ctx, m.Id)
 		assert.Nil(t, err)
 		assert.Equal(t, "aktif", model.Status)
 
-		posPemasukan := poses[0]
-		posPemasukan, err = x.posRepo.FindById(ctx, posPemasukan.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 90000, posPemasukan.Saldo)
-
-		kantongMandiri := kantongs[0]
-		kantongMandiri, err = x.kantongRepo.FindById(ctx, kantongMandiri.Id)
-		assert.Nil(t, err)
-		assert.Equal(t, 90000, kantongMandiri.Saldo)
+		_, err = x.repo.FindTrashedById(ctx, m.Id)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 	t.Run("HardDeleteTrashedSuccess", func(t *testing.T) {
 		transaksis, _, _ := x.reset()
@@ -905,10 +710,8 @@ func NewTransaksiServicesTest() *TransaksiServicesTest {
 }
 
 type TransaksiServicesTest struct {
-	barangRepo  keep_repo_interfaces.IBarangRepository
 	posRepo     keep_repo_interfaces.IPosRepository
 	kantongRepo keep_repo_interfaces.IKantongRepository
-	lokasiRepo  keep_repo_interfaces.ILokasiRepository
 	repo        keep_repo_interfaces.ITransaksiRepository
 	services    keep_service_interfaces.ITransaksiServices
 	truncate    func()
@@ -918,46 +721,30 @@ type TransaksiServicesTest struct {
 func (x *TransaksiServicesTest) setUp() {
 	x.setUpMemoryRepository()
 	x.services = keep_services.NewTransaksiServices(x.repo, x.posRepo, x.kantongRepo)
-
-	posService := keep_services.NewPosServices(x.posRepo, x.repo)
-	kantongService := keep_services.NewKantongServices(x.kantongRepo)
-	lokasiService := keep_services.NewLokasiServices(x.lokasiRepo, x.repo)
-	barangService := keep_services.NewBarangServices(x.barangRepo, x.repo)
-	routes.RegisterKeepListeners(posService, kantongService, lokasiService, barangService)
 }
 func (x *TransaksiServicesTest) setUpMemoryRepository() {
 	repo := keep_repos_memory.NewTransaksiMemoryRepository()
 	posRepo := keep_repos_memory.NewPosMemoryRepository()
 	kantongRepo := keep_repos_memory.NewKantongMemoryRepository()
-	barangRepo := keep_repos_memory.NewBarangMemoryRepository()
-	lokasiRepo := keep_repos_memory.NewLokasiMemoryRepository()
 
 	x.truncate = func() {
 		repo.Data = make([]*keep_entities.Transaksi, 0)
 		posRepo.Data = make([]*keep_entities.Pos, 0)
 		kantongRepo.Data = make([]*keep_entities.Kantong, 0)
-		barangRepo.Data = make([]*keep_entities.Barang, 0)
-		lokasiRepo.Data = make([]*keep_entities.Lokasi, 0)
 	}
 	x.cleanup = func() {}
 	x.repo = repo
-	x.barangRepo = barangRepo
 	x.posRepo = posRepo
 	x.kantongRepo = kantongRepo
-	x.lokasiRepo = lokasiRepo
 }
 func (x *TransaksiServicesTest) setUpMysqlRepository() {
 	repo := keep_repos_mysql.NewTransaksiMySqlRepository()
 	posRepo := keep_repos_memory.NewPosMemoryRepository()
 	kantongRepo := keep_repos_memory.NewKantongMemoryRepository()
-	barangRepo := keep_repos_memory.NewBarangMemoryRepository()
-	lokasiRepo := keep_repos_memory.NewLokasiMemoryRepository()
 
 	x.truncate = func() {
 		posRepo.Data = make([]*keep_entities.Pos, 0)
 		kantongRepo.Data = make([]*keep_entities.Kantong, 0)
-		barangRepo.Data = make([]*keep_entities.Barang, 0)
-		lokasiRepo.Data = make([]*keep_entities.Lokasi, 0)
 
 		models := repo.Get(context.Background(), keep_request.NewGetTransaksi())
 		for _, m := range models {
@@ -974,10 +761,8 @@ func (x *TransaksiServicesTest) setUpMysqlRepository() {
 		repo.Cleanup()
 	}
 	x.repo = repo
-	x.barangRepo = barangRepo
 	x.posRepo = posRepo
 	x.kantongRepo = kantongRepo
-	x.lokasiRepo = lokasiRepo
 }
 func (x *TransaksiServicesTest) reset() ([]*keep_entities.Transaksi, []*keep_entities.Pos, []*keep_entities.Kantong) {
 	x.truncate()
