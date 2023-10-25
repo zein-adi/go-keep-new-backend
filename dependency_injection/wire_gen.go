@@ -89,7 +89,8 @@ func InitKeepPosServices() *keep_services.PosServices {
 
 func InitKeepKantongServices() *keep_services.KantongServices {
 	kantongMysqlRepository := keep_repos_mysql.NewKantongMysqlRepository()
-	kantongServices := keep_services.NewKantongServices(kantongMysqlRepository)
+	posMysqlRepository := keep_repos_mysql.NewPosMySqlRepository()
+	kantongServices := keep_services.NewKantongServices(kantongMysqlRepository, posMysqlRepository)
 	return kantongServices
 }
 

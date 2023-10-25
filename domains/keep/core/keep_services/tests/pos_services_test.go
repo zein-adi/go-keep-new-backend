@@ -23,10 +23,10 @@ import (
 func TestPos(t *testing.T) {
 	helpers_env.Init(5)
 	x := NewPosServicesTest()
+	defer x.cleanup()
 
 	t.Run("GetSuccessAll", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		oriKey := helpers.KeyBy(ori, func(d *keep_entities.Pos) string {
 			return d.Id
@@ -49,7 +49,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("GetSuccessLeafOnly", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		oriKeyBy := helpers.KeyBy(ori, func(d *keep_entities.Pos) string {
 			return d.Id
@@ -74,7 +73,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("GetTrashedSuccess", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		models := x.services.GetTrashed(context.Background())
 		assert.Len(t, models, 1)
@@ -92,7 +90,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("InsertSuccess", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		nama := "Mas Luxman"
 		urutan := 1
@@ -113,7 +110,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("UpdateSuccess", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		id := ori[0].Id
 		nama := "Mas Luxman"
@@ -126,7 +122,11 @@ func TestPos(t *testing.T) {
 			ParentId: parentId,
 			IsShow:   false,
 		}
-		model, err := x.services.Update(context.Background(), input)
+		affected, err := x.services.Update(context.Background(), input)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		model, err := x.repo.FindById(context.Background(), id)
 		assert.Nil(t, err)
 		assert.Equal(t, nama, model.Nama)
 		assert.Equal(t, urutan, model.Urutan)
@@ -137,7 +137,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("DeleteSuccess", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		affected, err := x.services.DeleteById(context.Background(), ori[0].Id)
 		assert.Nil(t, err)
@@ -152,7 +151,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("RestoreTrashedSuccess", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		affected, err := x.services.RestoreTrashedById(context.Background(), ori[3].Id)
 		assert.Nil(t, err)
@@ -164,7 +162,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("DeleteTrashedSuccess", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		affected, err := x.services.DeleteTrashedById(context.Background(), ori[3].Id)
 		assert.Nil(t, err)
@@ -178,7 +175,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("UpdateFailedCauseParentToItself", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		pos := &keep_request.PosInputUpdate{
 			Id:       ori[0].Id,
@@ -193,7 +189,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("RestoreTrashedDeleteTrashedFailedCauseStatusAktif", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		id := ori[0].Id
 		affected, err := x.services.RestoreTrashedById(context.Background(), id)
@@ -208,7 +203,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("UpdateDeleteFailedCauseTrashed", func(t *testing.T) {
 		ori := x.reset()
-		defer x.truncate()
 
 		id := ori[3].Id
 		affected, err := x.services.DeleteById(context.Background(), id)
@@ -228,7 +222,6 @@ func TestPos(t *testing.T) {
 	})
 	t.Run("UpdateDeleteFailedCauseNotFound", func(t *testing.T) {
 		x.reset()
-		defer x.truncate()
 
 		id := "9999"
 		affected, err := x.services.DeleteById(context.Background(), id)
@@ -245,6 +238,111 @@ func TestPos(t *testing.T) {
 		_, err = x.services.Update(context.Background(), input)
 		assert.NotNil(t, err)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+	t.Run("InsertSuccessLevel1", func(t *testing.T) {
+		x.reset()
+
+		nama := "Mas Luxman"
+		urutan := 1
+		input := &keep_request.PosInputUpdate{
+			Nama:     nama,
+			Urutan:   urutan,
+			ParentId: "",
+		}
+		model, err := x.services.Insert(context.Background(), input)
+		assert.Nil(t, err)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 1, model.Level)
+
+		model, _ = x.repo.FindById(context.Background(), model.Id)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 1, model.Level)
+
+		input = &keep_request.PosInputUpdate{
+			Id:       model.Id,
+			Nama:     nama,
+			Urutan:   urutan,
+			ParentId: "",
+			IsShow:   true,
+		}
+		_, err = x.services.Update(context.Background(), input)
+		assert.Nil(t, err)
+
+		model, _ = x.repo.FindById(context.Background(), model.Id)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 1, model.Level)
+	})
+	t.Run("InsertSuccessLevel2", func(t *testing.T) {
+		poses := x.reset()
+		pos := poses[0]
+
+		nama := "Mas Luxman"
+		urutan := 1
+		input := &keep_request.PosInputUpdate{
+			Nama:     nama,
+			Urutan:   urutan,
+			ParentId: pos.Id,
+		}
+		model, err := x.services.Insert(context.Background(), input)
+		assert.Nil(t, err)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 2, model.Level)
+
+		model, _ = x.repo.FindById(context.Background(), model.Id)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 2, model.Level)
+	})
+	t.Run("InsertSuccessLevel3", func(t *testing.T) {
+		poses := x.reset()
+		pos := poses[2]
+
+		nama := "Mas Luxman"
+		urutan := 1
+		input := &keep_request.PosInputUpdate{
+			Nama:     nama,
+			Urutan:   urutan,
+			ParentId: pos.Id,
+		}
+		model, err := x.services.Insert(context.Background(), input)
+		assert.Nil(t, err)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 3, model.Level)
+
+		model, _ = x.repo.FindById(context.Background(), model.Id)
+		assert.Equal(t, true, model.IsShow)
+		assert.Equal(t, 3, model.Level)
+	})
+	t.Run("InsertSuccessIsLeafTrue", func(t *testing.T) {
+		poses := x.reset()
+		pos := poses[0]
+
+		nama := "Mas Luxman"
+		urutan := 1
+		input := &keep_request.PosInputUpdate{
+			Nama:     nama,
+			Urutan:   urutan,
+			ParentId: "",
+		}
+		model, err := x.services.Insert(context.Background(), input)
+		assert.Nil(t, err)
+		assert.Equal(t, true, model.IsLeaf)
+
+		model, _ = x.repo.FindById(context.Background(), model.Id)
+		assert.Equal(t, true, model.IsLeaf)
+
+		x.reset()
+
+		input = &keep_request.PosInputUpdate{
+			Nama:     nama,
+			Urutan:   urutan,
+			ParentId: pos.ParentId,
+		}
+		model, err = x.services.Insert(context.Background(), input)
+		assert.Nil(t, err)
+		assert.Equal(t, true, model.IsLeaf)
+
+		model, _ = x.repo.FindById(context.Background(), model.Id)
+		assert.Equal(t, true, model.IsLeaf)
 	})
 
 	/*
@@ -528,6 +626,105 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, 10000, model.Saldo)
 		model, _ = x.repo.FindById(ctx, posPengeluaran.Id)
 		assert.Equal(t, 10000, model.Saldo)
+	})
+
+	_ = d.Register(keep_events.PosCreated, l.PosCreated)
+	_ = d.Register(keep_events.PosUpdated, l.PosUpdated)
+	_ = d.Register(keep_events.PosSoftDeleted, l.PosSoftDeleted)
+	_ = d.Register(keep_events.PosRestored, l.PosRestored)
+	t.Run("ListenerPosCreated", func(t *testing.T) {
+		poses := x.reset()
+		ctx := context.Background()
+
+		posPemasukan := poses[0]
+		assert.True(t, posPemasukan.IsLeaf)
+
+		_, err := x.services.Insert(ctx, &keep_request.PosInputUpdate{
+			Nama:     "Mas Luxman",
+			Urutan:   1,
+			ParentId: posPemasukan.Id,
+			IsShow:   true,
+		})
+		assert.Nil(t, err)
+		time.Sleep(time.Millisecond * 10)
+
+		posPemasukan, err = x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Nil(t, err)
+		assert.False(t, posPemasukan.IsLeaf)
+	})
+	t.Run("ListenerPosUpdated", func(t *testing.T) {
+		poses := x.reset()
+		ctx := context.Background()
+
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		assert.True(t, posPemasukan.IsLeaf)
+		assert.False(t, posPengeluaran.IsLeaf)
+		assert.True(t, posMain.IsLeaf)
+
+		_, err := x.services.Update(ctx, &keep_request.PosInputUpdate{
+			Id:       posMain.Id,
+			Nama:     "Mas Luxman",
+			Urutan:   1,
+			ParentId: posPemasukan.Id,
+			IsShow:   true,
+		})
+		assert.Nil(t, err)
+		time.Sleep(time.Millisecond * 10)
+
+		posPemasukan, err = x.repo.FindById(ctx, posPemasukan.Id)
+		assert.Nil(t, err)
+		assert.False(t, posPemasukan.IsLeaf)
+
+		posPengeluaran, err = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.Nil(t, err)
+		assert.True(t, posPengeluaran.IsLeaf)
+	})
+	t.Run("ListenerPosSoftDeleted", func(t *testing.T) {
+		poses := x.reset()
+		ctx := context.Background()
+
+		posPemasukan := poses[0]
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+		assert.True(t, posPemasukan.IsLeaf)
+		assert.False(t, posPengeluaran.IsLeaf)
+		assert.True(t, posMain.IsLeaf)
+
+		_, err := x.services.DeleteById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		time.Sleep(time.Millisecond * 10)
+
+		posPemasukan, _ = x.repo.FindById(ctx, posPemasukan.Id)
+		assert.True(t, posPemasukan.IsLeaf)
+		posPengeluaran, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.True(t, posPengeluaran.IsLeaf)
+	})
+	t.Run("ListenerPosRestored", func(t *testing.T) {
+		poses := x.reset()
+		ctx := context.Background()
+
+		posPengeluaran := poses[1]
+		posMain := poses[2]
+
+		_, _ = x.services.DeleteById(ctx, posMain.Id)
+		time.Sleep(time.Millisecond * 10)
+
+		posPengeluaran, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.True(t, posPengeluaran.IsLeaf)
+		posMain, _ = x.repo.FindTrashedById(ctx, posMain.Id)
+		assert.True(t, posMain.IsLeaf)
+		assert.Equal(t, "trashed", posMain.Status)
+
+		_, err := x.services.RestoreTrashedById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		time.Sleep(time.Millisecond * 10)
+
+		posPengeluaran, _ = x.repo.FindById(ctx, posPengeluaran.Id)
+		assert.False(t, posPengeluaran.IsLeaf)
+		posMain, _ = x.repo.FindById(ctx, posMain.Id)
+		assert.True(t, posMain.IsLeaf)
 	})
 }
 

@@ -48,7 +48,7 @@ func InitKeepPosServices() *keep_services.PosServices {
 	return nil
 }
 func InitKeepKantongServices() *keep_services.KantongServices {
-	wire.Build(KeepKantongSet)
+	wire.Build(KeepKantongSet, KeepPosSet)
 	return nil
 }
 func InitKeepKantongHistoryServices() *keep_services.KantongHistoryServices {

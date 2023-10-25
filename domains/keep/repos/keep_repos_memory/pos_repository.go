@@ -26,8 +26,11 @@ func (x *PosMemoryRepository) Get(_ context.Context, request *keep_request.GetPo
 	})
 }
 func (x *PosMemoryRepository) FindById(_ context.Context, id string) (*keep_entities.Pos, error) {
-	model, err := x.findById(id, "aktif")
-	return model.Copy(), err
+	index, err := x.findIndexById(id, "aktif")
+	if err != nil {
+		return nil, err
+	}
+	return x.Data[index].Copy(), nil
 }
 func (x *PosMemoryRepository) Insert(_ context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
 	lastId := helpers.Reduce(x.Data, 0, func(accumulator int, pos *keep_entities.Pos) int {
@@ -40,18 +43,18 @@ func (x *PosMemoryRepository) Insert(_ context.Context, pos *keep_entities.Pos) 
 	x.Data = append(x.Data, model)
 	return model, nil
 }
-func (x *PosMemoryRepository) Update(_ context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
+func (x *PosMemoryRepository) Update(_ context.Context, pos *keep_entities.Pos) (affected int, err error) {
 	model := &keep_entities.Pos{}
-	_, err := x.findById(pos.Id, "aktif")
+	_, err = x.findById(pos.Id, "aktif")
 	if err != nil {
-		return model, err
+		return 0, err
 	}
 	index, _ := helpers.FindIndex(x.Data, func(p *keep_entities.Pos) bool {
 		return p.Id == pos.Id
 	})
 	model = pos.Copy()
 	x.Data[index] = model
-	return model, nil
+	return 1, nil
 }
 func (x *PosMemoryRepository) SoftDeleteById(_ context.Context, id string) (affected int, err error) {
 	model, _ := x.findById(id, "aktif")
@@ -72,8 +75,11 @@ func (x *PosMemoryRepository) GetTrashed(_ context.Context) []*keep_entities.Pos
 	})
 }
 func (x *PosMemoryRepository) FindTrashedById(_ context.Context, id string) (*keep_entities.Pos, error) {
-	model, err := x.findById(id, "trashed")
-	return model.Copy(), err
+	index, err := x.findIndexById(id, "trashed")
+	if err != nil {
+		return nil, err
+	}
+	return x.Data[index].Copy(), nil
 }
 func (x *PosMemoryRepository) RestoreTrashedById(_ context.Context, id string) (affected int, err error) {
 	model, _ := x.findById(id, "trashed")
@@ -94,6 +100,17 @@ func (x *PosMemoryRepository) GetJumlahById(_ context.Context, id string) (saldo
 		return accumulator + v.Saldo
 	})
 }
+func (x *PosMemoryRepository) CountChildren(_ context.Context, id string) (count int) {
+	models := helpers.Filter(x.Data, func(v *keep_entities.Pos) bool {
+		return v.Status == "aktif" && v.ParentId == id
+	})
+	return len(models)
+}
+func (x *PosMemoryRepository) UpdateLeaf(_ context.Context, id string, leaf bool) (affected int, err error) {
+	index, _ := x.findIndexById(id, "aktif")
+	x.Data[index].IsLeaf = leaf
+	return 1, nil
+}
 
 func (x *PosMemoryRepository) newQueryRequest(request *keep_request.GetPos, status string) []*keep_entities.Pos {
 	return helpers.Filter(x.Data, func(pos *keep_entities.Pos) bool {
@@ -106,6 +123,19 @@ func (x *PosMemoryRepository) newQueryRequest(request *keep_request.GetPos, stat
 		}
 		return res
 	})
+}
+func (x *PosMemoryRepository) findIndexById(id string, status string) (index int, err error) {
+	index, err = helpers.FindIndex(x.Data, func(v *keep_entities.Pos) bool {
+		res := v.Id == id
+		if status != "" {
+			res = res && v.Status == status
+		}
+		return res
+	})
+	if err != nil {
+		return index, helpers_error.NewEntryNotFoundError(posEntityName, "id", "id")
+	}
+	return index, nil
 }
 func (x *PosMemoryRepository) findById(id string, status string) (*keep_entities.Pos, error) {
 	models := helpers.Filter(x.Data, func(pos *keep_entities.Pos) bool {

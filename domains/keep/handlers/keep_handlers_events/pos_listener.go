@@ -18,13 +18,69 @@ type PosEventListenerHandler struct {
 	service keep_service_interfaces.IPosServices
 }
 
+/*
+ * Pos
+ */
+
+func (x *PosEventListenerHandler) PosCreated(eventData any) {
+	eventName, data, err := keep_events.NewPosCreatedEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+	x.updateLeafStatus(eventName, data.ParentId)
+}
+func (x *PosEventListenerHandler) PosUpdated(eventData any) {
+	eventName, data, err := keep_events.NewPosUpdatedEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+	x.updateLeafStatus(eventName, data.Old.ParentId, data.New.ParentId)
+}
+func (x *PosEventListenerHandler) PosSoftDeleted(eventData any) {
+	eventName, data, err := keep_events.NewPosSoftDeleteEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+	x.updateLeafStatus(eventName, data.ParentId)
+}
+func (x *PosEventListenerHandler) PosRestored(eventData any) {
+	eventName, data, err := keep_events.NewPosRestoreEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+	x.updateLeafStatus(eventName, data.ParentId)
+}
+func (x *PosEventListenerHandler) updateLeafStatus(action string, ids ...string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	affected, err := x.service.UpdateLeafStatus(ctx, ids)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+
+	logrus.
+		WithField("listener", "keep.pos").
+		WithField("event", action).
+		Infof("affected:%d", affected)
+}
+
+/*
+ * Transaksi
+ */
+
 func (x *PosEventListenerHandler) TransaksiCreated(eventData any) {
 	data, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo("created", data.Data.PosAsalId, data.Data.PosTujuanId)
+	x.updateSaldo(keep_events.TransaksiCreated, data.Data.PosAsalId, data.Data.PosTujuanId)
 }
 func (x *PosEventListenerHandler) TransaksiUpdated(eventData any) {
 	data, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
@@ -32,7 +88,7 @@ func (x *PosEventListenerHandler) TransaksiUpdated(eventData any) {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo("updated", data.Old.PosAsalId, data.Old.PosTujuanId, data.New.PosAsalId, data.New.PosTujuanId)
+	x.updateSaldo(keep_events.TransaksiUpdated, data.Old.PosAsalId, data.Old.PosTujuanId, data.New.PosAsalId, data.New.PosTujuanId)
 }
 func (x *PosEventListenerHandler) TransaksiSoftDeleted(eventData any) {
 	data, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
@@ -40,7 +96,7 @@ func (x *PosEventListenerHandler) TransaksiSoftDeleted(eventData any) {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo("softDelete", data.Data.PosAsalId, data.Data.PosTujuanId)
+	x.updateSaldo(keep_events.TransaksiSoftDeleted, data.Data.PosAsalId, data.Data.PosTujuanId)
 }
 func (x *PosEventListenerHandler) TransaksiRestored(eventData any) {
 	data, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
@@ -48,9 +104,8 @@ func (x *PosEventListenerHandler) TransaksiRestored(eventData any) {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo("restore", data.Data.PosAsalId, data.Data.PosTujuanId)
+	x.updateSaldo(keep_events.TransaksiRestored, data.Data.PosAsalId, data.Data.PosTujuanId)
 }
-
 func (x *PosEventListenerHandler) updateSaldo(action string, ids ...string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -61,5 +116,8 @@ func (x *PosEventListenerHandler) updateSaldo(action string, ids ...string) {
 		return
 	}
 
-	logrus.WithField("listener", "keep.pos."+action).Infof("affected:%d", affected)
+	logrus.
+		WithField("listener", "keep.pos").
+		WithField("event", action).
+		Infof("affected:%d", affected)
 }
