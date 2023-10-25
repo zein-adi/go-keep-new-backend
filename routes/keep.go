@@ -24,7 +24,7 @@ func injectKeepRoutes(r *gorillamux_router.Router) {
 			r.GET("/trash", transaksi.GetTrashed, "trash")
 			r.POST("", transaksi.Insert, "insert")
 			r.PATCH("/{transaksiId:[0-9]+}", transaksi.Update, "update")
-			r.PATCH("/{transaksiId:[0-9]+}/trash", transaksi.RestoreTrashedById, "trash")
+			r.PATCH("/{transaksiId:[0-9]+}/trash/restore", transaksi.RestoreTrashedById, "trash")
 			r.DELETE("/{transaksiId:[0-9]+}", transaksi.DeleteById, "delete")
 			r.DELETE("/{transaksiId:[0-9]+}/trash", transaksi.DeleteTrashedById, "trash") // Dangerous
 		})
@@ -40,12 +40,12 @@ func injectKeepRoutes(r *gorillamux_router.Router) {
 		})
 
 		pos := keep_handlers_restful.NewPosRestfulHandler(dependency_injection.InitKeepPosServices())
-		r.Group("/posts", "pos.", func(r *gorillamux_router.Router) {
+		r.Group("/pos", "pos.", func(r *gorillamux_router.Router) {
 			r.GET("", pos.Get, "get")
 			r.GET("/trash", pos.GetTrashed, "trash")
 			r.POST("", pos.Insert, "insert")
 			r.PATCH("/{posId:[0-9]+}", pos.Update, "update")
-			r.PATCH("/{posId:[0-9]+}/trash", pos.RestoreTrashedById, "trash")
+			r.PATCH("/{posId:[0-9]+}/trash/restore", pos.RestoreTrashedById, "trash")
 			r.DELETE("/{posId:[0-9]+}", pos.DeleteById, "delete")
 			//r.DELETE("/{posId:[0-9]+}/trash", pos.DeleteTrashedById, "trash") // Dangerous
 		})
@@ -56,7 +56,7 @@ func injectKeepRoutes(r *gorillamux_router.Router) {
 			r.GET("/trash", kantong.GetTrashed, "trash")
 			r.POST("", kantong.Insert, "insert")
 			r.PATCH("/{kantongId:[0-9]+}", kantong.Update, "update")
-			r.PATCH("/{kantongId:[0-9]+}/trash", kantong.RestoreTrashedById, "trash")
+			r.PATCH("/{kantongId:[0-9]+}/trash/restore", kantong.RestoreTrashedById, "trash")
 			r.DELETE("/{kantongId:[0-9]+}", kantong.DeleteById, "delete")
 			//r.DELETE("/{kantongId:[0-9]+}/trash", kantong.DeleteTrashedById, "trash") // Dangerous
 

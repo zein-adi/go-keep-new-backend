@@ -13,11 +13,11 @@ func injectBasicRoutes(r *gorillamux_router.Router) {
 	pos := basic_handlers_restful.NewChangelogRestfulHandler(dependency_injection.InitBasicChangelogServices())
 
 	// Bisa dilihat public / dimunculkan sebelum login
-	r.Group("/changelog", "changelog.", func(r *gorillamux_router.Router) {
+	r.Group("/changelogs", "changelog.", func(r *gorillamux_router.Router) {
 		r.GET("", pos.Get, "get")
 	}) //.SetMiddleware(middlewares.AuthHandle)
 
-	r.Group("/changelog", "changelog.", func(r *gorillamux_router.Router) {
+	r.Group("/changelogs", "changelog.", func(r *gorillamux_router.Router) {
 		r.POST("", pos.Insert, "insert")
 		r.PATCH("/{changelogId:[0-9]+}", pos.Update, "update")
 		r.DELETE("/{changelogId:[0-9]+}", pos.DeleteById, "delete")
