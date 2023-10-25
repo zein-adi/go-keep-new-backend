@@ -8,14 +8,16 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 )
 
-func NewKantongServices(repo keep_repo_interfaces.IKantongRepository) *KantongServices {
+func NewKantongServices(kantongRepo keep_repo_interfaces.IKantongRepository, posRepo keep_repo_interfaces.IPosRepository) *KantongServices {
 	return &KantongServices{
-		repo: repo,
+		repo:    kantongRepo,
+		posRepo: posRepo,
 	}
 }
 
 type KantongServices struct {
-	repo keep_repo_interfaces.IKantongRepository
+	repo    keep_repo_interfaces.IKantongRepository
+	posRepo keep_repo_interfaces.IPosRepository
 }
 
 func (x *KantongServices) Get(ctx context.Context) []*keep_entities.Kantong {
@@ -26,6 +28,10 @@ func (x *KantongServices) FindById(ctx context.Context, id string) (*keep_entiti
 }
 func (x *KantongServices) Insert(ctx context.Context, kantongRequest *keep_request.KantongInsert) (*keep_entities.Kantong, error) {
 	err := validator.New().ValidateStruct(kantongRequest)
+	if err != nil {
+		return nil, err
+	}
+	_, err = x.posRepo.FindById(ctx, kantongRequest.PosId)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +50,10 @@ func (x *KantongServices) Insert(ctx context.Context, kantongRequest *keep_reque
 func (x *KantongServices) Update(ctx context.Context, kantongRequest *keep_request.KantongUpdate) (affected int, int error) {
 
 	err := validator.New().ValidateStruct(kantongRequest)
+	if err != nil {
+		return 0, err
+	}
+	_, err = x.posRepo.FindById(ctx, kantongRequest.PosId)
 	if err != nil {
 		return 0, err
 	}

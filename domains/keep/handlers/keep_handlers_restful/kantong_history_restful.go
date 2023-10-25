@@ -39,6 +39,8 @@ func (x *KantongHistoryRestfulHandler) Insert(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	vars := mux.Vars(r)
+	input.KantongId = vars["kantongId"]
 	model, err := x.service.Insert(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.ValidationError) {
@@ -63,6 +65,7 @@ func (x *KantongHistoryRestfulHandler) Update(w http.ResponseWriter, r *http.Req
 
 	vars := mux.Vars(r)
 	input.Id = vars["kantongHistoryId"]
+	input.KantongId = vars["kantongId"]
 	model, err := x.service.Update(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {

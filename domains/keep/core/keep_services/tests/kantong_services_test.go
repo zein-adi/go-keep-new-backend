@@ -243,6 +243,49 @@ func TestKantong(t *testing.T) {
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
 
+	t.Run("InsertFailedPosNotExists", func(t *testing.T) {
+		x.reset()
+
+		nama := "Mandiri"
+		urutan := 1
+		posId := "999999"
+		saldo := 200000
+		saldoMengendap := 100000
+
+		input := &keep_request.KantongInsert{
+			Nama:           nama,
+			Urutan:         urutan,
+			Saldo:          saldo,
+			SaldoMengendap: saldoMengendap,
+			PosId:          posId,
+		}
+		_, err := x.services.Insert(context.Background(), input)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+	t.Run("UpdateFailedPosNotExists", func(t *testing.T) {
+		_, kantongs := x.reset()
+		kantong := kantongs[0]
+
+		id := kantong.Id
+		nama := "BCA"
+		urutan := 2
+		posId := "999999"
+		saldo := 100000
+		saldoMengendap := 0
+		input := &keep_request.KantongUpdate{
+			Id:             id,
+			Nama:           nama,
+			Urutan:         urutan,
+			Saldo:          saldo,
+			SaldoMengendap: saldoMengendap,
+			PosId:          posId,
+			IsShow:         false,
+		}
+		affected, err := x.services.Update(context.Background(), input)
+		assert.Equal(t, 0, affected)
+		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
+	})
+
 	/*
 	 * Testing Listener
 	 */
@@ -424,7 +467,7 @@ type KantongServicesTest struct {
 
 func (x *KantongServicesTest) setUp() {
 	x.setUpMemoryRepository()
-	x.services = keep_services.NewKantongServices(x.repo)
+	x.services = keep_services.NewKantongServices(x.repo, x.posRepo)
 }
 func (x *KantongServicesTest) setUpMemoryRepository() {
 	x.posRepo = keep_repos_memory.NewPosMemoryRepository()
