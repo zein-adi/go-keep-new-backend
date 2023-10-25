@@ -5,9 +5,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_repo_interfaces"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 )
 
@@ -25,10 +25,10 @@ type RoleServices struct {
 	roleRepo auth_repo_interfaces.IRoleRepository
 }
 
-func (x *RoleServices) Get(ctx context.Context, request auth_requests.Get) []*auth_entities.Role {
+func (x *RoleServices) Get(ctx context.Context, request *helpers_requests.Get) []*auth_entities.Role {
 	return x.roleRepo.Get(ctx, request)
 }
-func (x *RoleServices) Count(ctx context.Context, request auth_requests.Get) int {
+func (x *RoleServices) Count(ctx context.Context, request *helpers_requests.Get) int {
 	return x.roleRepo.Count(ctx, request)
 }
 func (x *RoleServices) Insert(ctx context.Context, role *auth_entities.Role, currentUserRoleIds []string) (*auth_entities.Role, error) {

@@ -3,9 +3,9 @@ package auth_repos_memory
 import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"slices"
 	"strconv"
 	"strings"
@@ -21,7 +21,7 @@ type RoleRepository struct {
 	data []*auth_entities.Role
 }
 
-func (r *RoleRepository) Get(_ context.Context, request auth_requests.Get) []*auth_entities.Role {
+func (r *RoleRepository) Get(_ context.Context, request *helpers_requests.Get) []*auth_entities.Role {
 	data := r.getDataFiltered(request)
 	if request.Take > 0 {
 		data = helpers.Slice(data, request.Skip, request.Take)
@@ -31,7 +31,7 @@ func (r *RoleRepository) Get(_ context.Context, request auth_requests.Get) []*au
 	})
 }
 
-func (r *RoleRepository) Count(_ context.Context, request auth_requests.Get) (count int) {
+func (r *RoleRepository) Count(_ context.Context, request *helpers_requests.Get) (count int) {
 	return len(r.getDataFiltered(request))
 }
 func (r *RoleRepository) CountByNama(_ context.Context, nama string, exceptId string) (count int) {
@@ -97,7 +97,7 @@ func (r *RoleRepository) GetById(_ context.Context, ids []string) ([]*auth_entit
 	return copied, nil
 }
 
-func (r *RoleRepository) getDataFiltered(request auth_requests.Get) []*auth_entities.Role {
+func (r *RoleRepository) getDataFiltered(request *helpers_requests.Get) []*auth_entities.Role {
 	return helpers.Filter(r.data, func(role *auth_entities.Role) bool {
 		res := true
 

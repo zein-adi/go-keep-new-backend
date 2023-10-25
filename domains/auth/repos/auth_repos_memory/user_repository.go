@@ -3,9 +3,9 @@ package auth_repos_memory
 import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"strconv"
 	"strings"
 )
@@ -20,25 +20,22 @@ type UserRepository struct {
 	data []*auth_entities.User
 }
 
-func (r *UserRepository) Get(_ context.Context, request auth_requests.Get) []*auth_entities.User {
+func (r *UserRepository) Get(_ context.Context, request *helpers_requests.Get) []*auth_entities.User {
 	data := r.getDataFiltered(request)
 	data = helpers.Slice(data, request.Skip, request.Take)
 	return helpers.Map(data, func(d *auth_entities.User) *auth_entities.User {
 		return d.Copy()
 	})
 }
-
-func (r *UserRepository) Count(_ context.Context, request auth_requests.Get) (count int) {
+func (r *UserRepository) Count(_ context.Context, request *helpers_requests.Get) (count int) {
 	return len(r.getDataFiltered(request))
 }
-
 func (r *UserRepository) CountByUsername(_ context.Context, username string, exceptId string) (count int) {
 	matches := helpers.Filter(r.data, func(user *auth_entities.User) bool {
 		return user.Username == username && user.Id != exceptId
 	})
 	return len(matches)
 }
-
 func (r *UserRepository) Insert(_ context.Context, user *auth_entities.User) (*auth_entities.User, error) {
 	lastId := helpers.Reduce(r.data, 0, func(accumulator int, user *auth_entities.User) int {
 		datumId, _ := strconv.Atoi(user.Id)
@@ -50,7 +47,6 @@ func (r *UserRepository) Insert(_ context.Context, user *auth_entities.User) (*a
 	r.data = append(r.data, model)
 	return model, nil
 }
-
 func (r *UserRepository) Update(ctx context.Context, user *auth_entities.User) (affected int, err error) {
 	_, err = r.FindById(ctx, user.Id)
 	if err != nil {
@@ -62,7 +58,6 @@ func (r *UserRepository) Update(ctx context.Context, user *auth_entities.User) (
 	r.data[index] = user
 	return 1, nil
 }
-
 func (r *UserRepository) UpdatePassword(ctx context.Context, userId, password string) (affected int, err error) {
 	_, err = r.FindById(ctx, userId)
 	if err != nil {
@@ -107,7 +102,7 @@ func (r *UserRepository) DeleteById(ctx context.Context, id string) (affected in
 	return 1, nil
 }
 
-func (r *UserRepository) getDataFiltered(request auth_requests.Get) []*auth_entities.User {
+func (r *UserRepository) getDataFiltered(request *helpers_requests.Get) []*auth_entities.User {
 	return helpers.Filter(r.data, func(user *auth_entities.User) bool {
 		res := true
 		if request.Search != "" {

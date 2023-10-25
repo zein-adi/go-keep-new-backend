@@ -12,6 +12,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/repos/auth_repos_mysql"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"testing"
@@ -44,7 +45,7 @@ func TestUser(t *testing.T) {
 	})
 	t.Run("GetSuccess", func(t *testing.T) {
 		r.setupAndPopulate()
-		models := r.services.Get(context.Background(), auth_requests.NewGet())
+		models := r.services.Get(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 2)
 	})
 	t.Run("UpdateSuccess", func(t *testing.T) {
@@ -93,14 +94,14 @@ func TestUser(t *testing.T) {
 		users, roles := r.setupAndPopulate()
 		id := users[1].Id
 		currentUserRoleIds := []string{roles[0].Id}
-		models := r.repo.Get(context.Background(), auth_requests.NewGet())
+		models := r.repo.Get(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 2)
 
 		aff, err := r.services.DeleteById(context.Background(), id, currentUserRoleIds)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, aff)
 
-		models = r.repo.Get(context.Background(), auth_requests.NewGet())
+		models = r.repo.Get(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 1)
 	})
 	t.Run("InsertUpdateFailedValidationsUsername", func(t *testing.T) {
@@ -305,11 +306,11 @@ func (x *UserServicesTest) setMysqlRepository() {
 	x.repo = repo
 	x.roleRepo = roleRepo
 
-	models := x.repo.Get(context.Background(), auth_requests.NewGet())
+	models := x.repo.Get(context.Background(), helpers_requests.NewGet())
 	for _, model := range models {
 		_, _ = x.repo.DeleteById(context.Background(), model.Id)
 	}
-	models2 := x.roleRepo.Get(context.Background(), auth_requests.NewGet())
+	models2 := x.roleRepo.Get(context.Background(), helpers_requests.NewGet())
 	for _, model := range models2 {
 		_, _ = x.repo.DeleteById(context.Background(), model.Id)
 	}

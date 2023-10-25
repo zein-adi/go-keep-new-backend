@@ -6,11 +6,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zein-adi/go-keep-new-backend/app/middlewares"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_services"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,7 +28,7 @@ func (x *RoleRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	request := auth_requests.NewGet()
+	request := helpers_requests.NewGet()
 	q := r.URL.Query()
 
 	if q.Has("skip") {

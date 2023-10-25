@@ -3,8 +3,8 @@ package auth_handlers_local
 import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_service_interfaces"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func (x *RoleLocalHandler) Get() []*auth_entities.Role {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	request := auth_requests.NewGet()
+	request := helpers_requests.NewGet()
 	request.Take = 0
 	return x.service.Get(ctx, request)
 }
