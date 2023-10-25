@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zein-adi/go-keep-new-backend/app/commands"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/routes"
 )
@@ -32,9 +33,9 @@ func cliHandler() {
 	flag.StringVar(&password, "p", "", "password: new user password")
 	flag.Parse()
 	if method == "migrate" {
-		RunMigration(action, domain, version, name)
+		commands.RunMigration(action, domain, version, name)
 	} else if method == "seed" {
-		RunSeed(username, password)
+		commands.RunSeed(username, password)
 	} else if method == "" {
 		routes.StartHttpServer()
 	} else {
