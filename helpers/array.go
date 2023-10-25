@@ -42,7 +42,7 @@ func Reduce[D any, E int | float32 | float64](data []D, initial E, f func(E, D) 
 
 // Map memetakan isi array sesuai function yang dimasukkan
 func Map[D any, V any](data []D, v func(D) V) []V {
-	var result []V
+	result := make([]V, 0)
 	for _, datum := range data {
 		result = append(result, v(datum))
 	}
