@@ -8,6 +8,8 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/basic/core/basic_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
+	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,27 +30,38 @@ func (x *ChangelogRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	q := r.URL.Query()
-	take := 10
-	skip := 0
-	if q.Has("take") {
-		t, err := strconv.Atoi(q.Get("take"))
-		if err != nil {
-			h.SendSingleResponse(w, 400, helpers_error.NewValidationErrors("take", "type", "integer"))
-			return
-		}
-		take = t
-	}
-	if q.Has("skip") {
-		t, err := strconv.Atoi(q.Get("skip"))
-		if err != nil {
-			h.SendSingleResponse(w, 400, helpers_error.NewValidationErrors("skip", "type", "integer"))
-			return
-		}
-		skip = t
+	v := validator.New()
+	err := v.ValidateMap(map[string]interface{}{
+		"skip": q.Get("skip"),
+		"take": q.Get("take"),
+	}, map[string]interface{}{
+		"skip": "omitempty,number",
+		"take": "omitempty,number",
+	})
+	if err != nil {
+		h.SendSingleResponse(w, 400, err.Error())
+		return
 	}
 
-	models := x.service.Get(ctx, skip, take)
-	h.SendMultiResponse(w, http.StatusOK, models, len(models))
+	request := helpers_requests.NewGet()
+	request.Search = q.Get("search")
+	if q.Has("skip") {
+		request.Skip, _ = strconv.Atoi(q.Get("skip"))
+	}
+	if q.Has("take") {
+		request.Take, _ = strconv.Atoi(q.Get("take"))
+	} else {
+		request.Take = 10
+	}
+	err = v.ValidateStruct(request)
+	if err != nil {
+		h.SendSingleResponse(w, 400, err.Error())
+		return
+	}
+
+	models := x.service.Get(ctx, request)
+	count := x.service.Count(ctx, request)
+	h.SendMultiResponse(w, http.StatusOK, models, count)
 }
 func (x *ChangelogRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
@@ -82,7 +95,7 @@ func (x *ChangelogRestfulHandler) Update(w http.ResponseWriter, r *http.Request)
 
 	vars := mux.Vars(r)
 	input.Id = vars["changelogId"]
-	model, err := x.service.Update(ctx, input)
+	affected, err := x.service.Update(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {
 			h.SendErrorResponse(w, http.StatusNotFound, "")
@@ -94,7 +107,7 @@ func (x *ChangelogRestfulHandler) Update(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.SendSingleResponse(w, http.StatusOK, model)
+	h.SendSingleResponse(w, http.StatusOK, affected)
 }
 func (x *ChangelogRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)

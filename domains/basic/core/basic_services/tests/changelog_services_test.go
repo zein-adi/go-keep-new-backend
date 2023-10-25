@@ -10,6 +10,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/basic/repos/basic_repos_file"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"testing"
 	"time"
 )
@@ -98,7 +99,8 @@ func TestChangelog(t *testing.T) {
 			oriMap[m.Id] = m
 		}
 
-		models := x.services.Get(ctx, 0, 0)
+		request := helpers_requests.NewGet()
+		models := x.services.Get(ctx, request)
 		for _, m := range models {
 			o := oriMap[m.Id]
 			assert.Equal(t, o.Id, m.Id)
@@ -107,16 +109,22 @@ func TestChangelog(t *testing.T) {
 			assert.Equal(t, o.Body, m.Body)
 		}
 
-		models = x.services.Get(ctx, 0, 1)
+		request = helpers_requests.NewGet()
+		request.Skip = 0
+		request.Take = 1
+		models = x.services.Get(ctx, request)
 		for _, m := range models {
 			o := oriMap[m.Id]
-			assert.Equal(t, "1", m.Id)
+			assert.Equal(t, "3", m.Id)
 			assert.Equal(t, o.Version, m.Version)
 			assert.Equal(t, o.Timestamp, m.Timestamp)
 			assert.Equal(t, o.Body, m.Body)
 		}
 
-		models = x.services.Get(ctx, 1, 1)
+		request = helpers_requests.NewGet()
+		request.Skip = 1
+		request.Take = 1
+		models = x.services.Get(ctx, request)
 		for _, m := range models {
 			o := oriMap[m.Id]
 			assert.Equal(t, "2", m.Id)
@@ -171,7 +179,7 @@ func (x *ChangelogServicesTest) setUpRepository() {
 		repo.DeleteFile()
 	}
 	x.truncate = func() {
-		models := repo.Get(context.Background(), 0, 0)
+		models := repo.Get(context.Background(), helpers_requests.NewGet())
 		for _, model := range models {
 			_, err := repo.DeleteById(context.Background(), model.Id)
 			helpers_error.PanicIfError(err)

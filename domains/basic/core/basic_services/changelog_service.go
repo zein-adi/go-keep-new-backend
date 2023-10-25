@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/basic/core/basic_entities"
 	"github.com/zein-adi/go-keep-new-backend/domains/basic/core/basic_repo_interfaces"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 )
 
@@ -17,9 +18,14 @@ type ChangelogServices struct {
 	repo basic_repo_interfaces.IChangelogRepository
 }
 
-func (x *ChangelogServices) Get(ctx context.Context, skip, take int) []*basic_entities.Changelog {
-	return x.repo.Get(ctx, skip, take)
+func (x *ChangelogServices) Get(ctx context.Context, request *helpers_requests.Get) []*basic_entities.Changelog {
+	return x.repo.Get(ctx, request)
 }
+
+func (x *ChangelogServices) Count(ctx context.Context, request *helpers_requests.Get) (count int) {
+	return x.repo.Count(ctx, request)
+}
+
 func (x *ChangelogServices) Insert(ctx context.Context, changelog *basic_entities.Changelog) (*basic_entities.Changelog, error) {
 	err := validator.New().ValidateStruct(changelog)
 	if err != nil {

@@ -7,8 +7,11 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_directory"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 var changelogEntityName = "changelog"
@@ -25,16 +28,22 @@ type ChangelogFileRepository struct {
 	Data []*basic_entities.Changelog
 }
 
-func (x *ChangelogFileRepository) Get(_ context.Context, skip int, take int) []*basic_entities.Changelog {
+func (x *ChangelogFileRepository) Get(_ context.Context, request *helpers_requests.Get) []*basic_entities.Changelog {
 	x.loadCache()
-	data := x.Data
-	if take > 0 {
-		data = helpers.Slice(x.Data, skip, take)
+	data := x.newQueryRequest(request)
+	if request.Take > 0 {
+		data = helpers.Slice(x.Data, request.Skip, request.Take)
 	}
 	return helpers.Map(data, func(v *basic_entities.Changelog) *basic_entities.Changelog {
 		return v.Copy()
 	})
 }
+
+func (x *ChangelogFileRepository) Count(_ context.Context, request *helpers_requests.Get) (count int) {
+	x.loadCache()
+	return len(x.newQueryRequest(request))
+}
+
 func (x *ChangelogFileRepository) FindById(_ context.Context, id string) (*basic_entities.Changelog, error) {
 	index, err := x.findIndexById(id)
 	if err != nil {
@@ -81,6 +90,15 @@ func (x *ChangelogFileRepository) DeleteById(_ context.Context, id string) (affe
 	return 1, nil
 }
 
+func (x *ChangelogFileRepository) newQueryRequest(request *helpers_requests.Get) []*basic_entities.Changelog {
+	return helpers.Filter(x.Data, func(v *basic_entities.Changelog) bool {
+		res := true
+		if request.Search != "" {
+			res = res && strings.Contains(strings.ToLower(v.Version), strings.ToLower(request.Search))
+		}
+		return res
+	})
+}
 func (x *ChangelogFileRepository) findIndexById(id string) (index int, err error) {
 	x.loadCache()
 
@@ -109,6 +127,11 @@ func (x *ChangelogFileRepository) loadCache() {
 	helpers_error.PanicIfError(err)
 }
 func (x *ChangelogFileRepository) writeToFile() {
+	// Order
+	sort.Slice(x.Data, func(i, j int) bool {
+		return x.Data[i].Timestamp > x.Data[j].Timestamp
+	})
+
 	// Save
 	data, err := json.Marshal(x.Data)
 	helpers_error.PanicIfError(err)
