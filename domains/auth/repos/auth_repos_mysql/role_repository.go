@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_entities"
-	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_mysql"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"strconv"
 )
 
-var roleTableName = "roles"
+var roleEntityName = "role"
+var roleTableName = "user_roles"
 
 func NewRoleMysqlRepository() *RoleMysqlRepository {
 	db, cleanup := helpers_mysql.OpenMySqlConnection()
@@ -26,7 +27,7 @@ type RoleMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (r *RoleMysqlRepository) Get(ctx context.Context, request auth_requests.Get) []*auth_entities.Role {
+func (r *RoleMysqlRepository) Get(ctx context.Context, request *helpers_requests.Get) []*auth_entities.Role {
 	q := r.getQueryFiltered(ctx, request)
 	if request.Take > 0 {
 		q.Skip(request.Skip)
@@ -35,22 +36,22 @@ func (r *RoleMysqlRepository) Get(ctx context.Context, request auth_requests.Get
 	q.OrderBy("nama")
 	return r.newEntitiesFromRows(q.Get())
 }
-func (r *RoleMysqlRepository) Count(ctx context.Context, request auth_requests.Get) (count int) {
+func (r *RoleMysqlRepository) Count(ctx context.Context, request *helpers_requests.Get) (count int) {
 	return r.getQueryFiltered(ctx, request).Count()
 }
 func (r *RoleMysqlRepository) FindById(ctx context.Context, id string) (*auth_entities.Role, error) {
-	q := r.getQueryFiltered(ctx, auth_requests.NewGet())
+	q := r.getQueryFiltered(ctx, helpers_requests.NewGet())
 	q.Where("id", "=", id)
 	q.Take(1)
 
 	models := r.newEntitiesFromRows(q.Get())
 	if len(models) == 0 {
-		return nil, helpers_error.EntryNotFoundError
+		return nil, helpers_error.NewEntryNotFoundError(roleEntityName, "id", id)
 	}
 	return models[0], nil
 }
 func (r *RoleMysqlRepository) CountByNama(ctx context.Context, nama string, exceptId string) (count int) {
-	q := r.getQueryFiltered(ctx, auth_requests.NewGet())
+	q := r.getQueryFiltered(ctx, helpers_requests.NewGet())
 	q.Where("nama", "=", nama)
 	q.Where("id", "!=", exceptId)
 	q.Take(1)
@@ -95,12 +96,12 @@ func (r *RoleMysqlRepository) DeleteById(ctx context.Context, id string) (affect
 
 	affected = q.Delete()
 	if affected == 0 {
-		return 0, helpers_error.EntryNotFoundError
+		return 0, helpers_error.NewEntryNotFoundError(roleEntityName, "id", id)
 	}
 	return affected, nil
 }
 func (r *RoleMysqlRepository) GetById(ctx context.Context, ids []string) ([]*auth_entities.Role, error) {
-	q := r.getQueryFiltered(ctx, auth_requests.NewGet())
+	q := r.getQueryFiltered(ctx, helpers_requests.NewGet())
 	q.WhereIn("id", ids)
 	models := r.newEntitiesFromRows(q.Get())
 	expectedLen := len(ids)
@@ -114,7 +115,7 @@ func (r *RoleMysqlRepository) GetById(ctx context.Context, ids []string) ([]*aut
 func (r *RoleMysqlRepository) Cleanup() {
 	r.dbCleanup()
 }
-func (r *RoleMysqlRepository) getQueryFiltered(ctx context.Context, request auth_requests.Get) *helpers_mysql.QueryBuilder {
+func (r *RoleMysqlRepository) getQueryFiltered(ctx context.Context, request *helpers_requests.Get) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, r.db, roleTableName)
 	q.Select("id, nama, deskripsi, level, permissions")
 

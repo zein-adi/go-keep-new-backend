@@ -1,4 +1,4 @@
-CREATE TABLE `roles` (
+CREATE TABLE `user_roles` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `nama` VARCHAR(100) NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',
     `deskripsi` TEXT NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',

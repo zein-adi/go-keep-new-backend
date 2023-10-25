@@ -1,4 +1,4 @@
-CREATE TABLE `users` (
+CREATE TABLE `user_users` (
     `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(100) NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',
     `password` VARCHAR(100) NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',
