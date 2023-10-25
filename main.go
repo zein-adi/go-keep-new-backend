@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/routes"
 )
@@ -34,7 +35,9 @@ func cliHandler() {
 		RunMigration(action, domain, version, name)
 	} else if method == "seed" {
 		RunSeed(username, password)
-	} else {
+	} else if method == "" {
 		routes.StartHttpServer()
+	} else {
+		fmt.Printf("Unknown command %s. \nAvailable: migrate|seed|(empty) to run server", method)
 	}
 }
