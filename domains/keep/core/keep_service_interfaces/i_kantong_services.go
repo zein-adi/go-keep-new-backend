@@ -18,4 +18,6 @@ type IKantongServices interface {
 	DeleteTrashedById(ctx context.Context, id string) (affected int, err error)
 
 	UpdateSaldo(ctx context.Context, asalId, tujuanId string, jumlah int, oldAsalId, oldTujuanId string, oldJumlah int) (affected int, err error)
+	UpdateUrutan(ctx context.Context, kantongRequests []*keep_request.KantongUpdateUrutanItem) (affected int, err error)
+	UpdateVisibility(ctx context.Context, kantongRequests []*keep_request.KantongUpdateVisibilityItem) (affected int, err error)
 }

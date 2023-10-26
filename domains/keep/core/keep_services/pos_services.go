@@ -190,7 +190,7 @@ func (x *PosServices) DeleteTrashedById(ctx context.Context, id string) (affecte
 	if err != nil {
 		return 0, err
 	}
-	affected, err = x.repo.DeleteById(ctx, id)
+	affected, err = x.repo.HardDeleteTrashedById(ctx, id)
 
 	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosHardDeleted, keep_events.PosHardDeletedEventData{
 		Time:     time.Now(),
@@ -244,6 +244,46 @@ func (x *PosServices) UpdateLeafStatus(ctx context.Context, ids []string) (affec
 		aff, err2 := x.repo.UpdateLeaf(ctx, id, isLeaf)
 		if err2 != nil {
 			return 0, err2
+		}
+		affected += aff
+	}
+	return affected, nil
+}
+func (x *PosServices) UpdateUrutan(ctx context.Context, posRequests []*keep_request.PosUpdateUrutanItem) (affected int, err error) {
+	v := validator.New()
+	for _, request := range posRequests {
+		err = v.ValidateStruct(request)
+		if err != nil {
+			return 0, err
+		}
+		if request.ParentId != "" {
+			_, err = x.repo.FindById(ctx, request.ParentId)
+			if err != nil {
+				return 0, err
+			}
+		}
+	}
+	for _, request := range posRequests {
+		aff, err2 := x.repo.UpdateUrutan(ctx, request.Id, request.Urutan, request.ParentId)
+		if err2 != nil {
+			return affected, err2
+		}
+		affected += aff
+	}
+	return affected, nil
+}
+func (x *PosServices) UpdateVisibility(ctx context.Context, posRequests []*keep_request.PosUpdateVisibilityItem) (affected int, err error) {
+	v := validator.New()
+	for _, request := range posRequests {
+		err = v.ValidateStruct(request)
+		if err != nil {
+			return 0, err
+		}
+	}
+	for _, request := range posRequests {
+		aff, err2 := x.repo.UpdateVisibility(ctx, request.Id, request.IsShow)
+		if err2 != nil {
+			return affected, err2
 		}
 		affected += aff
 	}

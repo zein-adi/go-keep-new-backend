@@ -140,3 +140,41 @@ func (x *KantongServices) UpdateSaldo(ctx context.Context, asalId, tujuanId stri
 	}
 	return affected, nil
 }
+func (x *KantongServices) UpdateUrutan(ctx context.Context, kantongRequests []*keep_request.KantongUpdateUrutanItem) (affected int, err error) {
+	v := validator.New()
+	for _, request := range kantongRequests {
+		err = v.ValidateStruct(request)
+		if err != nil {
+			return 0, err
+		}
+		_, err = x.posRepo.FindById(ctx, request.PosId)
+		if err != nil {
+			return 0, err
+		}
+	}
+	for _, request := range kantongRequests {
+		aff, err2 := x.repo.UpdateUrutan(ctx, request.Id, request.Urutan, request.PosId)
+		if err2 != nil {
+			return affected, err2
+		}
+		affected += aff
+	}
+	return affected, nil
+}
+func (x *KantongServices) UpdateVisibility(ctx context.Context, kantongRequests []*keep_request.KantongUpdateVisibilityItem) (affected int, err error) {
+	v := validator.New()
+	for _, request := range kantongRequests {
+		err = v.ValidateStruct(request)
+		if err != nil {
+			return 0, err
+		}
+	}
+	for _, request := range kantongRequests {
+		aff, err2 := x.repo.UpdateVisibility(ctx, request.Id, request.IsShow)
+		if err2 != nil {
+			return affected, err2
+		}
+		affected += aff
+	}
+	return affected, nil
+}

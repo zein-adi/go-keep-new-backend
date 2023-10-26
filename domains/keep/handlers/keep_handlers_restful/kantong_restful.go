@@ -29,7 +29,6 @@ func (x *KantongRestfulHandler) Get(w http.ResponseWriter, _ *http.Request) {
 	models := x.service.Get(ctx)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
-
 func (x *KantongRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -51,7 +50,6 @@ func (x *KantongRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-
 func (x *KantongRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -77,7 +75,6 @@ func (x *KantongRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
-
 func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -95,7 +92,6 @@ func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Reques
 	}
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
-
 func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -103,7 +99,6 @@ func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, _ *http.Reques
 	models := x.service.GetTrashed(ctx)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
-
 func (x *KantongRestfulHandler) RestoreTrashedById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -121,7 +116,6 @@ func (x *KantongRestfulHandler) RestoreTrashedById(w http.ResponseWriter, r *htt
 	}
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
-
 func (x *KantongRestfulHandler) DeleteTrashedById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -137,5 +131,48 @@ func (x *KantongRestfulHandler) DeleteTrashedById(w http.ResponseWriter, r *http
 		}
 		return
 	}
+	h.SendSingleResponse(w, http.StatusOK, affected)
+}
+
+func (x *KantongRestfulHandler) UpdateUrutan(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	input := make([]*keep_request.KantongUpdateUrutanItem, 0)
+	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+		return
+	}
+
+	affected, err := x.service.UpdateUrutan(ctx, input)
+	if err != nil {
+		if errors.Is(err, helpers_error.ValidationError) {
+			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
+		} else {
+			h.SendErrorResponse(w, http.StatusInternalServerError, "")
+		}
+		return
+	}
+
+	h.SendSingleResponse(w, http.StatusOK, affected)
+}
+func (x *KantongRestfulHandler) UpdateVisivility(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	input := make([]*keep_request.KantongUpdateVisibilityItem, 0)
+	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+		return
+	}
+
+	affected, err := x.service.UpdateVisibility(ctx, input)
+	if err != nil {
+		if errors.Is(err, helpers_error.ValidationError) {
+			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
+		} else {
+			h.SendErrorResponse(w, http.StatusInternalServerError, "")
+		}
+		return
+	}
+
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }

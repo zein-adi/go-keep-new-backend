@@ -285,6 +285,61 @@ func TestKantong(t *testing.T) {
 		assert.Equal(t, 0, affected)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
 	})
+	t.Run("UpdateUrutan", func(t *testing.T) {
+		poses, kantongs := x.reset()
+		kantongBca := kantongs[0]
+		posPengeluaran := poses[1]
+		ctx := context.Background()
+
+		request := []*keep_request.KantongUpdateUrutanItem{
+			{
+				Id:     kantongBca.Id,
+				Urutan: 99,
+				PosId:  posPengeluaran.Id,
+			},
+		}
+		affected, err := x.services.UpdateUrutan(ctx, request)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		kantongBca, err = x.repo.FindById(ctx, kantongBca.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 99, kantongBca.Urutan)
+		assert.Equal(t, posPengeluaran.Id, kantongBca.PosId)
+	})
+	t.Run("UpdateUrutan", func(t *testing.T) {
+		_, kantongs := x.reset()
+		kantongBca := kantongs[0]
+		ctx := context.Background()
+
+		request := []*keep_request.KantongUpdateVisibilityItem{
+			{
+				Id:     kantongBca.Id,
+				IsShow: false,
+			},
+		}
+		affected, err := x.services.UpdateVisibility(ctx, request)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		kantongBca, err = x.repo.FindById(ctx, kantongBca.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, false, kantongBca.IsShow)
+
+		request = []*keep_request.KantongUpdateVisibilityItem{
+			{
+				Id:     kantongBca.Id,
+				IsShow: true,
+			},
+		}
+		affected, err = x.services.UpdateVisibility(ctx, request)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		kantongBca, err = x.repo.FindById(ctx, kantongBca.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, true, kantongBca.IsShow)
+	})
 
 	/*
 	 * Testing Listener
@@ -494,7 +549,7 @@ func (x *KantongServicesTest) setUpMysqlRepository() {
 			_, _ = posRepo.SoftDeleteById(context.Background(), m.Id)
 		}
 		for _, m := range posRepo.GetTrashed(context.Background()) {
-			_, _ = posRepo.DeleteById(context.Background(), m.Id)
+			_, _ = posRepo.HardDeleteTrashedById(context.Background(), m.Id)
 		}
 		for _, m := range repo.Get(context.Background()) {
 			_, _ = repo.SoftDeleteById(context.Background(), m.Id)

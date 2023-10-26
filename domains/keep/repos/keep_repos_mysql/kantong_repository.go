@@ -9,7 +9,8 @@ import (
 	"strconv"
 )
 
-var kantongEntityName = "keep_kantong"
+var kantongEntityName = "kantong"
+var kantongTableName = "keep_kantong"
 
 func NewKantongMysqlRepository() *KantongMysqlRepository {
 	db, dbCleanup := helpers_mysql.OpenMySqlConnection()
@@ -28,16 +29,18 @@ func (x *KantongMysqlRepository) Get(ctx context.Context) []*keep_entities.Kanto
 	q := x.newQueryRequest(ctx, "aktif")
 	return x.newEntitiesFromRows(q.Get())
 }
+
 func (x *KantongMysqlRepository) FindById(ctx context.Context, id string) (*keep_entities.Kantong, error) {
 	return x.findById(ctx, "aktif", id)
 }
+
 func (x *KantongMysqlRepository) Insert(ctx context.Context, kantong *keep_entities.Kantong) (*keep_entities.Kantong, error) {
 	isShowInt := 0
 	if kantong.IsShow {
 		isShowInt = 1
 	}
 
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
 	insertId, err := q.Insert(map[string]any{
 		"nama":            kantong.Nama,
 		"urutan":          kantong.Urutan,
@@ -54,13 +57,14 @@ func (x *KantongMysqlRepository) Insert(ctx context.Context, kantong *keep_entit
 	model.Id = strconv.Itoa(insertId)
 	return model, nil
 }
+
 func (x *KantongMysqlRepository) Update(ctx context.Context, kantong *keep_entities.Kantong) (affected int, err error) {
 	isShowInt := 0
 	if kantong.IsShow {
 		isShowInt = 1
 	}
 
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
 	affected = q.Update(map[string]any{
 		"nama":            kantong.Nama,
 		"urutan":          kantong.Urutan,
@@ -80,6 +84,29 @@ func (x *KantongMysqlRepository) UpdateSaldo(ctx context.Context, id string, sal
 	})
 	return affected, nil
 }
+func (x *KantongMysqlRepository) UpdateUrutan(ctx context.Context, id string, urutan int, posId string) (affected int, err error) {
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"urutan": urutan,
+		"pos_id": posId,
+	})
+	return affected, nil
+}
+func (x *KantongMysqlRepository) UpdateVisibility(ctx context.Context, id string, isShow bool) (affected int, err error) {
+	isShowInt := 0
+	if isShow {
+		isShowInt = 1
+	}
+
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"is_show": isShowInt,
+	})
+	return affected, nil
+}
+
 func (x *KantongMysqlRepository) SoftDeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := x.newQueryRequest(ctx, "aktif")
 	q.Where("id", "=", id)
@@ -110,7 +137,7 @@ func (x *KantongMysqlRepository) HardDeleteTrashedById(ctx context.Context, id s
 }
 
 func (x *KantongMysqlRepository) newQueryRequest(ctx context.Context, status string) *helpers_mysql.QueryBuilder {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongEntityName)
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
 	q.Select("id,nama,urutan,saldo,saldo_mengendap,pos_id,is_show,status")
 
 	if status != "" {

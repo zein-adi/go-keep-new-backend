@@ -31,6 +31,40 @@ func (x *PosMysqlRepository) Get(ctx context.Context, request *keep_request.GetP
 	q := x.newQueryRequest(ctx, "aktif", request)
 	return x.newEntitiesFromRows(q.Get())
 }
+func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (saldo int) {
+	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
+	q.Select("IFNULL(SUM(saldo), 0)")
+	q.Where("parent_id", "=", id)
+	rows, cleanup := q.Get()
+	defer cleanup()
+
+	if !rows.Next() {
+		panic(fmt.Errorf("next failed"))
+	}
+
+	saldo = 0
+	err := rows.Scan(&saldo)
+	helpers_error.PanicIfError(err)
+
+	return saldo
+}
+
+func (x *PosMysqlRepository) CountChildren(ctx context.Context, id string) (count int) {
+	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
+	q.Select("COUNT(0)")
+	q.Where("parent_id", "=", id)
+	rows, cleanup := q.Get()
+	defer cleanup()
+
+	if !rows.Next() {
+		panic("failed to next")
+	}
+	err := rows.Scan(&count)
+	helpers_error.PanicIfError(err)
+
+	return count
+}
+
 func (x *PosMysqlRepository) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {
 	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
 	q.Where("id", "=", id)
@@ -40,6 +74,7 @@ func (x *PosMysqlRepository) FindById(ctx context.Context, id string) (*keep_ent
 	}
 	return models[0], nil
 }
+
 func (x *PosMysqlRepository) Insert(ctx context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
 	model := &keep_entities.Pos{}
 
@@ -74,6 +109,7 @@ func (x *PosMysqlRepository) Insert(ctx context.Context, pos *keep_entities.Pos)
 	model.Id = strconv.Itoa(insertId)
 	return model, nil
 }
+
 func (x *PosMysqlRepository) Update(ctx context.Context, pos *keep_entities.Pos) (affected int, err error) {
 	isShowInt := 0
 	if pos.IsShow {
@@ -102,6 +138,56 @@ func (x *PosMysqlRepository) Update(ctx context.Context, pos *keep_entities.Pos)
 	})
 	return affected, nil
 }
+func (x *PosMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int) {
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"saldo": saldo,
+	})
+	return affected
+}
+func (x *PosMysqlRepository) UpdateLeaf(ctx context.Context, id string, leaf bool) (affected int, err error) {
+	isLeafInt := 0
+	if leaf {
+		isLeafInt = 1
+	}
+
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"is_leaf": isLeafInt,
+	})
+	return affected, nil
+}
+func (x *PosMysqlRepository) UpdateUrutan(ctx context.Context, id string, urutan int, parentId string) (affected int, err error) {
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
+	q.Where("id", "=", id)
+
+	fields := map[string]any{
+		"urutan":    urutan,
+		"parent_id": nil,
+	}
+	if parentId != "" {
+		fields["parent_id"] = parentId
+	}
+
+	affected = q.Update(fields)
+	return affected, nil
+}
+func (x *PosMysqlRepository) UpdateVisibility(ctx context.Context, id string, isShow bool) (affected int, err error) {
+	isShowInt := 0
+	if isShow {
+		isShowInt = 1
+	}
+
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
+	q.Where("id", "=", id)
+	affected = q.Update(map[string]any{
+		"is_show": isShowInt,
+	})
+	return affected, nil
+}
+
 func (x *PosMysqlRepository) SoftDeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", id)
@@ -109,16 +195,6 @@ func (x *PosMysqlRepository) SoftDeleteById(ctx context.Context, id string) (aff
 	affected = q.Update(map[string]any{
 		"status": "trashed",
 	})
-	if affected == 0 {
-		return affected, helpers_error.NewEntryNotFoundError(posEntityName, "id", id)
-	}
-	return affected, nil
-}
-func (x *PosMysqlRepository) DeleteById(ctx context.Context, id string) (affected int, err error) {
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
-	q.Where("id", "=", id)
-	q.Where("status", "=", "trashed")
-	affected = q.Delete()
 	if affected == 0 {
 		return affected, helpers_error.NewEntryNotFoundError(posEntityName, "id", id)
 	}
@@ -150,58 +226,14 @@ func (x *PosMysqlRepository) RestoreTrashedById(ctx context.Context, id string) 
 	}
 	return affected, nil
 }
-func (x *PosMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int) {
+func (x *PosMysqlRepository) HardDeleteTrashedById(ctx context.Context, id string) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", id)
-	affected = q.Update(map[string]any{
-		"saldo": saldo,
-	})
-	return affected
-}
-
-func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (saldo int) {
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
-	q.Select("IFNULL(SUM(saldo), 0)")
-	q.Where("parent_id", "=", id)
-	rows, cleanup := q.Get()
-	defer cleanup()
-
-	if !rows.Next() {
-		panic(fmt.Errorf("next failed"))
+	q.Where("status", "=", "trashed")
+	affected = q.Delete()
+	if affected == 0 {
+		return affected, helpers_error.NewEntryNotFoundError(posEntityName, "id", id)
 	}
-
-	saldo = 0
-	err := rows.Scan(&saldo)
-	helpers_error.PanicIfError(err)
-
-	return saldo
-}
-func (x *PosMysqlRepository) CountChildren(ctx context.Context, id string) (count int) {
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
-	q.Select("COUNT(0)")
-	q.Where("parent_id", "=", id)
-	rows, cleanup := q.Get()
-	defer cleanup()
-
-	if !rows.Next() {
-		panic("failed to next")
-	}
-	err := rows.Scan(&count)
-	helpers_error.PanicIfError(err)
-
-	return count
-}
-func (x *PosMysqlRepository) UpdateLeaf(ctx context.Context, id string, leaf bool) (affected int, err error) {
-	isLeafInt := 0
-	if leaf {
-		isLeafInt = 1
-	}
-
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
-	q.Where("id", "=", id)
-	affected = q.Update(map[string]any{
-		"is_leaf": isLeafInt,
-	})
 	return affected, nil
 }
 

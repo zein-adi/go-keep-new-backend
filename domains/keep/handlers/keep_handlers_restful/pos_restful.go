@@ -139,3 +139,46 @@ func (x *PosRestfulHandler) DeleteTrashedById(w http.ResponseWriter, r *http.Req
 	}
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
+
+func (x *PosRestfulHandler) UpdateUrutan(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	input := make([]*keep_request.PosUpdateUrutanItem, 0)
+	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+		return
+	}
+
+	affected, err := x.service.UpdateUrutan(ctx, input)
+	if err != nil {
+		if errors.Is(err, helpers_error.ValidationError) {
+			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
+		} else {
+			h.SendErrorResponse(w, http.StatusInternalServerError, "")
+		}
+		return
+	}
+
+	h.SendSingleResponse(w, http.StatusOK, affected)
+}
+func (x *PosRestfulHandler) UpdateVisivility(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	input := make([]*keep_request.PosUpdateVisibilityItem, 0)
+	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+		return
+	}
+
+	affected, err := x.service.UpdateVisibility(ctx, input)
+	if err != nil {
+		if errors.Is(err, helpers_error.ValidationError) {
+			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
+		} else {
+			h.SendErrorResponse(w, http.StatusInternalServerError, "")
+		}
+		return
+	}
+
+	h.SendSingleResponse(w, http.StatusOK, affected)
+}

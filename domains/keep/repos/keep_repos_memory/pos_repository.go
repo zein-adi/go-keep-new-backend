@@ -61,7 +61,7 @@ func (x *PosMemoryRepository) SoftDeleteById(_ context.Context, id string) (affe
 	model.Status = "trashed"
 	return 1, nil
 }
-func (x *PosMemoryRepository) DeleteById(_ context.Context, id string) (affected int, err error) {
+func (x *PosMemoryRepository) HardDeleteTrashedById(_ context.Context, id string) (affected int, err error) {
 	index, _ := helpers.FindIndex(x.Data, func(p *keep_entities.Pos) bool {
 		return p.Id == id
 	})
@@ -109,6 +109,25 @@ func (x *PosMemoryRepository) CountChildren(_ context.Context, id string) (count
 func (x *PosMemoryRepository) UpdateLeaf(_ context.Context, id string, leaf bool) (affected int, err error) {
 	index, _ := x.findIndexById(id, "aktif")
 	x.Data[index].IsLeaf = leaf
+	return 1, nil
+}
+func (x *PosMemoryRepository) UpdateUrutan(_ context.Context, id string, urutan int, parentId string) (affected int, err error) {
+	index, err := x.findIndexById(id, "aktif")
+	if err != nil {
+		return 0, err
+	}
+
+	x.Data[index].Urutan = urutan
+	x.Data[index].ParentId = parentId
+	return 1, nil
+}
+func (x *PosMemoryRepository) UpdateVisibility(_ context.Context, id string, isShow bool) (affected int, err error) {
+	index, err := x.findIndexById(id, "aktif")
+	if err != nil {
+		return 0, err
+	}
+
+	x.Data[index].IsShow = isShow
 	return 1, nil
 }
 

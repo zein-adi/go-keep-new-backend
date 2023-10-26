@@ -101,6 +101,25 @@ func (x *KantongMemoryRepository) HardDeleteTrashedById(_ context.Context, id st
 	x.Data = append(x.Data[0:index], x.Data[index+1:]...)
 	return 1, nil
 }
+func (x *KantongMemoryRepository) UpdateUrutan(_ context.Context, id string, urutan int, posId string) (affected int, err error) {
+	index, err := x.findIndexById(id, "aktif")
+	if err != nil {
+		return 0, err
+	}
+
+	x.Data[index].Urutan = urutan
+	x.Data[index].PosId = posId
+	return 1, nil
+}
+func (x *KantongMemoryRepository) UpdateVisibility(_ context.Context, id string, isShow bool) (affected int, err error) {
+	index, err := x.findIndexById(id, "aktif")
+	if err != nil {
+		return 0, err
+	}
+
+	x.Data[index].IsShow = isShow
+	return 1, nil
+}
 
 func (x *KantongMemoryRepository) newQueryRequest(status string) []*keep_entities.Kantong {
 	return helpers.Filter(x.Data, func(pos *keep_entities.Kantong) bool {

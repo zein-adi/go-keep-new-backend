@@ -344,6 +344,60 @@ func TestPos(t *testing.T) {
 		model, _ = x.repo.FindById(context.Background(), model.Id)
 		assert.Equal(t, true, model.IsLeaf)
 	})
+	t.Run("UpdateUrutan", func(t *testing.T) {
+		poses := x.reset()
+		posMain := poses[2]
+		ctx := context.Background()
+
+		request := []*keep_request.PosUpdateUrutanItem{
+			{
+				Id:       posMain.Id,
+				Urutan:   99,
+				ParentId: "",
+			},
+		}
+		affected, err := x.services.UpdateUrutan(ctx, request)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		posMain, err = x.repo.FindById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, 99, posMain.Urutan)
+		assert.Equal(t, "", posMain.ParentId)
+	})
+	t.Run("UpdateUrutan", func(t *testing.T) {
+		poses := x.reset()
+		posMain := poses[2]
+		ctx := context.Background()
+
+		request := []*keep_request.PosUpdateVisibilityItem{
+			{
+				Id:     posMain.Id,
+				IsShow: false,
+			},
+		}
+		affected, err := x.services.UpdateVisibility(ctx, request)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		posMain, err = x.repo.FindById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, false, posMain.IsShow)
+
+		request = []*keep_request.PosUpdateVisibilityItem{
+			{
+				Id:     posMain.Id,
+				IsShow: true,
+			},
+		}
+		affected, err = x.services.UpdateVisibility(ctx, request)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, affected)
+
+		posMain, err = x.repo.FindById(ctx, posMain.Id)
+		assert.Nil(t, err)
+		assert.Equal(t, true, posMain.IsShow)
+	})
 
 	/*
 	 * Testing Listener
@@ -778,7 +832,7 @@ func (x *PosServicesTest) setUpMysqlRepository() {
 		}
 		models = repo.GetTrashed(context.Background())
 		for _, m := range models {
-			_, err := repo.DeleteById(context.Background(), m.Id)
+			_, err := repo.HardDeleteTrashedById(context.Background(), m.Id)
 			helpers_error.PanicIfError(err)
 		}
 	}

@@ -19,4 +19,6 @@ type IPosServices interface {
 
 	UpdateSaldoFromTransaksi(ctx context.Context, ids []string) (affected int, err error)
 	UpdateLeafStatus(ctx context.Context, ids []string) (affected int, err error)
+	UpdateUrutan(ctx context.Context, posRequests []*keep_request.PosUpdateUrutanItem) (affected int, err error)
+	UpdateVisibility(ctx context.Context, posRequests []*keep_request.PosUpdateVisibilityItem) (affected int, err error)
 }

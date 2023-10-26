@@ -17,3 +17,12 @@ type KantongUpdate struct {
 	PosId          string `json:"posId,omitempty" validate:"required,number"`
 	IsShow         bool   `json:"isShow,omitempty" validate:"boolean"`
 }
+type KantongUpdateUrutanItem struct {
+	Id     string `json:"id,omitempty" validate:"required,number"`
+	Urutan int    `json:"urutan,omitempty" validate:"required,number,min=1"`
+	PosId  string `json:"posId,omitempty" validate:"required,number"`
+}
+type KantongUpdateVisibilityItem struct {
+	Id     string `json:"id,omitempty" validate:"required,number"`
+	IsShow bool   `json:"isShow,omitempty" validate:"boolean"`
+}
