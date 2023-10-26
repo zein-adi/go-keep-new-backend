@@ -7,18 +7,19 @@ import (
 )
 
 type IPosServices interface {
-	Get(ctx context.Context, request *keep_request.GetPos) []*keep_entities.Pos
-	FindById(ctx context.Context, id string) (*keep_entities.Pos, error)
-	Insert(ctx context.Context, posRequest *keep_request.PosInputUpdate) (*keep_entities.Pos, error)
-	Update(ctx context.Context, posRequest *keep_request.PosInputUpdate) (affected int, err error)
-	DeleteById(ctx context.Context, id string) (affected int, err error)
+	Get(ctx context.Context) []*keep_entities.Pos
 
+	FindById(ctx context.Context, id string) (*keep_entities.Pos, error)
+
+	Insert(ctx context.Context, posRequest *keep_request.PosInputUpdate) (*keep_entities.Pos, error)
+
+	Update(ctx context.Context, posRequest *keep_request.PosInputUpdate) (affected int, err error)
+	UpdateSaldoFromTransaksi(ctx context.Context, ids []string) (affected int, err error)
+	UpdateUrutan(ctx context.Context, posRequests []*keep_request.PosUpdateUrutanItem) (affected int, err error)
+	UpdateVisibility(ctx context.Context, posRequests []*keep_request.PosUpdateVisibilityItem) (affected int, err error)
+
+	DeleteById(ctx context.Context, id string) (affected int, err error)
 	GetTrashed(ctx context.Context) []*keep_entities.Pos
 	RestoreTrashedById(ctx context.Context, id string) (affected int, err error)
 	DeleteTrashedById(ctx context.Context, id string) (affected int, err error)
-
-	UpdateSaldoFromTransaksi(ctx context.Context, ids []string) (affected int, err error)
-	UpdateLeafStatus(ctx context.Context, ids []string) (affected int, err error)
-	UpdateUrutan(ctx context.Context, posRequests []*keep_request.PosUpdateUrutanItem) (affected int, err error)
-	UpdateVisibility(ctx context.Context, posRequests []*keep_request.PosUpdateVisibilityItem) (affected int, err error)
 }

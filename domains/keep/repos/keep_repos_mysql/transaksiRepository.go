@@ -235,6 +235,9 @@ func (x *TransaksiMysqlRepository) newEntitiesFromRows(rows *sql.Rows, cleanup f
 		model.CreatedAt = helpers_datetime.ParseStringGmt(createdAtString)
 		model.UpdatedAt = helpers_datetime.ParseStringGmt(updatedAtString)
 		helpers_error.PanicIfError(json.Unmarshal([]byte(detailsString), &model.Details))
+		if model.Details == nil {
+			model.Details = make([]*keep_entities.TransaksiDetail, 0)
+		}
 	}
 
 	return models

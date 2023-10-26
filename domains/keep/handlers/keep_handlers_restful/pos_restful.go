@@ -22,19 +22,14 @@ type PosRestfulHandler struct {
 	service keep_service_interfaces.IPosServices
 }
 
-func (x *PosRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (x *PosRestfulHandler) Get(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	request := keep_request.NewGetPos()
-	q := r.URL.Query()
-	if q.Has("isLeafOnly") {
-		request.IsLeafOnly = true
-	}
-
-	models := x.service.Get(ctx, request)
+	models := x.service.Get(ctx)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
+
 func (x *PosRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -56,6 +51,7 @@ func (x *PosRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
+
 func (x *PosRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -81,6 +77,49 @@ func (x *PosRestfulHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	h.SendSingleResponse(w, http.StatusOK, model)
 }
+func (x *PosRestfulHandler) UpdateUrutan(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	input := make([]*keep_request.PosUpdateUrutanItem, 0)
+	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+		return
+	}
+
+	affected, err := x.service.UpdateUrutan(ctx, input)
+	if err != nil {
+		if errors.Is(err, helpers_error.ValidationError) {
+			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
+		} else {
+			h.SendErrorResponse(w, http.StatusInternalServerError, "")
+		}
+		return
+	}
+
+	h.SendSingleResponse(w, http.StatusOK, affected)
+}
+func (x *PosRestfulHandler) UpdateVisivility(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	input := make([]*keep_request.PosUpdateVisibilityItem, 0)
+	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+		return
+	}
+
+	affected, err := x.service.UpdateVisibility(ctx, input)
+	if err != nil {
+		if errors.Is(err, helpers_error.ValidationError) {
+			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
+		} else {
+			h.SendErrorResponse(w, http.StatusInternalServerError, "")
+		}
+		return
+	}
+
+	h.SendSingleResponse(w, http.StatusOK, affected)
+}
+
 func (x *PosRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
@@ -137,48 +176,5 @@ func (x *PosRestfulHandler) DeleteTrashedById(w http.ResponseWriter, r *http.Req
 		}
 		return
 	}
-	h.SendSingleResponse(w, http.StatusOK, affected)
-}
-
-func (x *PosRestfulHandler) UpdateUrutan(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
-
-	input := make([]*keep_request.PosUpdateUrutanItem, 0)
-	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
-		return
-	}
-
-	affected, err := x.service.UpdateUrutan(ctx, input)
-	if err != nil {
-		if errors.Is(err, helpers_error.ValidationError) {
-			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
-		} else {
-			h.SendErrorResponse(w, http.StatusInternalServerError, "")
-		}
-		return
-	}
-
-	h.SendSingleResponse(w, http.StatusOK, affected)
-}
-func (x *PosRestfulHandler) UpdateVisivility(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
-
-	input := make([]*keep_request.PosUpdateVisibilityItem, 0)
-	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
-		return
-	}
-
-	affected, err := x.service.UpdateVisibility(ctx, input)
-	if err != nil {
-		if errors.Is(err, helpers_error.ValidationError) {
-			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())
-		} else {
-			h.SendErrorResponse(w, http.StatusInternalServerError, "")
-		}
-		return
-	}
-
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }

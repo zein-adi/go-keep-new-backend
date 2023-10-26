@@ -165,8 +165,9 @@ func (x *TransaksiServices) newEntityFromRequest(ctx context.Context, transaksiR
 		if err != nil {
 			return nil, err
 		}
-		if !posAsal.IsLeaf {
-			return nil, helpers_error.NewValidationErrors("posAsalId", "invalid", "is not leaf")
+		count := x.posRepo.CountChildren(ctx, transaksiRequest.PosAsalId)
+		if count > 0 {
+			return nil, helpers_error.NewValidationErrors("posAsalId", "invalid", "has children")
 		}
 		posAsalNama = posAsal.Nama
 	}
@@ -175,8 +176,9 @@ func (x *TransaksiServices) newEntityFromRequest(ctx context.Context, transaksiR
 		if err != nil {
 			return nil, err
 		}
-		if !posTujuan.IsLeaf {
-			return nil, helpers_error.NewValidationErrors("posTujuanId", "invalid", "is not leaf")
+		count := x.posRepo.CountChildren(ctx, transaksiRequest.PosTujuanId)
+		if count > 0 {
+			return nil, helpers_error.NewValidationErrors("posTujuanId", "invalid", "has children")
 		}
 		posTujuanNama = posTujuan.Nama
 	}

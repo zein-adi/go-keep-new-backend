@@ -693,13 +693,13 @@ func TestTransaksi(t *testing.T) {
 		_, err := x.services.Insert(ctx, input)
 		assert.NotNil(t, err)
 		assert.ErrorIs(t, err, helpers_error.ValidationError)
-		assert.ErrorContains(t, err, "is not leaf")
+		assert.ErrorContains(t, err, "has children")
 
 		affected, err := x.services.Update(ctx, input)
 		assert.NotNil(t, err)
 		assert.Equal(t, 0, affected)
 		assert.ErrorIs(t, err, helpers_error.ValidationError)
-		assert.ErrorContains(t, err, "is not leaf")
+		assert.ErrorContains(t, err, "has children")
 	})
 }
 
@@ -773,18 +773,14 @@ func (x *TransaksiServicesTest) reset() ([]*keep_entities.Transaksi, []*keep_ent
 			Nama:   "Pemasukan",
 			Urutan: 1,
 			Saldo:  100000,
-			Level:  1,
 			IsShow: true,
-			IsLeaf: true,
 			Status: "aktif",
 		},
 		{
 			Nama:   "Pengeluaran",
 			Urutan: 2,
 			Saldo:  0,
-			Level:  1,
 			IsShow: true,
-			IsLeaf: false,
 			Status: "aktif",
 		},
 	}
@@ -798,19 +794,15 @@ func (x *TransaksiServicesTest) reset() ([]*keep_entities.Transaksi, []*keep_ent
 			Nama:     "Main",
 			Urutan:   3,
 			Saldo:    0,
-			Level:    1,
 			ParentId: poses[1].Id,
 			IsShow:   true,
-			IsLeaf:   true,
 			Status:   "aktif",
 		},
 		{
 			Nama:   "ZAM",
 			Urutan: 4,
 			Saldo:  0,
-			Level:  1,
 			IsShow: true,
-			IsLeaf: true,
 			Status: "aktif",
 		},
 	}

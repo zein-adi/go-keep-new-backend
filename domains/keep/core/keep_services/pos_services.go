@@ -25,12 +25,14 @@ type PosServices struct {
 	transaksiRepo keep_repo_interfaces.ITransaksiRepository
 }
 
-func (x *PosServices) Get(ctx context.Context, request *keep_request.GetPos) []*keep_entities.Pos {
-	return x.repo.Get(ctx, request)
+func (x *PosServices) Get(ctx context.Context) []*keep_entities.Pos {
+	return x.repo.Get(ctx)
 }
+
 func (x *PosServices) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {
 	return x.repo.FindById(ctx, id)
 }
+
 func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosInputUpdate) (*keep_entities.Pos, error) {
 	pos := &keep_entities.Pos{}
 	v := validator.New()
@@ -44,16 +46,13 @@ func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosIn
 		Urutan:   posRequest.Urutan,
 		ParentId: posRequest.ParentId,
 		IsShow:   true,
-		Level:    1,
 		Status:   "aktif",
-		IsLeaf:   true,
 	}
 	if posRequest.ParentId != "" {
-		parent, err2 := x.repo.FindById(ctx, posRequest.ParentId)
-		if err2 != nil {
-			return pos, err2
+		_, err = x.repo.FindById(ctx, posRequest.ParentId)
+		if err != nil {
+			return pos, err
 		}
-		pos.Level = parent.Level + 1
 	}
 	pos, err = x.repo.Insert(ctx, pos)
 
@@ -64,14 +63,13 @@ func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosIn
 		Urutan:   pos.Urutan,
 		Saldo:    pos.Saldo,
 		ParentId: pos.ParentId,
-		Level:    pos.Level,
 		IsShow:   pos.IsShow,
-		IsLeaf:   pos.IsLeaf,
 		Status:   pos.Status,
 	})
 
 	return pos, err
 }
+
 func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosInputUpdate) (affected int, err error) {
 	model, err := x.repo.FindById(ctx, posRequest.Id)
 	if err != nil {
@@ -92,19 +90,16 @@ func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosIn
 		ParentId: posRequest.ParentId,
 		IsShow:   posRequest.IsShow,
 		Saldo:    model.Saldo,
-		IsLeaf:   model.IsLeaf,
 		Status:   model.Status,
-		Level:    1,
 	}
 	if posRequest.ParentId != "" {
 		if posRequest.ParentId == posRequest.Id {
 			return 0, helpers_error.NewValidationErrors("parentId", "invalid", "parent_to_self")
 		}
-		parent, err2 := x.repo.FindById(ctx, posRequest.ParentId)
-		if err2 != nil {
-			return 0, err2
+		_, err = x.repo.FindById(ctx, posRequest.ParentId)
+		if err != nil {
+			return 0, err
 		}
-		pos.Level = parent.Level + 1
 	}
 	affected, err = x.repo.Update(ctx, pos)
 
@@ -117,9 +112,7 @@ func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosIn
 			Urutan:   model.Urutan,
 			Saldo:    model.Saldo,
 			ParentId: model.ParentId,
-			Level:    model.Level,
 			IsShow:   model.IsShow,
-			IsLeaf:   model.IsLeaf,
 			Status:   model.Status,
 		},
 		New: keep_events.PosEventData{
@@ -129,80 +122,9 @@ func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosIn
 			Urutan:   pos.Urutan,
 			Saldo:    pos.Saldo,
 			ParentId: pos.ParentId,
-			Level:    pos.Level,
 			IsShow:   pos.IsShow,
-			IsLeaf:   pos.IsLeaf,
 			Status:   pos.Status,
 		},
-	})
-
-	return affected, err
-}
-func (x *PosServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
-	model, err := x.repo.FindById(ctx, id)
-	if err != nil {
-		return 0, err
-	}
-	affected, err = x.repo.SoftDeleteById(ctx, id)
-
-	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosSoftDeleted, keep_events.PosSoftDeletedEventData{
-		Time:     time.Now(),
-		Id:       model.Id,
-		Nama:     model.Nama,
-		Urutan:   model.Urutan,
-		Saldo:    model.Saldo,
-		ParentId: model.ParentId,
-		Level:    model.Level,
-		IsShow:   model.IsShow,
-		IsLeaf:   model.IsLeaf,
-		Status:   model.Status,
-	})
-
-	return affected, err
-}
-func (x *PosServices) GetTrashed(ctx context.Context) []*keep_entities.Pos {
-	return x.repo.GetTrashed(ctx)
-}
-func (x *PosServices) RestoreTrashedById(ctx context.Context, id string) (affected int, err error) {
-	model, err := x.repo.FindTrashedById(ctx, id)
-	if err != nil {
-		return 0, err
-	}
-	affected, err = x.repo.RestoreTrashedById(ctx, id)
-
-	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosRestored, keep_events.PosRestoredEventData{
-		Time:     time.Now(),
-		Id:       model.Id,
-		Nama:     model.Nama,
-		Urutan:   model.Urutan,
-		Saldo:    model.Saldo,
-		ParentId: model.ParentId,
-		Level:    model.Level,
-		IsShow:   model.IsShow,
-		IsLeaf:   model.IsLeaf,
-		Status:   model.Status,
-	})
-
-	return affected, err
-}
-func (x *PosServices) DeleteTrashedById(ctx context.Context, id string) (affected int, err error) {
-	model, err := x.repo.FindTrashedById(ctx, id)
-	if err != nil {
-		return 0, err
-	}
-	affected, err = x.repo.HardDeleteTrashedById(ctx, id)
-
-	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosHardDeleted, keep_events.PosHardDeletedEventData{
-		Time:     time.Now(),
-		Id:       model.Id,
-		Nama:     model.Nama,
-		Urutan:   model.Urutan,
-		Saldo:    model.Saldo,
-		ParentId: model.ParentId,
-		Level:    model.Level,
-		IsShow:   model.IsShow,
-		IsLeaf:   model.IsLeaf,
-		Status:   model.Status,
 	})
 
 	return affected, err
@@ -220,28 +142,6 @@ func (x *PosServices) UpdateSaldoFromTransaksi(ctx context.Context, ids []string
 		aff := x.repo.UpdateSaldo(ctx, id, jumlah)
 		affected += aff
 		aff, err2 = x.updateParentSaldo(ctx, id)
-		if err2 != nil {
-			return 0, err2
-		}
-		affected += aff
-	}
-	return affected, nil
-}
-func (x *PosServices) UpdateLeafStatus(ctx context.Context, ids []string) (affected int, err error) {
-	ids = helpers.Unique(ids)
-	ids = helpers.Filter(ids, func(s string) bool { return s != "" })
-
-	for _, id := range ids {
-		_, err2 := x.repo.FindById(ctx, id)
-		if err2 != nil {
-			return 0, err2
-		}
-		count := x.repo.CountChildren(ctx, id)
-		isLeaf := true
-		if count > 0 {
-			isLeaf = false
-		}
-		aff, err2 := x.repo.UpdateLeaf(ctx, id, isLeaf)
 		if err2 != nil {
 			return 0, err2
 		}
@@ -288,6 +188,70 @@ func (x *PosServices) UpdateVisibility(ctx context.Context, posRequests []*keep_
 		affected += aff
 	}
 	return affected, nil
+}
+
+func (x *PosServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
+	model, err := x.repo.FindById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	affected, err = x.repo.SoftDeleteById(ctx, id)
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosSoftDeleted, keep_events.PosSoftDeletedEventData{
+		Time:     time.Now(),
+		Id:       model.Id,
+		Nama:     model.Nama,
+		Urutan:   model.Urutan,
+		Saldo:    model.Saldo,
+		ParentId: model.ParentId,
+		IsShow:   model.IsShow,
+		Status:   model.Status,
+	})
+
+	return affected, err
+}
+func (x *PosServices) GetTrashed(ctx context.Context) []*keep_entities.Pos {
+	return x.repo.GetTrashed(ctx)
+}
+func (x *PosServices) RestoreTrashedById(ctx context.Context, id string) (affected int, err error) {
+	model, err := x.repo.FindTrashedById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	affected, err = x.repo.RestoreTrashedById(ctx, id)
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosRestored, keep_events.PosRestoredEventData{
+		Time:     time.Now(),
+		Id:       model.Id,
+		Nama:     model.Nama,
+		Urutan:   model.Urutan,
+		Saldo:    model.Saldo,
+		ParentId: model.ParentId,
+		IsShow:   model.IsShow,
+		Status:   model.Status,
+	})
+
+	return affected, err
+}
+func (x *PosServices) DeleteTrashedById(ctx context.Context, id string) (affected int, err error) {
+	model, err := x.repo.FindTrashedById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	affected, err = x.repo.HardDeleteTrashedById(ctx, id)
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.PosHardDeleted, keep_events.PosHardDeletedEventData{
+		Time:     time.Now(),
+		Id:       model.Id,
+		Nama:     model.Nama,
+		Urutan:   model.Urutan,
+		Saldo:    model.Saldo,
+		ParentId: model.ParentId,
+		IsShow:   model.IsShow,
+		Status:   model.Status,
+	})
+
+	return affected, err
 }
 
 func (x *PosServices) updateParentSaldo(ctx context.Context, id string) (affected int, err error) {

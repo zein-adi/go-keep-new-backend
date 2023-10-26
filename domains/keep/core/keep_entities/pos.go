@@ -6,9 +6,7 @@ type Pos struct {
 	Urutan   int    `json:"urutan,omitempty"`
 	Saldo    int    `json:"saldo,omitempty"`
 	ParentId string `json:"parentId,omitempty"`
-	Level    int    `json:"level,omitempty"`
 	IsShow   bool   `json:"isShow,omitempty"`
-	IsLeaf   bool   `json:"isLeaf,omitempty"`
 	Status   string `json:"status,omitempty" validate:"oneof=aktif trashed"`
 }
 

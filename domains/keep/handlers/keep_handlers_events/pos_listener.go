@@ -19,58 +19,6 @@ type PosEventListenerHandler struct {
 }
 
 /*
- * Pos
- */
-
-func (x *PosEventListenerHandler) PosCreated(eventData any) {
-	eventName, data, err := keep_events.NewPosCreatedEventDataFromDispatcher(eventData)
-	if err != nil {
-		logrus.Error(err.Error())
-		return
-	}
-	x.updateLeafStatus(eventName, data.ParentId)
-}
-func (x *PosEventListenerHandler) PosUpdated(eventData any) {
-	eventName, data, err := keep_events.NewPosUpdatedEventDataFromDispatcher(eventData)
-	if err != nil {
-		logrus.Error(err.Error())
-		return
-	}
-	x.updateLeafStatus(eventName, data.Old.ParentId, data.New.ParentId)
-}
-func (x *PosEventListenerHandler) PosSoftDeleted(eventData any) {
-	eventName, data, err := keep_events.NewPosSoftDeleteEventDataFromDispatcher(eventData)
-	if err != nil {
-		logrus.Error(err.Error())
-		return
-	}
-	x.updateLeafStatus(eventName, data.ParentId)
-}
-func (x *PosEventListenerHandler) PosRestored(eventData any) {
-	eventName, data, err := keep_events.NewPosRestoreEventDataFromDispatcher(eventData)
-	if err != nil {
-		logrus.Error(err.Error())
-		return
-	}
-	x.updateLeafStatus(eventName, data.ParentId)
-}
-func (x *PosEventListenerHandler) updateLeafStatus(action string, ids ...string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	affected, err := x.service.UpdateLeafStatus(ctx, ids)
-	if err != nil {
-		logrus.Error(err.Error())
-		return
-	}
-
-	logrus.
-		WithField("listener", "keep.pos").
-		WithField("event", action).
-		Infof("affected:%d", affected)
-}
-
-/*
  * Transaksi
  */
 

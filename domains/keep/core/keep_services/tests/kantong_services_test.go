@@ -545,7 +545,7 @@ func (x *KantongServicesTest) setUpMysqlRepository() {
 		repo.Cleanup()
 	}
 	x.truncate = func() {
-		for _, m := range posRepo.Get(context.Background(), keep_request.NewGetPos()) {
+		for _, m := range posRepo.Get(context.Background()) {
 			_, _ = posRepo.SoftDeleteById(context.Background(), m.Id)
 		}
 		for _, m := range posRepo.GetTrashed(context.Background()) {

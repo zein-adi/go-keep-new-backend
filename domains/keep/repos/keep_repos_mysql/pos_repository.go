@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
-	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_mysql"
 	"strconv"
@@ -27,12 +26,12 @@ type PosMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (x *PosMysqlRepository) Get(ctx context.Context, request *keep_request.GetPos) []*keep_entities.Pos {
-	q := x.newQueryRequest(ctx, "aktif", request)
+func (x *PosMysqlRepository) Get(ctx context.Context) []*keep_entities.Pos {
+	q := x.newQueryRequest(ctx, "aktif")
 	return x.newEntitiesFromRows(q.Get())
 }
 func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (saldo int) {
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
+	q := x.newQueryRequest(ctx, "aktif")
 	q.Select("IFNULL(SUM(saldo), 0)")
 	q.Where("parent_id", "=", id)
 	rows, cleanup := q.Get()
@@ -50,7 +49,7 @@ func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (sald
 }
 
 func (x *PosMysqlRepository) CountChildren(ctx context.Context, id string) (count int) {
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
+	q := x.newQueryRequest(ctx, "aktif")
 	q.Select("COUNT(0)")
 	q.Where("parent_id", "=", id)
 	rows, cleanup := q.Get()
@@ -66,7 +65,7 @@ func (x *PosMysqlRepository) CountChildren(ctx context.Context, id string) (coun
 }
 
 func (x *PosMysqlRepository) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetPos())
+	q := x.newQueryRequest(ctx, "aktif")
 	q.Where("id", "=", id)
 	models := x.newEntitiesFromRows(q.Get())
 	if len(models) == 0 {
@@ -78,30 +77,24 @@ func (x *PosMysqlRepository) FindById(ctx context.Context, id string) (*keep_ent
 func (x *PosMysqlRepository) Insert(ctx context.Context, pos *keep_entities.Pos) (*keep_entities.Pos, error) {
 	model := &keep_entities.Pos{}
 
-	isShowInt := 0
-	if pos.IsShow {
-		isShowInt = 1
-	}
-	isLeafInt := 0
-	if pos.IsLeaf {
-		isLeafInt = 1
-	}
-	var parentId *string = nil
-	if pos.ParentId != "" {
-		parentId = &pos.ParentId
-	}
-
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
-	insertId, err := q.Insert(map[string]any{
+	fields := map[string]any{
 		"nama":      pos.Nama,
 		"urutan":    pos.Urutan,
 		"saldo":     pos.Saldo,
-		"parent_id": parentId,
-		"level":     pos.Level,
-		"is_show":   isShowInt,
-		"is_leaf":   isLeafInt,
+		"parent_id": nil,
+		"is_show":   0,
 		"status":    pos.Status,
-	})
+	}
+
+	if pos.IsShow {
+		fields["is_show"] = 1
+	}
+	if pos.ParentId != "" {
+		fields["parent_id"] = pos.ParentId
+	}
+
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
+	insertId, err := q.Insert(fields)
 	if err != nil {
 		return model, err
 	}
@@ -111,31 +104,25 @@ func (x *PosMysqlRepository) Insert(ctx context.Context, pos *keep_entities.Pos)
 }
 
 func (x *PosMysqlRepository) Update(ctx context.Context, pos *keep_entities.Pos) (affected int, err error) {
-	isShowInt := 0
+	fields := map[string]any{
+		"nama":      pos.Nama,
+		"urutan":    pos.Urutan,
+		"saldo":     pos.Saldo,
+		"parent_id": nil,
+		"is_show":   0,
+		"status":    pos.Status,
+	}
+
 	if pos.IsShow {
-		isShowInt = 1
+		fields["is_show"] = 1
 	}
-	isLeafInt := 0
-	if pos.IsLeaf {
-		isLeafInt = 1
-	}
-	var parentId *string = nil
 	if pos.ParentId != "" {
-		parentId = &pos.ParentId
+		fields["parent_id"] = pos.ParentId
 	}
 
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
 	q.Where("id", "=", pos.Id)
-	affected = q.Update(map[string]any{
-		"nama":      pos.Nama,
-		"urutan":    pos.Urutan,
-		"saldo":     pos.Saldo,
-		"parent_id": parentId,
-		"level":     pos.Level,
-		"is_show":   isShowInt,
-		"is_leaf":   isLeafInt,
-		"status":    pos.Status,
-	})
+	affected = q.Update(fields)
 	return affected, nil
 }
 func (x *PosMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int) {
@@ -201,11 +188,11 @@ func (x *PosMysqlRepository) SoftDeleteById(ctx context.Context, id string) (aff
 	return affected, nil
 }
 func (x *PosMysqlRepository) GetTrashed(ctx context.Context) []*keep_entities.Pos {
-	q := x.newQueryRequest(ctx, "trashed", keep_request.NewGetPos())
+	q := x.newQueryRequest(ctx, "trashed")
 	return x.newEntitiesFromRows(q.Get())
 }
 func (x *PosMysqlRepository) FindTrashedById(ctx context.Context, id string) (*keep_entities.Pos, error) {
-	q := x.newQueryRequest(ctx, "trashed", keep_request.NewGetPos())
+	q := x.newQueryRequest(ctx, "trashed")
 	q.Where("id", "=", id)
 	models := x.newEntitiesFromRows(q.Get())
 	model := &keep_entities.Pos{}
@@ -237,15 +224,12 @@ func (x *PosMysqlRepository) HardDeleteTrashedById(ctx context.Context, id strin
 	return affected, nil
 }
 
-func (x *PosMysqlRepository) newQueryRequest(ctx context.Context, status string, request *keep_request.GetPos) *helpers_mysql.QueryBuilder {
+func (x *PosMysqlRepository) newQueryRequest(ctx context.Context, status string) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, posTableName)
-	q.Select("id, nama, urutan, saldo, parent_id, level, is_show, is_leaf, status")
+	q.Select("id, nama, urutan, saldo, parent_id, is_show, status")
 
 	if status != "" {
 		q.Where("status", "=", status)
-	}
-	if request.IsLeafOnly {
-		q.Where("is_leaf", "=", "1")
 	}
 
 	return q
@@ -264,7 +248,6 @@ func (x *PosMysqlRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func())
 		models = append(models, model)
 
 		isShowInt := 0
-		isLeafInt := 0
 		var parentId *string
 		helpers_error.PanicIfError(rows.Scan(
 			&model.Id,
@@ -272,15 +255,12 @@ func (x *PosMysqlRepository) newEntitiesFromRows(rows *sql.Rows, cleanup func())
 			&model.Urutan,
 			&model.Saldo,
 			&parentId,
-			&model.Level,
 			&isShowInt,
-			&isLeafInt,
 			&model.Status,
 		))
 		if parentId != nil {
 			model.ParentId = *parentId
 		}
-		model.IsLeaf = isLeafInt == 1
 		model.IsShow = isShowInt == 1
 	}
 
