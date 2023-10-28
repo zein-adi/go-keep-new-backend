@@ -22,7 +22,7 @@ type Validator struct {
 	playgroundValidator *validator.Validate
 }
 
-func (r *Validator) ValidateMap(data map[string]interface{}, rules map[string]interface{}) error {
+func (r *Validator) ValidateMap(data map[string]any, rules map[string]any) error {
 	r.validateMapRegisterRequiredIf(data)
 
 	rawErrors := r.playgroundValidator.ValidateMap(data, rules)
