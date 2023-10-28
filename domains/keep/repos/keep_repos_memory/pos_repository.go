@@ -5,6 +5,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"sort"
 	"strconv"
 )
 
@@ -20,6 +21,9 @@ type PosMemoryRepository struct {
 
 func (x *PosMemoryRepository) Get(_ context.Context) []*keep_entities.Pos {
 	models := x.newQueryRequest("aktif")
+	sort.Slice(models, func(i, j int) bool {
+		return models[i].Urutan < models[i].Urutan
+	})
 	return helpers.Map(models, func(d *keep_entities.Pos) *keep_entities.Pos {
 		return d.Copy()
 	})

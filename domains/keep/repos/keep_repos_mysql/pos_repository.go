@@ -28,6 +28,7 @@ type PosMysqlRepository struct {
 
 func (x *PosMysqlRepository) Get(ctx context.Context) []*keep_entities.Pos {
 	q := x.newQueryRequest(ctx, "aktif")
+	q.OrderBy("urutan")
 	return x.newEntitiesFromRows(q.Get())
 }
 func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (saldo int) {

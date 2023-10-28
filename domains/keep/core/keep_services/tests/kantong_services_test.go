@@ -307,7 +307,7 @@ func TestKantong(t *testing.T) {
 		assert.Equal(t, 99, kantongBca.Urutan)
 		assert.Equal(t, posPengeluaran.Id, kantongBca.PosId)
 	})
-	t.Run("UpdateUrutan", func(t *testing.T) {
+	t.Run("UpdateVisibility", func(t *testing.T) {
 		_, kantongs := x.reset()
 		kantongBca := kantongs[0]
 		ctx := context.Background()

@@ -36,9 +36,9 @@ func (p *Transaksi) Copy() *Transaksi {
 
 type TransaksiDetail struct {
 	Uraian       string  `json:"uraian,omitempty"`
-	Harga        int     `json:"harga,omitempty"`
+	Harga        float64 `json:"harga,omitempty"`
 	Jumlah       float64 `json:"jumlah,omitempty"`
-	Diskon       int     `json:"diskon,omitempty"`
+	Diskon       float64 `json:"diskon,omitempty"`
 	SatuanNama   string  `json:"satuanNama,omitempty"`
 	SatuanJumlah float64 `json:"satuanJumlah,omitempty"`
 	SatuanHarga  float64 `json:"satuanHarga,omitempty"`

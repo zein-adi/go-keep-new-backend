@@ -81,10 +81,11 @@ func (x *PosRestfulHandler) UpdateUrutan(w http.ResponseWriter, r *http.Request)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	input := make([]*keep_request.PosUpdateUrutanItem, 0)
-	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+	data := h.NewDefaultFormRequest([]*keep_request.PosUpdateUrutanItem{})
+	if !h.ReadRequest(w, r, data) {
 		return
 	}
+	input := data.Data
 
 	affected, err := x.service.UpdateUrutan(ctx, input)
 	if err != nil {
@@ -102,10 +103,11 @@ func (x *PosRestfulHandler) UpdateVisivility(w http.ResponseWriter, r *http.Requ
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	input := make([]*keep_request.PosUpdateVisibilityItem, 0)
-	if !h.ReadRequest(w, r, h.NewDefaultFormRequest(input)) {
+	data := h.NewDefaultFormRequest([]*keep_request.PosUpdateVisibilityItem{})
+	if !h.ReadRequest(w, r, data) {
 		return
 	}
+	input := data.Data
 
 	affected, err := x.service.UpdateVisibility(ctx, input)
 	if err != nil {

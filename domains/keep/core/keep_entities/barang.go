@@ -4,8 +4,8 @@ import "github.com/zein-adi/go-keep-new-backend/helpers"
 
 type Barang struct {
 	Nama         string          `json:"nama,omitempty"`
-	Harga        int             `json:"harga,omitempty"`
-	Diskon       int             `json:"diskon,omitempty"`
+	Harga        float64         `json:"harga,omitempty"`
+	Diskon       float64         `json:"diskon,omitempty"`
 	SatuanNama   string          `json:"satuanNama,omitempty"`
 	SatuanJumlah float64         `json:"satuanJumlah,omitempty"`
 	SatuanHarga  float64         `json:"satuanHarga,omitempty"`
@@ -23,11 +23,11 @@ func (x *Barang) Copy() *Barang {
 }
 
 type BarangDetail struct {
-	Lokasi      string
-	Harga       int
-	Diskon      int
-	SatuanHarga float64
-	Keterangan  string
+	Lokasi      string  `json:"lokasi,omitempty"`
+	Harga       float64 `json:"harga,omitempty"`
+	Diskon      float64 `json:"diskon,omitempty"`
+	SatuanHarga float64 `json:"satuanHarga,omitempty"`
+	Keterangan  string  `json:"keterangan,omitempty"`
 }
 
 func (x *BarangDetail) Copy() *BarangDetail {

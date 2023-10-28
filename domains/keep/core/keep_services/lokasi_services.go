@@ -27,6 +27,7 @@ func (x *LokasiServices) Get(ctx context.Context, search string) []*keep_entitie
 
 func (x *LokasiServices) UpdateLokasiFromTransaksi(ctx context.Context) (affected int, err error) {
 	request := keep_request.NewGetTransaksi()
+	request.Jenis = "pengeluaran"
 	request.WaktuAwal = time.Now().AddDate(0, -6, 0).Unix()
 	transaksis := x.transaksiRepo.Get(ctx, request)
 	transaksiMap := make(map[string]*keep_entities.Lokasi)

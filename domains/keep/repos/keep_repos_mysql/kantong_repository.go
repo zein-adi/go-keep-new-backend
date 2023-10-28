@@ -27,6 +27,7 @@ type KantongMysqlRepository struct {
 
 func (x *KantongMysqlRepository) Get(ctx context.Context) []*keep_entities.Kantong {
 	q := x.newQueryRequest(ctx, "aktif")
+	q.OrderBy("urutan")
 	return x.newEntitiesFromRows(q.Get())
 }
 
@@ -35,21 +36,21 @@ func (x *KantongMysqlRepository) FindById(ctx context.Context, id string) (*keep
 }
 
 func (x *KantongMysqlRepository) Insert(ctx context.Context, kantong *keep_entities.Kantong) (*keep_entities.Kantong, error) {
-	isShowInt := 0
-	if kantong.IsShow {
-		isShowInt = 1
-	}
-
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
-	insertId, err := q.Insert(map[string]any{
+	fields := map[string]any{
 		"nama":            kantong.Nama,
 		"urutan":          kantong.Urutan,
 		"saldo":           kantong.Saldo,
 		"saldo_mengendap": kantong.SaldoMengendap,
 		"pos_id":          kantong.PosId,
-		"is_show":         isShowInt,
+		"is_show":         0,
 		"status":          kantong.Status,
-	})
+	}
+	if kantong.IsShow {
+		fields["is_show"] = 1
+	}
+
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
+	insertId, err := q.Insert(fields)
 	if err != nil {
 		return nil, err
 	}
@@ -59,21 +60,22 @@ func (x *KantongMysqlRepository) Insert(ctx context.Context, kantong *keep_entit
 }
 
 func (x *KantongMysqlRepository) Update(ctx context.Context, kantong *keep_entities.Kantong) (affected int, err error) {
-	isShowInt := 0
-	if kantong.IsShow {
-		isShowInt = 1
-	}
-
-	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
-	affected = q.Update(map[string]any{
+	fields := map[string]any{
 		"nama":            kantong.Nama,
 		"urutan":          kantong.Urutan,
 		"saldo":           kantong.Saldo,
 		"saldo_mengendap": kantong.SaldoMengendap,
 		"pos_id":          kantong.PosId,
-		"is_show":         isShowInt,
+		"is_show":         0,
 		"status":          kantong.Status,
-	})
+	}
+	if kantong.IsShow {
+		fields["is_show"] = 1
+	}
+
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
+	q.Where("id", "=", kantong.Id)
+	affected = q.Update(fields)
 	return affected, nil
 }
 func (x *KantongMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int, err error) {

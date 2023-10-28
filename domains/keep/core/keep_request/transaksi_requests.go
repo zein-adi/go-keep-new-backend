@@ -18,11 +18,11 @@ type TransaksiInputUpdate struct {
 
 type TransaksiInputUpdateDetail struct {
 	Uraian       string  `json:"uraian,omitempty" validate:"required"`
-	Harga        int     `json:"harga,omitempty" validate:"number,min=1"`
-	Jumlah       float64 `json:"jumlah,omitempty" validate:"number,min=0.1"`
-	Diskon       int     `json:"diskon,omitempty" validate:"number,min=0"`
-	SatuanNama   string  `json:"satuan,omitempty" validate:"required,alpha"`
-	SatuanJumlah float64 `json:"satuanJumlah,omitempty" validate:"number,min=0.1"`
+	Harga        float64 `json:"harga,omitempty" validate:"number,min=0.01"`
+	Jumlah       float64 `json:"jumlah,omitempty" validate:"number,min=0.01"`
+	Diskon       float64 `json:"diskon,omitempty" validate:"number,min=0"`
+	SatuanNama   string  `json:"satuanNama,omitempty" validate:"required,alpha"`
+	SatuanJumlah float64 `json:"satuanJumlah,omitempty" validate:"number,min=0.01"`
 	Keterangan   string  `json:"keterangan,omitempty"`
 }
 
@@ -33,8 +33,11 @@ func NewGetTransaksi() *GetTransaksi {
 type GetTransaksi struct {
 	PosId        string `json:"posId,omitempty"`
 	KantongId    string `json:"kantongId,omitempty"`
-	JenisTanggal string `json:"jenisTanggal,omitempty" validate:"oneof=tahun bulan tanggal"`
+	JenisTanggal string `json:"jenisTanggal,omitempty" validate:"omitempty,oneof=tahun bulan tanggal"`
 	Tanggal      int64  `json:"tanggal,omitempty"`
-	WaktuAwal    int64  `json:"tanggalAwal,omitempty"`
-	Jenis        string `json:"jenis,omitempty" validate:"required,oneof=pemasukan pengeluaran mutasi"`
+	WaktuAwal    int64  `json:"waktuAwal,omitempty"`
+	Jenis        string `json:"jenis,omitempty" validate:"omitempty,required,oneof=pemasukan pengeluaran mutasi"`
+	Search       string `json:"search,omitempty"`
+	Skip         int    `json:"skip,omitempty"`
+	Take         int    `json:"take,omitempty" validate:"min=10"`
 }

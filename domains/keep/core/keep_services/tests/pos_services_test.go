@@ -232,7 +232,7 @@ func TestPos(t *testing.T) {
 		assert.Equal(t, 99, posMain.Urutan)
 		assert.Equal(t, "", posMain.ParentId)
 	})
-	t.Run("UpdateUrutan", func(t *testing.T) {
+	t.Run("UpdateVisibility", func(t *testing.T) {
 		poses := x.reset()
 		posMain := poses[2]
 		ctx := context.Background()
@@ -264,6 +264,89 @@ func TestPos(t *testing.T) {
 		posMain, err = x.repo.FindById(ctx, posMain.Id)
 		assert.Nil(t, err)
 		assert.Equal(t, true, posMain.IsShow)
+	})
+	t.Run("InsertFailedBecauseParentIsLeafHasTransaksi", func(t *testing.T) {
+		poses := x.reset()
+		pos := poses[0]
+		ctx := context.Background()
+
+		trx := &keep_entities.Transaksi{
+			PosAsalId: pos.Id,
+		}
+		_, err := x.transaksiRepo.Insert(ctx, trx)
+		helpers_error.PanicIfError(err)
+
+		input := &keep_request.PosInputUpdate{
+			Nama:     "Makan",
+			Urutan:   10,
+			ParentId: pos.Id,
+		}
+		_, err = x.services.Insert(ctx, input)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, helpers_error.ValidationError)
+		assert.ErrorContains(t, err, "has transaksi")
+
+		poses = x.reset()
+		pos = poses[0]
+
+		trx = &keep_entities.Transaksi{
+			PosTujuanId: pos.Id,
+		}
+		_, err = x.transaksiRepo.Insert(ctx, trx)
+		helpers_error.PanicIfError(err)
+
+		input = &keep_request.PosInputUpdate{
+			Nama:     "Makan",
+			Urutan:   10,
+			ParentId: pos.Id,
+		}
+		_, err = x.services.Insert(ctx, input)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, helpers_error.ValidationError)
+		assert.ErrorContains(t, err, "has transaksi")
+	})
+	t.Run("UpdateFailedBecauseParentIsLeafHasTransaksi", func(t *testing.T) {
+		poses := x.reset()
+		posPemasukan := poses[0]
+		posMain := poses[2]
+		ctx := context.Background()
+
+		trx := &keep_entities.Transaksi{
+			PosAsalId: posPemasukan.Id,
+		}
+		_, err := x.transaksiRepo.Insert(ctx, trx)
+		helpers_error.PanicIfError(err)
+
+		input := &keep_request.PosInputUpdate{
+			Id:       posMain.Id,
+			Nama:     posMain.Nama,
+			Urutan:   posMain.Urutan,
+			ParentId: posPemasukan.Id,
+		}
+		_, err = x.services.Update(ctx, input)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, helpers_error.ValidationError)
+		assert.ErrorContains(t, err, "has transaksi")
+
+		poses = x.reset()
+		posPemasukan = poses[0]
+
+		trx = &keep_entities.Transaksi{
+			PosTujuanId: posPemasukan.Id,
+		}
+		_, err = x.transaksiRepo.Insert(ctx, trx)
+		helpers_error.PanicIfError(err)
+
+		input = &keep_request.PosInputUpdate{
+			Id:       posMain.Id,
+			Nama:     posMain.Nama,
+			Urutan:   posMain.Urutan,
+			ParentId: posPemasukan.Id,
+		}
+		_, err = x.services.Update(ctx, input)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, helpers_error.ValidationError)
+		assert.ErrorContains(t, err, "has transaksi")
 	})
 
 	/*

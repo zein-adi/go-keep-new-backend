@@ -33,6 +33,9 @@ func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affecte
 	transaksis := x.transaksiRepo.Get(ctx, request)
 	transaksiMap := make(map[string]*keep_entities.Barang)
 	for _, transaksi := range transaksis {
+		if transaksi.Lokasi == "" {
+			continue
+		}
 		for _, detail := range transaksi.Details {
 			k := detail.Uraian
 			if k == "" {

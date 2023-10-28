@@ -34,14 +34,13 @@ func (x *PosServices) FindById(ctx context.Context, id string) (*keep_entities.P
 }
 
 func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosInputUpdate) (*keep_entities.Pos, error) {
-	pos := &keep_entities.Pos{}
 	v := validator.New()
 	err := v.ValidateStruct(posRequest)
 	if err != nil {
-		return pos, err
+		return nil, err
 	}
 
-	pos = &keep_entities.Pos{
+	pos := &keep_entities.Pos{
 		Nama:     posRequest.Nama,
 		Urutan:   posRequest.Urutan,
 		ParentId: posRequest.ParentId,
@@ -52,6 +51,10 @@ func (x *PosServices) Insert(ctx context.Context, posRequest *keep_request.PosIn
 		_, err = x.repo.FindById(ctx, posRequest.ParentId)
 		if err != nil {
 			return pos, err
+		}
+		count := x.transaksiRepo.CountByPosId(ctx, posRequest.ParentId)
+		if count > 0 {
+			return nil, helpers_error.NewValidationErrors("parentId", "invalid", "has transaksi")
 		}
 	}
 	pos, err = x.repo.Insert(ctx, pos)
@@ -99,6 +102,10 @@ func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosIn
 		_, err = x.repo.FindById(ctx, posRequest.ParentId)
 		if err != nil {
 			return 0, err
+		}
+		count := x.transaksiRepo.CountByPosId(ctx, posRequest.ParentId)
+		if count > 0 {
+			return 0, helpers_error.NewValidationErrors("parentId", "invalid", "has transaksi")
 		}
 	}
 	affected, err = x.repo.Update(ctx, pos)

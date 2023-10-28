@@ -31,8 +31,45 @@ type TransaksiMysqlRepository struct {
 
 func (x *TransaksiMysqlRepository) Get(ctx context.Context, request *keep_request.GetTransaksi) []*keep_entities.Transaksi {
 	q := x.newQueryRequest(ctx, "aktif", request)
+	q.OrderBy("waktu desc")
+	if request.Take > 0 {
+		q.Skip(request.Skip)
+		q.Take(request.Take)
+	}
 	return x.newEntitiesFromRows(q.Get())
 }
+func (x *TransaksiMysqlRepository) GetJumlahByPosId(ctx context.Context, posId string) (saldo int) {
+	pengeluaran := 0
+	pemasukan := 0
+
+	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
+	q.Select("IFNULL(SUM(jumlah), 0)")
+	q.Where("pos_asal_id", "=", posId)
+	rows, cleanup := q.Get()
+	defer cleanup()
+	if rows.Next() {
+		helpers_error.PanicIfError(rows.Scan(&pengeluaran))
+	}
+
+	q = x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
+	q.Select("IFNULL(SUM(jumlah), 0)")
+	q.Where("pos_tujuan_id", "=", posId)
+	rows, cleanup2 := q.Get()
+	defer cleanup2()
+	if rows.Next() {
+		helpers_error.PanicIfError(rows.Scan(&pemasukan))
+	}
+
+	return pemasukan - pengeluaran
+}
+
+func (x *TransaksiMysqlRepository) CountByPosId(ctx context.Context, posId string) (count int) {
+	q := helpers_mysql.NewQueryBuilder(ctx, x.db, transaksiTableName)
+	q.OrWhere("pos_asal_id", "=", posId)
+	q.OrWhere("pos_tujuan_id", "=", posId)
+	return q.Count()
+}
+
 func (x *TransaksiMysqlRepository) FindById(ctx context.Context, id string) (*keep_entities.Transaksi, error) {
 	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
 	q.Where("id", "=", id)
@@ -42,6 +79,7 @@ func (x *TransaksiMysqlRepository) FindById(ctx context.Context, id string) (*ke
 	}
 	return models[0], nil
 }
+
 func (x *TransaksiMysqlRepository) Insert(ctx context.Context, transaksi *keep_entities.Transaksi) (*keep_entities.Transaksi, error) {
 	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
 	q.Where("id", "=", transaksi.Id)
@@ -53,12 +91,14 @@ func (x *TransaksiMysqlRepository) Insert(ctx context.Context, transaksi *keep_e
 	model.Id = strconv.Itoa(lastId)
 	return model, nil
 }
+
 func (x *TransaksiMysqlRepository) Update(ctx context.Context, transaksi *keep_entities.Transaksi) (affected int, err error) {
 	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
 	q.Where("id", "=", transaksi.Id)
 	affected = q.Update(x.newMapFromEntities(transaksi))
 	return affected, nil
 }
+
 func (x *TransaksiMysqlRepository) SoftDeleteById(ctx context.Context, id string) (affected int, err error) {
 	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
 	q.Where("id", "=", id)
@@ -103,30 +143,6 @@ func (x *TransaksiMysqlRepository) HardDeleteTrashedById(ctx context.Context, id
 	}
 	return affected, nil
 }
-func (x *TransaksiMysqlRepository) GetJumlahByPosId(ctx context.Context, posId string) (saldo int) {
-	pengeluaran := 0
-	pemasukan := 0
-
-	q := x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
-	q.Select("IFNULL(SUM(jumlah), 0)")
-	q.Where("pos_asal_id", "=", posId)
-	rows, cleanup := q.Get()
-	defer cleanup()
-	if rows.Next() {
-		helpers_error.PanicIfError(rows.Scan(&pengeluaran))
-	}
-
-	q = x.newQueryRequest(ctx, "aktif", keep_request.NewGetTransaksi())
-	q.Select("IFNULL(SUM(jumlah), 0)")
-	q.Where("pos_tujuan_id", "=", posId)
-	rows, cleanup2 := q.Get()
-	defer cleanup2()
-	if rows.Next() {
-		helpers_error.PanicIfError(rows.Scan(&pemasukan))
-	}
-
-	return pemasukan - pengeluaran
-}
 
 func (x *TransaksiMysqlRepository) newQueryRequest(ctx context.Context, status string, request *keep_request.GetTransaksi) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, transaksiTableName)
@@ -167,19 +183,22 @@ func (x *TransaksiMysqlRepository) newQueryRequest(ctx context.Context, status s
 		sub.OrWhere("kantong_tujuan_id", "=", request.KantongId)
 	}
 	if request.JenisTanggal != "" && request.Tanggal != 0 {
-		q.Where("YEAR(waktu)", "=", time.Now().UTC().Format("2006"))
-		if request.JenisTanggal == "bulan" {
-			q.Where("MONTH(waktu)", "=", time.Now().UTC().Format("01"))
+		q.Where("YEAR(waktu)", "=", time.Unix(request.Tanggal, 0).Format("2006"))
+		if request.JenisTanggal != "tahun" {
+			q.Where("MONTH(waktu)", "=", time.Unix(request.Tanggal, 0).Format("01"))
 		}
 		if request.JenisTanggal == "tanggal" {
-			q.Where("DAY(waktu)", "=", time.Now().UTC().Format("02"))
+			q.Where("DAY(waktu)", "=", time.Unix(request.Tanggal, 0).Format("02"))
 		}
 	}
 	if request.WaktuAwal != 0 {
-		q.Where("waktu", ">=", time.Now().UTC().Format(time.DateTime))
+		q.Where("waktu", ">=", time.Unix(request.WaktuAwal, 0).Format(time.DateTime))
 	}
 	if request.Jenis != "" {
 		q.Where("jenis", "=", request.Jenis)
+	}
+	if request.Search != "" {
+		q.Where("uraian", "LIKE", "%"+request.Search+"%")
 	}
 
 	return q

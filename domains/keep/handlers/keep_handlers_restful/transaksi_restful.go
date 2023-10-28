@@ -8,6 +8,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
+	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,30 +29,42 @@ func (x *TransaksiRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	q := r.URL.Query()
+	v := validator.New()
+	err := v.ValidateMap(map[string]any{
+		"skip":      q.Get("skip"),
+		"take":      q.Get("take"),
+		"tanggal":   q.Get("tanggal"),
+		"waktuAwal": q.Get("waktuAwal"),
+	}, map[string]any{
+		"skip":      "omitempty,number",
+		"take":      "omitempty,number",
+		"tanggal":   "omitempty,number",
+		"waktuAwal": "omitempty,number",
+	})
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
+	}
+
 	request := keep_request.NewGetTransaksi()
+	request.Skip, err = strconv.Atoi(q.Get("skip"))
+	helpers_error.PanicIfError(err)
+	request.Take, err = strconv.Atoi(q.Get("take"))
+	helpers_error.PanicIfError(err)
+	request.Tanggal, err = strconv.ParseInt(q.Get("tanggal"), 10, 64)
+	helpers_error.PanicIfError(err)
+	request.WaktuAwal, err = strconv.ParseInt(q.Get("waktuAwal"), 10, 64)
+	helpers_error.PanicIfError(err)
+	request.Search = q.Get("search")
 	request.PosId = q.Get("posId")
 	request.KantongId = q.Get("kantongId")
 	request.JenisTanggal = q.Get("jenisTanggal")
 	request.Jenis = q.Get("jenis")
-	tanggalString := q.Get("tanggal")
-	if tanggalString != "" {
-		tanggalInt, err := strconv.ParseInt(tanggalString, 10, 64)
-		if err != nil {
-			e := helpers_error.NewValidationErrors("tanggal", "type", "integer")
-			h.SendErrorResponse(w, 400, e.Error())
-			return
-		}
-		request.Tanggal = tanggalInt
-	}
-	waktuAwalString := q.Get("waktuAwal")
-	if waktuAwalString != "" {
-		waktuAwalInt, err := strconv.ParseInt(waktuAwalString, 10, 64)
-		if err != nil {
-			e := helpers_error.NewValidationErrors("tanggal", "type", "integer")
-			h.SendErrorResponse(w, 400, e.Error())
-			return
-		}
-		request.WaktuAwal = waktuAwalInt
+
+	err = v.ValidateStruct(request)
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
 	}
 
 	models := x.service.Get(ctx, request)
