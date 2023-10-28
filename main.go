@@ -11,8 +11,12 @@ import (
 /*
  * APP_ENV: production (default), development, testing
  */
+
+var Version = "1.0.0"
+
 func main() {
 	helpers_env.Init(0)
+	fmt.Printf("%-25s: %s\n", "Version", Version)
 	cliHandler()
 }
 

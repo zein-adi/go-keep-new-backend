@@ -31,10 +31,22 @@ func startServer() {
 		AllowCredentials: true,
 		Debug:            false,
 	}
+
+	serverType := ""
+	if port == 443 {
+		serverType = "HTTPS"
+	} else {
+		serverType = "HTTP"
+	}
+	fmt.Printf("%-25s:\n", serverType)
+	fmt.Printf("%-25s: %s:%d\n", "Address", address, port)
+	fmt.Printf("%-25s: %s\n", "Cors Allowed Origins", allowedOrigins)
+	fmt.Printf("%-25s:\n", "Registered Routes")
+
 	r := gorillamux_router.NewRouter(opt)
 	injectRoutes(r)
 
-	fmt.Printf("Listening\nAddress: %s:%d \n...", address, port)
+	fmt.Printf("Listening ...")
 	if port == 443 {
 		err := http.ListenAndServeTLS(address+":"+strconv.Itoa(port), tlsCertPath, tlsKeyPath, r)
 		helpers_error.PanicIfError(err)
