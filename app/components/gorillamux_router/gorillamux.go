@@ -67,24 +67,41 @@ func (m *Router) PATCH(path string, handle HttpHandler, routeName string) {
 func (m *Router) DELETE(path string, handle HttpHandler, routeName string) {
 	m.handle(http.MethodDelete, path, handle, routeName)
 }
-func (m *Router) Group(pathPrefix string, routeNamePrefix string, handleGroup func(router *Router)) *Router {
+
+/*
+ * Chaining Methods
+ */
+
+func (m *Router) New() *Router {
 	newRouter := &Router{
 		router:          m.router,
 		cors:            m.cors,
 		logger:          m.logger,
 		middlewares:     m.middlewares,
-		pathPrefix:      m.pathPrefix + pathPrefix,
-		routeNamePrefix: m.routeNamePrefix + routeNamePrefix,
+		pathPrefix:      m.pathPrefix,
+		routeNamePrefix: m.routeNamePrefix,
 	}
-	handleGroup(newRouter)
 	return newRouter
 }
-func (m *Router) AddMiddleware(middlewares ...MiddlewareFunc) {
+func (m *Router) AddMiddleware(middlewares ...MiddlewareFunc) *Router {
 	m.middlewares = append(m.middlewares, middlewares...)
+	return m
 }
-func (m *Router) SetMiddleware(middlewares ...MiddlewareFunc) {
+func (m *Router) SetMiddleware(middlewares ...MiddlewareFunc) *Router {
 	m.middlewares = middlewares
+	return m
 }
+func (m *Router) Group(pathPrefix string, routeNamePrefix string, handleGroup func(router *Router)) {
+	newRouter := m.New()
+	newRouter.pathPrefix += pathPrefix
+	newRouter.routeNamePrefix += routeNamePrefix
+	handleGroup(newRouter)
+}
+
+/*
+ * Endpoint Handler
+ */
+
 func (m *Router) handle(method string, path string, handle HttpHandler, routeName string) {
 	fmt.Printf("%-10s\t%-30s\t%-40s\n", method, m.routeNamePrefix+routeName, m.pathPrefix+path)
 	m.router.HandleFunc(m.pathPrefix+path, func(w http.ResponseWriter, r *http.Request) {

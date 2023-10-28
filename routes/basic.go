@@ -17,9 +17,10 @@ func injectBasicRoutes(r *gorillamux_router.Router) {
 		r.GET("", pos.Get, "get")
 	}) //.SetMiddleware(middlewares.AuthHandle)
 
-	r.Group("/changelogs", "changelog.", func(r *gorillamux_router.Router) {
-		r.POST("", pos.Insert, "insert")
-		r.PATCH("/{changelogId:[0-9]+}", pos.Update, "update")
-		r.DELETE("/{changelogId:[0-9]+}", pos.DeleteById, "delete")
-	}).SetMiddleware(middlewares.AuthHandle, middlewareAcl.Handle)
+	r.New().SetMiddleware(middlewares.AuthHandle, middlewareAcl.Handle).
+		Group("/changelogs", "changelog.", func(r *gorillamux_router.Router) {
+			r.POST("", pos.Insert, "insert")
+			r.PATCH("/{changelogId:[0-9]+}", pos.Update, "update")
+			r.DELETE("/{changelogId:[0-9]+}", pos.DeleteById, "delete")
+		})
 }

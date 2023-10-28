@@ -16,63 +16,64 @@ func injectKeepRoutes(r *gorillamux_router.Router) {
 
 	middlewareAcl := middlewares.NewMiddlewareAcl(auth_handlers_local.NewRoleLocalHandler(dependency_injection.InitUserRoleServices()))
 
-	r.Group("/keep", "keep.", func(r *gorillamux_router.Router) {
+	r.New().SetMiddleware(middlewares.AuthHandle, middlewareAcl.Handle).
+		Group("/keep", "keep.", func(r *gorillamux_router.Router) {
 
-		transaksi := keep_handlers_restful.NewTransaksiRestfulHandler(dependency_injection.InitKeepTransaksiServices())
-		r.Group("/transaksi", "transaksi.", func(r *gorillamux_router.Router) {
-			r.GET("", transaksi.Get, "get")
-			r.GET("/trash", transaksi.GetTrashed, "trash")
-			r.POST("", transaksi.Insert, "insert")
-			r.PATCH("/{transaksiId:[0-9]+}", transaksi.Update, "update")
-			r.PATCH("/{transaksiId:[0-9]+}/trash/restore", transaksi.RestoreTrashedById, "trash")
-			r.DELETE("/{transaksiId:[0-9]+}", transaksi.DeleteById, "delete")
-			r.DELETE("/{transaksiId:[0-9]+}/trash", transaksi.DeleteTrashedById, "trash") // Dangerous
-		})
+			transaksi := keep_handlers_restful.NewTransaksiRestfulHandler(dependency_injection.InitKeepTransaksiServices())
+			r.Group("/transaksi", "transaksi.", func(r *gorillamux_router.Router) {
+				r.GET("", transaksi.Get, "get")
+				r.GET("/trash", transaksi.GetTrashed, "trash")
+				r.POST("", transaksi.Insert, "insert")
+				r.PATCH("/{transaksiId:[0-9]+}", transaksi.Update, "update")
+				r.PATCH("/{transaksiId:[0-9]+}/trash/restore", transaksi.RestoreTrashedById, "trash")
+				r.DELETE("/{transaksiId:[0-9]+}", transaksi.DeleteById, "delete")
+				r.DELETE("/{transaksiId:[0-9]+}/trash", transaksi.DeleteTrashedById, "trash") // Dangerous
+			})
 
-		lokasi := keep_handlers_restful.NewLokasiRestfulHandler(dependency_injection.InitKeepLokasiServices())
-		r.Group("/lokasi", "lokasi.", func(r *gorillamux_router.Router) {
-			r.GET("", lokasi.Get, "get")
-		})
+			lokasi := keep_handlers_restful.NewLokasiRestfulHandler(dependency_injection.InitKeepLokasiServices())
+			r.Group("/lokasi", "lokasi.", func(r *gorillamux_router.Router) {
+				r.GET("", lokasi.Get, "get")
+			})
 
-		barang := keep_handlers_restful.NewBarangRestfulHandler(dependency_injection.InitKeepBarangServices())
-		r.Group("/barang", "barang.", func(r *gorillamux_router.Router) {
-			r.GET("", barang.Get, "get")
-		})
+			barang := keep_handlers_restful.NewBarangRestfulHandler(dependency_injection.InitKeepBarangServices())
+			r.Group("/barang", "barang.", func(r *gorillamux_router.Router) {
+				r.GET("", barang.Get, "get")
+			})
 
-		pos := keep_handlers_restful.NewPosRestfulHandler(dependency_injection.InitKeepPosServices())
-		r.Group("/pos", "pos.", func(r *gorillamux_router.Router) {
-			r.GET("", pos.Get, "get")
-			r.GET("/trash", pos.GetTrashed, "trash")
-			r.POST("", pos.Insert, "insert")
-			r.PATCH("/order", pos.UpdateUrutan, "update")
-			r.PATCH("/visibility", pos.UpdateVisivility, "update")
-			r.PATCH("/{posId:[0-9]+}", pos.Update, "update")
-			r.PATCH("/{posId:[0-9]+}/trash/restore", pos.RestoreTrashedById, "trash")
-			r.DELETE("/{posId:[0-9]+}", pos.DeleteById, "delete")
-			//r.DELETE("/{posId:[0-9]+}/trash", pos.DeleteTrashedById, "trash") // Dangerous
-		})
+			pos := keep_handlers_restful.NewPosRestfulHandler(dependency_injection.InitKeepPosServices())
+			r.Group("/pos", "pos.", func(r *gorillamux_router.Router) {
+				r.GET("", pos.Get, "get")
+				r.GET("/trash", pos.GetTrashed, "trash")
+				r.POST("", pos.Insert, "insert")
+				r.PATCH("/order", pos.UpdateUrutan, "update")
+				r.PATCH("/visibility", pos.UpdateVisivility, "update")
+				r.PATCH("/{posId:[0-9]+}", pos.Update, "update")
+				r.PATCH("/{posId:[0-9]+}/trash/restore", pos.RestoreTrashedById, "trash")
+				r.DELETE("/{posId:[0-9]+}", pos.DeleteById, "delete")
+				//r.DELETE("/{posId:[0-9]+}/trash", pos.DeleteTrashedById, "trash") // Dangerous
+			})
 
-		kantong := keep_handlers_restful.NewKantongRestfulHandler(dependency_injection.InitKeepKantongServices())
-		r.Group("/kantong", "kantong.", func(r *gorillamux_router.Router) {
-			r.GET("", kantong.Get, "get")
-			r.GET("/trash", kantong.GetTrashed, "trash")
-			r.POST("", kantong.Insert, "insert")
-			r.PATCH("/order", kantong.UpdateUrutan, "update")
-			r.PATCH("/visibility", kantong.UpdateVisivility, "update")
-			r.PATCH("/{kantongId:[0-9]+}", kantong.Update, "update")
-			r.PATCH("/{kantongId:[0-9]+}/trash/restore", kantong.RestoreTrashedById, "trash")
-			r.DELETE("/{kantongId:[0-9]+}", kantong.DeleteById, "delete")
-			//r.DELETE("/{kantongId:[0-9]+}/trash", kantong.DeleteTrashedById, "trash") // Dangerous
+			kantong := keep_handlers_restful.NewKantongRestfulHandler(dependency_injection.InitKeepKantongServices())
+			r.Group("/kantong", "kantong.", func(r *gorillamux_router.Router) {
+				r.GET("", kantong.Get, "get")
+				r.GET("/trash", kantong.GetTrashed, "trash")
+				r.POST("", kantong.Insert, "insert")
+				r.PATCH("/order", kantong.UpdateUrutan, "update")
+				r.PATCH("/visibility", kantong.UpdateVisivility, "update")
+				r.PATCH("/{kantongId:[0-9]+}", kantong.Update, "update")
+				r.PATCH("/{kantongId:[0-9]+}/trash/restore", kantong.RestoreTrashedById, "trash")
+				r.DELETE("/{kantongId:[0-9]+}", kantong.DeleteById, "delete")
+				//r.DELETE("/{kantongId:[0-9]+}/trash", kantong.DeleteTrashedById, "trash") // Dangerous
 
-			kantongHistory := keep_handlers_restful.NewKantongHistoryRestfulHandler(dependency_injection.InitKeepKantongHistoryServices())
-			r.Group("/{kantongId:[0-9]+}/history", "history.", func(r *gorillamux_router.Router) {
-				r.GET("", kantongHistory.Get, "get")
-				r.POST("", kantongHistory.Insert, "insert")
-				r.PATCH("/{kantongHistoryId:[0-9]+}", kantongHistory.Update, "update")
-				r.DELETE("/{kantongHistoryId:[0-9]+}", kantongHistory.DeleteById, "delete")
+				kantongHistory := keep_handlers_restful.NewKantongHistoryRestfulHandler(dependency_injection.InitKeepKantongHistoryServices())
+				r.Group("/{kantongId:[0-9]+}/history", "history.", func(r *gorillamux_router.Router) {
+					r.GET("", kantongHistory.Get, "get")
+					r.POST("", kantongHistory.Insert, "insert")
+					r.PATCH("/{kantongHistoryId:[0-9]+}", kantongHistory.Update, "update")
+					r.DELETE("/{kantongHistoryId:[0-9]+}", kantongHistory.DeleteById, "delete")
+				})
 			})
 		})
-	}).SetMiddleware(middlewares.AuthHandle, middlewareAcl.Handle)
 }
 
 func RegisterKeepListeners(

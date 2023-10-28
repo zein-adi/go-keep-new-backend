@@ -16,14 +16,16 @@ func injectAuthRoutes(r *gorillamux_router.Router) {
 
 		r.POST("/login", authRestful.Login, "")
 
-		r.Group("", "", func(r *gorillamux_router.Router) {
-			r.GET("/profile", authRestful.Profile, "")
-		}).SetMiddleware(middlewares.AuthHandle)
+		r.New().SetMiddleware(middlewares.AuthHandle).
+			Group("", "", func(r *gorillamux_router.Router) {
+				r.GET("/profile", authRestful.Profile, "")
+			})
 
-		r.Group("", "", func(r *gorillamux_router.Router) {
-			r.POST("/logout", authRestful.Logout, "")
-			r.POST("/refresh", authRestful.Refresh, "")
-		}).SetMiddleware(middlewares.AuthRefreshHandle)
+		r.New().SetMiddleware(middlewares.AuthRefreshHandle).
+			Group("", "", func(r *gorillamux_router.Router) {
+				r.POST("/logout", authRestful.Logout, "")
+				r.POST("/refresh", authRestful.Refresh, "")
+			})
 	})
 }
 func defHandler(w http.ResponseWriter, _ *http.Request) {
