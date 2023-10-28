@@ -28,6 +28,8 @@ func (x *PermissionMemoryRepository) Get(_ context.Context) []string {
 		"keep.transaksi.update",
 		"keep.transaksi.delete",
 		"keep.transaksi.trash",
+		"keep.lokasi.get",
+		"keep.barang.get",
 		"keep.pos.get",
 		"keep.pos.insert",
 		"keep.pos.update",
