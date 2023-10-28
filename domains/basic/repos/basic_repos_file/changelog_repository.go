@@ -2,6 +2,7 @@ package basic_repos_file
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"github.com/zein-adi/go-keep-new-backend/domains/basic/core/basic_entities"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
@@ -16,6 +17,9 @@ import (
 
 var changelogEntityName = "changelog"
 var changelogFileName = "changelog.json"
+
+//go:embed changelog.json
+var changelogJson []byte
 
 func NewChangelogFileRepository() *ChangelogFileRepository {
 	t := &ChangelogFileRepository{
@@ -115,15 +119,22 @@ func (x *ChangelogFileRepository) loadCache() {
 		return
 	}
 
-	if !helpers_directory.FileExists(changelogFileName) {
-		x.writeToFile()
+	if os.Getenv("APP_ENV") == "development" || os.Getenv("APP_ENV") == "testing" {
+		// Read From File
+		if !helpers_directory.FileExists(changelogFileName) {
+			x.writeToFile()
+			return
+		}
+
+		data, err := os.ReadFile(changelogFileName)
+		helpers_error.PanicIfError(err)
+		err = json.Unmarshal(data, &x.Data)
+		helpers_error.PanicIfError(err)
 		return
 	}
 
-	// Read File
-	data, err := os.ReadFile(changelogFileName)
-	helpers_error.PanicIfError(err)
-	err = json.Unmarshal(data, &x.Data)
+	// Read From embed
+	err := json.Unmarshal(changelogJson, &x.Data)
 	helpers_error.PanicIfError(err)
 }
 func (x *ChangelogFileRepository) writeToFile() {
