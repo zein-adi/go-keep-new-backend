@@ -66,6 +66,7 @@ func RegisterListeners() {
 	RegisterKeepListeners(
 		dependency_injection.InitKeepPosServices(),
 		dependency_injection.InitKeepKantongServices(),
+		dependency_injection.InitKeepKantongHistoryServices(),
 		dependency_injection.InitKeepLokasiServices(),
 		dependency_injection.InitKeepBarangServices(),
 	)

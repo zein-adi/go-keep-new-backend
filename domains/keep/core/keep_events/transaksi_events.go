@@ -24,6 +24,7 @@ type TransaksiEventData struct {
 	KantongTujuanId string
 	Jumlah          int
 	Lokasi          string
+	Uraian          string
 	Details         []*keep_entities.TransaksiDetail
 }
 type TransaksiCreatedEventData struct {
@@ -42,43 +43,43 @@ type TransaksiSoftDeletedEventData struct {
 type TransaksiRestoredEventData TransaksiSoftDeletedEventData
 type TransaksiHardDeletedEventData TransaksiSoftDeletedEventData
 
-func NewTransaksiCreatedEventDataFromDispatcher(eventData any) (*TransaksiCreatedEventData, error) {
+func NewTransaksiCreatedEventDataFromDispatcher(eventData any) (string, *TransaksiCreatedEventData, error) {
 	data, ok := eventData.(TransaksiCreatedEventData)
 	if !ok {
 		err := errors.New(fmt.Sprintf("failed to cast %s eventdata from any to %s",
 			"TransaksiCreated",
 			"TransaksiCreatedEventData"))
-		return nil, err
+		return TransaksiCreated, nil, err
 	}
-	return &data, nil
+	return TransaksiCreated, &data, nil
 }
-func NewTransaksiUpdatedEventDataFromDispatcher(eventData any) (*TransaksiUpdatedEventData, error) {
+func NewTransaksiUpdatedEventDataFromDispatcher(eventData any) (string, *TransaksiUpdatedEventData, error) {
 	data, ok := eventData.(TransaksiUpdatedEventData)
 	if !ok {
 		err := errors.New(fmt.Sprintf("failed to cast %s eventdata from any to %s",
 			"TransaksiUpdated",
 			"TransaksiUpdatedEventData"))
-		return nil, err
+		return TransaksiUpdated, nil, err
 	}
-	return &data, nil
+	return TransaksiUpdated, &data, nil
 }
-func NewTransaksiSoftDeleteEventDataFromDispatcher(eventData any) (*TransaksiSoftDeletedEventData, error) {
+func NewTransaksiSoftDeleteEventDataFromDispatcher(eventData any) (string, *TransaksiSoftDeletedEventData, error) {
 	data, ok := eventData.(TransaksiSoftDeletedEventData)
 	if !ok {
 		err := errors.New(fmt.Sprintf("failed to cast %s eventdata from any to %s",
 			"TransaksiSoftDeleted",
 			"TransaksiSoftDeletedEventData"))
-		return nil, err
+		return TransaksiSoftDeleted, nil, err
 	}
-	return &data, nil
+	return TransaksiSoftDeleted, &data, nil
 }
-func NewTransaksiRestoreEventDataFromDispatcher(eventData any) (*TransaksiRestoredEventData, error) {
+func NewTransaksiRestoreEventDataFromDispatcher(eventData any) (string, *TransaksiRestoredEventData, error) {
 	data, ok := eventData.(TransaksiRestoredEventData)
 	if !ok {
 		err := errors.New(fmt.Sprintf("failed to cast %s eventdata from any to %s",
 			"TransaksiRestored",
 			"TransaksiRestoredEventData"))
-		return nil, err
+		return TransaksiRestored, nil, err
 	}
-	return &data, nil
+	return TransaksiRestored, &data, nil
 }

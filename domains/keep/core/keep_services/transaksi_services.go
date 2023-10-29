@@ -264,5 +264,6 @@ func (x *TransaksiServices) createEvent(transaksi *keep_entities.Transaksi) keep
 		Jumlah:          transaksi.Jumlah,
 		Lokasi:          transaksi.Lokasi,
 		Details:         detailsCopy,
+		Uraian:          transaksi.Uraian,
 	}
 }

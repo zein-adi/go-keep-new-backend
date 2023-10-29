@@ -19,36 +19,36 @@ type BarangEventListenerHandler struct {
 }
 
 func (x *BarangEventListenerHandler) TransaksiCreated(eventData any) {
-	_, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateBarang("created")
+	x.updateBarang(eventName)
 }
 func (x *BarangEventListenerHandler) TransaksiUpdated(eventData any) {
-	_, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateBarang("updated")
+	x.updateBarang(eventName)
 }
 func (x *BarangEventListenerHandler) TransaksiSoftDeleted(eventData any) {
-	_, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateBarang("softDelete")
+	x.updateBarang(eventName)
 }
 func (x *BarangEventListenerHandler) TransaksiRestored(eventData any) {
-	_, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateBarang("restore")
+	x.updateBarang(eventName)
 }
 
 func (x *BarangEventListenerHandler) updateBarang(action string) {
@@ -61,5 +61,8 @@ func (x *BarangEventListenerHandler) updateBarang(action string) {
 		return
 	}
 
-	logrus.WithField("listener", "keep.barang."+action).Infof("affected:%d", affected)
+	logrus.
+		WithField("event", action).
+		WithField("listener", "keep.barang").
+		Infof("affected:%d", affected)
 }

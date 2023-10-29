@@ -3,8 +3,10 @@ package keep_services
 import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_events"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_events"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"time"
@@ -26,13 +28,13 @@ func (x *KantongHistoryServices) Get(ctx context.Context, request *helpers_reque
 	return x.repo.Get(ctx, request)
 }
 
-func (x *KantongHistoryServices) InsertAndUpdateSaldoKantong(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error) {
+func (x *KantongHistoryServices) Insert(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error) {
 	err := validator.New().ValidateStruct(kantongHistoryRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	kantong, err := x.kantongRepo.FindById(ctx, kantongHistoryRequest.KantongId)
+	_, err = x.kantongRepo.FindById(ctx, kantongHistoryRequest.KantongId)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +50,12 @@ func (x *KantongHistoryServices) InsertAndUpdateSaldoKantong(ctx context.Context
 		return nil, err
 	}
 
-	saldo := kantong.Saldo - model.Jumlah
-	_, _ = x.kantongRepo.UpdateSaldo(ctx, kantongHistoryRequest.KantongId, saldo)
+	_ = helpers_events.GetDispatcher().Dispatch(
+		keep_events.KantongHistoryCreated,
+		keep_events.KantongHistoryCreatedEventData{
+			Time: time.Now(),
+			Data: *model,
+		})
 
 	return model, nil
 }
@@ -76,13 +82,34 @@ func (x *KantongHistoryServices) Update(ctx context.Context, kantongHistoryReque
 		Uraian:    kantongHistoryRequest.Uraian,
 		Waktu:     model.Waktu,
 	}
-	return x.repo.Update(ctx, kantongHistory)
-}
-
-func (x *KantongHistoryServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
-	_, err = x.repo.FindById(ctx, id)
+	affected, err = x.repo.Update(ctx, kantongHistory)
 	if err != nil {
 		return 0, err
 	}
-	return x.repo.DeleteById(ctx, id)
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongHistoryUpdated, keep_events.KantongHistoryUpdatedEventData{
+		Time: time.Now(),
+		Old:  *model,
+		New:  *kantongHistory,
+	})
+
+	return affected, nil
+}
+
+func (x *KantongHistoryServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
+	model, err := x.repo.FindById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	affected, err = x.repo.DeleteById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongHistoryDeleted, keep_events.KantongHistoryDeletedEventData{
+		Time: time.Now(),
+		Data: *model,
+	})
+
+	return affected, nil
 }

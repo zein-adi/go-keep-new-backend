@@ -53,7 +53,7 @@ func TestKantongHistory(t *testing.T) {
 			Jumlah:    jumlah,
 			Uraian:    uraian,
 		}
-		m, err := x.services.InsertAndUpdateSaldoKantong(context.Background(), input)
+		m, err := x.services.Insert(context.Background(), input)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, m.Id)
 		assert.Equal(t, kantongId, m.KantongId)

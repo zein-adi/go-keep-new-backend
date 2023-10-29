@@ -23,36 +23,36 @@ type PosEventListenerHandler struct {
  */
 
 func (x *PosEventListenerHandler) TransaksiCreated(eventData any) {
-	data, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
+	eventName, data, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo(keep_events.TransaksiCreated, data.Data.PosAsalId, data.Data.PosTujuanId)
+	x.updateSaldo(eventName, data.Data.PosAsalId, data.Data.PosTujuanId)
 }
 func (x *PosEventListenerHandler) TransaksiUpdated(eventData any) {
-	data, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
+	eventName, data, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo(keep_events.TransaksiUpdated, data.Old.PosAsalId, data.Old.PosTujuanId, data.New.PosAsalId, data.New.PosTujuanId)
+	x.updateSaldo(eventName, data.Old.PosAsalId, data.Old.PosTujuanId, data.New.PosAsalId, data.New.PosTujuanId)
 }
 func (x *PosEventListenerHandler) TransaksiSoftDeleted(eventData any) {
-	data, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
+	eventName, data, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo(keep_events.TransaksiSoftDeleted, data.Data.PosAsalId, data.Data.PosTujuanId)
+	x.updateSaldo(eventName, data.Data.PosAsalId, data.Data.PosTujuanId)
 }
 func (x *PosEventListenerHandler) TransaksiRestored(eventData any) {
-	data, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
+	eventName, data, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateSaldo(keep_events.TransaksiRestored, data.Data.PosAsalId, data.Data.PosTujuanId)
+	x.updateSaldo(eventName, data.Data.PosAsalId, data.Data.PosTujuanId)
 }
 func (x *PosEventListenerHandler) updateSaldo(action string, ids ...string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

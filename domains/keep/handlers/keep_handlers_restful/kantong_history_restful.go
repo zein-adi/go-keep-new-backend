@@ -65,7 +65,7 @@ func (x *KantongHistoryRestfulHandler) InsertAndUpdateSaldoKantong(w http.Respon
 
 	vars := mux.Vars(r)
 	input.KantongId = vars["kantongId"]
-	model, err := x.service.InsertAndUpdateSaldoKantong(ctx, input)
+	model, err := x.service.Insert(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.ValidationError) {
 			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())

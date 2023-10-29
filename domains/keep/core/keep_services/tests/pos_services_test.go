@@ -359,7 +359,7 @@ func TestPos(t *testing.T) {
 	_ = d.Register(keep_events.TransaksiSoftDeleted, l.TransaksiSoftDeleted)
 	_ = d.Register(keep_events.TransaksiRestored, l.TransaksiRestored)
 
-	t.Run("UpdateSaldoFromTransaksi", func(t *testing.T) {
+	t.Run("UpdateSaldo", func(t *testing.T) {
 		poses := x.reset()
 		posPemasukan := poses[0]
 		posPengeluaran := poses[1]

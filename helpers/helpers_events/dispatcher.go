@@ -15,7 +15,7 @@ func GetDispatcher() *Dispatcher {
 		defer lock.Unlock()
 		if dispatcherInstance == nil {
 			d := &Dispatcher{
-				jobs:      make(chan job),
+				jobs:      make(chan job, 20),
 				listeners: make(map[string][]ListenerHandleFunc),
 			}
 			go d.consume()

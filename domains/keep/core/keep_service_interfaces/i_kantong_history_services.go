@@ -9,7 +9,7 @@ import (
 
 type IKantongHistoryServices interface {
 	Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory
-	InsertAndUpdateSaldoKantong(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error)
+	Insert(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error)
 	Update(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (affected int, err error)
 	DeleteById(ctx context.Context, id string) (affected int, err error)
 }

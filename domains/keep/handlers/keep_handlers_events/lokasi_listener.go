@@ -19,36 +19,36 @@ type LokasiEventListenerHandler struct {
 }
 
 func (x *LokasiEventListenerHandler) TransaksiCreated(eventData any) {
-	_, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiCreatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateLokasi("created")
+	x.updateLokasi(eventName)
 }
 func (x *LokasiEventListenerHandler) TransaksiUpdated(eventData any) {
-	_, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiUpdatedEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateLokasi("updated")
+	x.updateLokasi(eventName)
 }
 func (x *LokasiEventListenerHandler) TransaksiSoftDeleted(eventData any) {
-	_, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiSoftDeleteEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateLokasi("softDelete")
+	x.updateLokasi(eventName)
 }
 func (x *LokasiEventListenerHandler) TransaksiRestored(eventData any) {
-	_, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
+	eventName, _, err := keep_events.NewTransaksiRestoreEventDataFromDispatcher(eventData)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-	x.updateLokasi("restore")
+	x.updateLokasi(eventName)
 }
 
 func (x *LokasiEventListenerHandler) updateLokasi(action string) {
@@ -61,5 +61,8 @@ func (x *LokasiEventListenerHandler) updateLokasi(action string) {
 		return
 	}
 
-	logrus.WithField("listener", "keep.lokasi."+action).Infof("affected:%d", affected)
+	logrus.
+		WithField("event", action).
+		WithField("listener", "keep.lokasi").
+		Infof("affected:%d", affected)
 }
