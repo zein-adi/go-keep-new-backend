@@ -5,7 +5,10 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 var kantongHistoryEntityName = "pos"
@@ -18,8 +21,14 @@ type KantongHistoryMemoryRepository struct {
 	Data []*keep_entities.KantongHistory
 }
 
-func (x *KantongHistoryMemoryRepository) Get(_ context.Context) []*keep_entities.KantongHistory {
-	models := x.newQueryRequest()
+func (x *KantongHistoryMemoryRepository) Get(_ context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory {
+	models := x.newQueryRequest(request)
+	sort.Slice(models, func(i, j int) bool {
+		return models[i].Waktu > models[j].Waktu
+	})
+	if request.Take > 0 {
+		models = helpers.Slice(models, request.Skip, request.Take)
+	}
 	return helpers.Map(models, func(d *keep_entities.KantongHistory) *keep_entities.KantongHistory {
 		return d.Copy()
 	})
@@ -66,8 +75,14 @@ func (x *KantongHistoryMemoryRepository) DeleteById(_ context.Context, id string
 	return 1, nil
 }
 
-func (x *KantongHistoryMemoryRepository) newQueryRequest() []*keep_entities.KantongHistory {
-	return x.Data
+func (x *KantongHistoryMemoryRepository) newQueryRequest(request *helpers_requests.Get) []*keep_entities.KantongHistory {
+	return helpers.Filter(x.Data, func(v *keep_entities.KantongHistory) bool {
+		res := true
+		if request.Search != "" {
+			res = res && strings.Contains(strings.ToLower(v.Uraian), strings.ToLower(request.Search))
+		}
+		return res
+	})
 }
 func (x *KantongHistoryMemoryRepository) findIndexById(id string) (index int, err error) {
 	index, err = helpers.FindIndex(x.Data, func(v *keep_entities.KantongHistory) bool {

@@ -13,6 +13,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"testing"
 	"time"
 )
@@ -28,7 +29,7 @@ func TestKantongHistory(t *testing.T) {
 			return d.Id
 		})
 
-		models := x.services.Get(context.Background())
+		models := x.services.Get(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 2)
 
 		for _, m := range models {
@@ -52,7 +53,7 @@ func TestKantongHistory(t *testing.T) {
 			Jumlah:    jumlah,
 			Uraian:    uraian,
 		}
-		m, err := x.services.Insert(context.Background(), input)
+		m, err := x.services.InsertAndUpdateSaldoKantong(context.Background(), input)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, m.Id)
 		assert.Equal(t, kantongId, m.KantongId)
@@ -109,7 +110,7 @@ func TestKantongHistory(t *testing.T) {
 		input := &keep_request.KantongHistoryInsertUpdate{
 			Id:        id,
 			KantongId: kantong.Id,
-			Jumlah:    0,
+			Jumlah:    1,
 			Uraian:    "1",
 		}
 		_, err = x.services.Update(context.Background(), input)
@@ -166,7 +167,7 @@ func (x *KantongHistoryServicesTest) setUpMysqlRepository() {
 		for _, m := range kantongRepo.GetTrashed(context.Background()) {
 			_, _ = kantongRepo.HardDeleteTrashedById(context.Background(), m.Id)
 		}
-		for _, m := range repo.Get(context.Background()) {
+		for _, m := range repo.Get(context.Background(), helpers_requests.NewGet()) {
 			_, _ = repo.DeleteById(context.Background(), m.Id)
 		}
 	}

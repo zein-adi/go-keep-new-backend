@@ -297,9 +297,9 @@ func TestTransaksi(t *testing.T) {
 		lokasi := "Citra Ken Dedes"
 
 		nama := "Bloat Cake Special"
-		harga := 13000
+		harga := float64(13000)
 		jumlah := float64(1)
-		diskon := 1000
+		diskon := float64(1000)
 		satuanJumlah := float64(1)
 		satuanNama := "pcs"
 		keteranganDetail := "lagi diskon"

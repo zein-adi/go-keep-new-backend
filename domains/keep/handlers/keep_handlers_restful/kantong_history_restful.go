@@ -8,7 +8,10 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
+	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -22,15 +25,36 @@ type KantongHistoryRestfulHandler struct {
 	service keep_service_interfaces.IKantongHistoryServices
 }
 
-func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, _ *http.Request) {
+func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	models := x.service.Get(ctx)
+	q := r.URL.Query()
+	v := validator.New()
+	err := v.ValidateMap(map[string]any{
+		"skip": q.Get("skip"),
+		"take": q.Get("take"),
+	}, map[string]any{
+		"skip": "omitempty,number",
+		"take": "omitempty,number",
+	})
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
+	}
+
+	request := helpers_requests.NewGet()
+	request.Search = q.Get("search")
+	request.Skip, err = strconv.Atoi(q.Get("skip"))
+	helpers_error.PanicIfError(err)
+	request.Take, err = strconv.Atoi(q.Get("take"))
+	helpers_error.PanicIfError(err)
+
+	models := x.service.Get(ctx, request)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 
-func (x *KantongHistoryRestfulHandler) Insert(w http.ResponseWriter, r *http.Request) {
+func (x *KantongHistoryRestfulHandler) InsertAndUpdateSaldoKantong(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
@@ -41,7 +65,7 @@ func (x *KantongHistoryRestfulHandler) Insert(w http.ResponseWriter, r *http.Req
 
 	vars := mux.Vars(r)
 	input.KantongId = vars["kantongId"]
-	model, err := x.service.Insert(ctx, input)
+	model, err := x.service.InsertAndUpdateSaldoKantong(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.ValidationError) {
 			h.SendErrorResponse(w, http.StatusBadRequest, errors.Unwrap(err).Error())

@@ -3,9 +3,12 @@ package keep_services
 import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
+	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_events"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_events"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
+	"time"
 )
 
 func NewKantongServices(kantongRepo keep_repo_interfaces.IKantongRepository, posRepo keep_repo_interfaces.IPosRepository) *KantongServices {
@@ -45,10 +48,19 @@ func (x *KantongServices) Insert(ctx context.Context, kantongRequest *keep_reque
 		IsShow:         true,
 		Status:         "aktif",
 	}
-	return x.repo.Insert(ctx, kantong)
+	model, err := x.repo.Insert(ctx, kantong)
+	if err != nil {
+		return nil, err
+	}
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongCreated, &keep_events.KantongCreatedEventData{
+		Time: time.Now(),
+		Data: *model,
+	})
+
+	return model, nil
 }
 func (x *KantongServices) Update(ctx context.Context, kantongRequest *keep_request.KantongUpdate) (affected int, int error) {
-
 	err := validator.New().ValidateStruct(kantongRequest)
 	if err != nil {
 		return 0, err
@@ -58,7 +70,7 @@ func (x *KantongServices) Update(ctx context.Context, kantongRequest *keep_reque
 		return 0, err
 	}
 
-	_, err = x.repo.FindById(ctx, kantongRequest.Id)
+	model, err := x.repo.FindById(ctx, kantongRequest.Id)
 	if err != nil {
 		return 0, err
 	}
@@ -73,31 +85,72 @@ func (x *KantongServices) Update(ctx context.Context, kantongRequest *keep_reque
 		IsShow:         kantongRequest.IsShow,
 		Status:         "aktif",
 	}
-	return x.repo.Update(ctx, kantong)
-}
-func (x *KantongServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
-	_, err = x.repo.FindById(ctx, id)
+	affected, err = x.repo.Update(ctx, kantong)
 	if err != nil {
 		return 0, err
 	}
-	return x.repo.SoftDeleteById(ctx, id)
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongUpdated, &keep_events.KantongUpdatedEventData{
+		Time: time.Now(),
+		Old:  *model,
+		New:  *kantong,
+	})
+
+	return affected, nil
+}
+func (x *KantongServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
+	model, err := x.repo.FindById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	affected, err = x.repo.SoftDeleteById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongSoftDeleted, &keep_events.KantongSoftDeletedEventData{
+		Time: time.Now(),
+		Data: *model,
+	})
+
+	return affected, nil
 }
 func (x *KantongServices) GetTrashed(ctx context.Context) []*keep_entities.Kantong {
 	return x.repo.GetTrashed(ctx)
 }
 func (x *KantongServices) RestoreTrashedById(ctx context.Context, id string) (affected int, err error) {
-	_, err = x.repo.FindTrashedById(ctx, id)
+	model, err := x.repo.FindTrashedById(ctx, id)
 	if err != nil {
 		return 0, err
 	}
-	return x.repo.RestoreTrashedById(ctx, id)
+	affected, err = x.repo.RestoreTrashedById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongRestored, &keep_events.KantongRestoredEventData{
+		Time: time.Now(),
+		Data: *model,
+	})
+
+	return affected, nil
 }
 func (x *KantongServices) DeleteTrashedById(ctx context.Context, id string) (affected int, err error) {
-	_, err = x.repo.FindTrashedById(ctx, id)
+	model, err := x.repo.FindTrashedById(ctx, id)
 	if err != nil {
 		return 0, err
 	}
-	return x.repo.HardDeleteTrashedById(ctx, id)
+	affected, err = x.repo.HardDeleteTrashedById(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
+	_ = helpers_events.GetDispatcher().Dispatch(keep_events.KantongHardDeleted, &keep_events.KantongHardDeletedEventData{
+		Time: time.Now(),
+		Data: *model,
+	})
+
+	return affected, nil
 }
 func (x *KantongServices) UpdateSaldo(ctx context.Context, asalId, tujuanId string, jumlah int, oldAsalId, oldTujuanId string, oldJumlah int) (affected int, err error) {
 	update := map[string]int{

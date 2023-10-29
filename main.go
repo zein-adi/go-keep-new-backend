@@ -15,8 +15,8 @@ import (
 var Version = "1.0.0"
 
 func main() {
-	helpers_env.Init(0)
 	fmt.Printf("%-25s: %s\n", "Version", Version)
+	helpers_env.Init(0)
 	cliHandler()
 }
 

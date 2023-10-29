@@ -1,6 +1,7 @@
 package helpers_env
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_directory"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
@@ -26,6 +27,9 @@ func Init(relativeLevelToProjectRootDirectory int) {
 				envFile = workingDirectory + "/.env.development"
 			}
 		}
+
+		fmt.Printf("%-25s: %s\n", "APP_ENV", appEnvironment)
+		fmt.Printf("%-25s: %s\n", "Env File", envFile)
 
 		viper.SetConfigFile(envFile)
 		viper.SetConfigType("env")

@@ -6,6 +6,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_mysql"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"strconv"
 	"time"
 )
@@ -26,8 +27,16 @@ type KantongHistoryMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (x *KantongHistoryMysqlRepository) Get(ctx context.Context) []*keep_entities.KantongHistory {
+func (x *KantongHistoryMysqlRepository) Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory {
 	q := x.newQueryRequest(ctx)
+	if request.Search != "" {
+		q.Where("uraian", "LIKE", "%"+request.Search+"%")
+	}
+	if request.Take > 0 {
+		q.Skip(request.Skip)
+		q.Take(request.Take)
+	}
+	q.OrderBy("waktu desc")
 	return x.newEntitiesFromRows(q.Get())
 }
 

@@ -4,11 +4,12 @@ import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 )
 
 type IKantongHistoryServices interface {
-	Get(ctx context.Context) []*keep_entities.KantongHistory
-	Insert(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error)
+	Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory
+	InsertAndUpdateSaldoKantong(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error)
 	Update(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (affected int, err error)
 	DeleteById(ctx context.Context, id string) (affected int, err error)
 }

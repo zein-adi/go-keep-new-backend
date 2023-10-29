@@ -5,6 +5,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"time"
 )
@@ -21,17 +22,17 @@ type KantongHistoryServices struct {
 	kantongRepo keep_repo_interfaces.IKantongRepository
 }
 
-func (x *KantongHistoryServices) Get(ctx context.Context) []*keep_entities.KantongHistory {
-	return x.repo.Get(ctx)
+func (x *KantongHistoryServices) Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory {
+	return x.repo.Get(ctx, request)
 }
 
-func (x *KantongHistoryServices) Insert(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error) {
+func (x *KantongHistoryServices) InsertAndUpdateSaldoKantong(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error) {
 	err := validator.New().ValidateStruct(kantongHistoryRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = x.kantongRepo.FindById(ctx, kantongHistoryRequest.KantongId)
+	kantong, err := x.kantongRepo.FindById(ctx, kantongHistoryRequest.KantongId)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +43,15 @@ func (x *KantongHistoryServices) Insert(ctx context.Context, kantongHistoryReque
 		Uraian:    kantongHistoryRequest.Uraian,
 		Waktu:     time.Now().Unix(),
 	}
-	return x.repo.Insert(ctx, kantongHistory)
+	model, err := x.repo.Insert(ctx, kantongHistory)
+	if err != nil {
+		return nil, err
+	}
+
+	saldo := kantong.Saldo - model.Jumlah
+	_, _ = x.kantongRepo.UpdateSaldo(ctx, kantongHistoryRequest.KantongId, saldo)
+
+	return model, nil
 }
 
 func (x *KantongHistoryServices) Update(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (affected int, err error) {

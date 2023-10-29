@@ -68,7 +68,7 @@ func injectKeepRoutes(r *gorillamux_router.Router) {
 				kantongHistory := keep_handlers_restful.NewKantongHistoryRestfulHandler(dependency_injection.InitKeepKantongHistoryServices())
 				r.Group("/{kantongId:[0-9]+}/history", "history.", func(r *gorillamux_router.Router) {
 					r.GET("", kantongHistory.Get, "get")
-					r.POST("", kantongHistory.Insert, "insert")
+					r.POST("", kantongHistory.InsertAndUpdateSaldoKantong, "insert")
 					r.PATCH("/{kantongHistoryId:[0-9]+}", kantongHistory.Update, "update")
 					r.DELETE("/{kantongHistoryId:[0-9]+}", kantongHistory.DeleteById, "delete")
 				})
