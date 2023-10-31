@@ -16,6 +16,7 @@ import (
 
 var (
 	refreshTokenBlacklistedError = errors.New("refresh token is blacklisted")
+	accessTokenExpiredMinutes    = 10
 )
 
 func NewAuthServices(authRepo auth_repo_interfaces.IAuthRepository, userRepo auth_repo_interfaces.IUserRepository, roleRepo auth_repo_interfaces.IRoleRepository) *AuthServices {
@@ -58,7 +59,7 @@ func (a *AuthServices) Login(ctx context.Context, username, rawPassword string, 
 	}
 
 	iat := time.Now()
-	exp := time.Now().Add(time.Minute * 10)
+	exp := time.Now().Add(time.Minute * time.Duration(accessTokenExpiredMinutes))
 	accessToken = middlewares.IssueNewAccessToken(user.Username, user.Nama, user.RoleIds, iat, exp)
 
 	if rememberMe {
@@ -87,7 +88,7 @@ func (a *AuthServices) Refresh(ctx context.Context, refreshToken string) (access
 	}
 
 	newIat := time.Now()
-	newExp := time.Now().Add(time.Minute * 15)
+	newExp := time.Now().Add(time.Minute * time.Duration(accessTokenExpiredMinutes))
 	accessToken = middlewares.IssueNewAccessToken(user.Username, user.Nama, user.RoleIds, newIat, newExp)
 
 	var futureExpired time.Time
