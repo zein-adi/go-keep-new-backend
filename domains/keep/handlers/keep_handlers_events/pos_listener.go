@@ -19,6 +19,37 @@ type PosEventListenerHandler struct {
 }
 
 /*
+ * Pos
+ */
+
+func (x *PosEventListenerHandler) PosUpdated(eventData any) {
+	eventName, data, err := keep_events.NewPosUpdatedEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+
+	x.updateSaldo(eventName, data.Old.ParentId)
+	x.updateSaldo(eventName, data.New.Id)
+}
+func (x *PosEventListenerHandler) PosSoftDeleted(eventData any) {
+	eventName, data, err := keep_events.NewPosSoftDeleteEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+	x.updateSaldo(eventName, data.Id)
+}
+func (x *PosEventListenerHandler) PosRestored(eventData any) {
+	eventName, data, err := keep_events.NewPosRestoreEventDataFromDispatcher(eventData)
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+	x.updateSaldo(eventName, data.Id)
+}
+
+/*
  * Transaksi
  */
 

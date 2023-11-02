@@ -8,8 +8,7 @@ import (
 type IPosRepository interface {
 	Get(ctx context.Context) []*keep_entities.Pos
 	GetJumlahById(ctx context.Context, id string) (saldo int)
-
-	CountChildren(ctx context.Context, id string) (count int)
+	GetChildrenById(ctx context.Context, id string) []*keep_entities.Pos
 
 	FindById(ctx context.Context, id string) (*keep_entities.Pos, error)
 

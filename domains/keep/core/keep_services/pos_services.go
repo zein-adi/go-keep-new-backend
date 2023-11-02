@@ -137,8 +137,8 @@ func (x *PosServices) Update(ctx context.Context, posRequest *keep_request.PosIn
 	return affected, err
 }
 func (x *PosServices) UpdateSaldoFromTransaksi(ctx context.Context, ids []string) (affected int, err error) {
-	ids = helpers.Unique(ids)
 	ids = helpers.Filter(ids, func(s string) bool { return s != "" })
+	ids = helpers.Unique(x.getAllChildrenLeaf(ctx, ids))
 
 	for _, id := range ids {
 		_, err2 := x.repo.FindById(ctx, id)
@@ -288,4 +288,19 @@ func (x *PosServices) updateParentSaldo(ctx context.Context, id string) (affecte
 	}
 
 	return affected, nil
+}
+func (x *PosServices) getAllChildrenLeaf(ctx context.Context, ids []string) []string {
+	leafIds := make([]string, 0)
+	for _, id := range ids {
+		childs := x.repo.GetChildrenById(ctx, id)
+		if len(childs) == 0 {
+			leafIds = append(leafIds, id)
+		} else {
+			childIds := helpers.Map(childs, func(v *keep_entities.Pos) string {
+				return v.Id
+			})
+			leafIds = append(leafIds, x.getAllChildrenLeaf(ctx, childIds)...)
+		}
+	}
+	return leafIds
 }

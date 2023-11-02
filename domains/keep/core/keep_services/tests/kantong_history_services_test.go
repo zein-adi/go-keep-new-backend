@@ -24,12 +24,12 @@ func TestKantongHistory(t *testing.T) {
 	defer x.cleanup()
 
 	t.Run("GetSuccess", func(t *testing.T) {
-		_, ori := x.reset()
+		kantong, ori := x.reset()
 		oriKey := helpers.KeyBy(ori, func(d *keep_entities.KantongHistory) string {
 			return d.Id
 		})
 
-		models := x.services.Get(context.Background(), helpers_requests.NewGet())
+		models := x.services.Get(context.Background(), kantong.Id, helpers_requests.NewGet())
 		assert.Len(t, models, 2)
 
 		for _, m := range models {
@@ -88,10 +88,10 @@ func TestKantongHistory(t *testing.T) {
 		assert.NotEmpty(t, m.Waktu)
 	})
 	t.Run("DeleteSuccess", func(t *testing.T) {
-		_, kantongHistories := x.reset()
+		kantong, kantongHistories := x.reset()
 		m := kantongHistories[0]
 
-		affected, err := x.services.DeleteById(context.Background(), m.Id)
+		affected, err := x.services.DeleteById(context.Background(), kantong.Id, m.Id)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, affected)
 
@@ -102,7 +102,7 @@ func TestKantongHistory(t *testing.T) {
 		kantong, _ := x.reset()
 		id := "9999"
 
-		affected, err := x.services.DeleteById(context.Background(), id)
+		affected, err := x.services.DeleteById(context.Background(), kantong.Id, id)
 		assert.NotNil(t, err)
 		assert.Empty(t, affected)
 		assert.ErrorIs(t, err, helpers_error.EntryNotFoundError)
@@ -135,8 +135,8 @@ type KantongHistoryServicesTest struct {
 }
 
 func (x *KantongHistoryServicesTest) setUp() {
-	x.setUpMemoryRepository()
 	x.posRepo = keep_repos_memory.NewPosMemoryRepository()
+	x.setUpMemoryRepository()
 	x.services = keep_services.NewKantongHistoryServices(x.repo, x.kantongRepo)
 }
 func (x *KantongHistoryServicesTest) setUpMemoryRepository() {
@@ -169,8 +169,12 @@ func (x *KantongHistoryServicesTest) setUpMysqlRepository() {
 		for _, m := range kantongRepo.GetTrashed(context.Background(), request) {
 			_, _ = kantongRepo.HardDeleteTrashedById(context.Background(), m.Id)
 		}
-		for _, m := range repo.Get(context.Background(), helpers_requests.NewGet()) {
-			_, _ = repo.DeleteById(context.Background(), m.Id)
+
+		kantongs := x.kantongRepo.Get(context.Background(), helpers_requests.NewGet())
+		for _, kantong := range kantongs {
+			for _, m := range repo.Get(context.Background(), kantong.Id, helpers_requests.NewGet()) {
+				_, _ = repo.DeleteById(context.Background(), m.Id)
+			}
 		}
 	}
 }

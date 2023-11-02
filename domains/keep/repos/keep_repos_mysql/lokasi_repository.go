@@ -52,9 +52,6 @@ func (x *LokasiMysqlRepository) Update(ctx context.Context, lokasi *keep_entitie
 		"nama":        lokasi.Nama,
 		"last_update": lastUpdateString,
 	})
-	if affected == 0 {
-		return 0, helpers_error.NewEntryNotFoundError(lokasiEntityName, "nama", lokasi.Nama)
-	}
 	return affected, nil
 }
 func (x *LokasiMysqlRepository) DeleteByNama(ctx context.Context, nama string) (affected int, err error) {

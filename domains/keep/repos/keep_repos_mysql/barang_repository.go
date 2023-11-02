@@ -91,9 +91,6 @@ func (x *BarangMysqlRepository) Update(ctx context.Context, barang *keep_entitie
 		"last_update":   lastUpdateString,
 		"details":       detailString,
 	})
-	if affected == 0 {
-		return 0, helpers_error.NewEntryNotFoundError(barangEntityName, "nama", barang.Nama)
-	}
 	return affected, nil
 }
 func (x *BarangMysqlRepository) DeleteByNama(ctx context.Context, nama string) (affected int, err error) {

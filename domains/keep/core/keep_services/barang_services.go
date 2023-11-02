@@ -28,6 +28,7 @@ func (x *BarangServices) Get(ctx context.Context, search string, lokasi string) 
 
 func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affected int, err error) {
 	request := keep_request.NewGetTransaksi()
+	request.Take = 0
 	request.WaktuAwal = time.Now().AddDate(0, -6, 0).Unix()
 	request.Jenis = "pengeluaran"
 	transaksis := x.transaksiRepo.Get(ctx, request)
@@ -59,7 +60,8 @@ func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affecte
 			}
 
 			t := transaksiMap[k]
-			if t.LastUpdate < transaksi.Waktu {
+			isUpdate := t.LastUpdate < transaksi.Waktu
+			if isUpdate {
 				t.LastUpdate = transaksi.Waktu
 			}
 
@@ -77,8 +79,8 @@ func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affecte
 				}
 				t.Details = append(t.Details, barangDetail)
 
-				// Bila detail barang lebih murah dari yang tercatat saat ini, maka update
-				if barangDetail.SatuanHarga < t.SatuanHarga {
+				// Bila data saat ini lebih baru, maka update harganya
+				if isUpdate {
 					t.Harga = barangDetail.Harga
 					t.Diskon = barangDetail.Diskon
 					t.SatuanHarga = barangDetail.SatuanHarga
@@ -95,27 +97,18 @@ func (x *BarangServices) UpdateBarangFromTransaksi(ctx context.Context) (affecte
 	for nama, barang := range transaksiMap {
 		_, ok := barangMap[nama]
 		if !ok {
-			af, err2 := x.repo.Insert(ctx, barang)
+			af, _ := x.repo.Insert(ctx, barang)
 			affected += af
-			if err2 != nil {
-				return affected, err2
-			}
 		} else {
-			af, err2 := x.repo.Update(ctx, barang)
+			af, _ := x.repo.Update(ctx, barang)
 			affected += af
-			if err2 != nil {
-				return affected, err2
-			}
 		}
 	}
 	for nama := range barangMap {
 		_, ok := transaksiMap[nama]
 		if !ok {
-			af, err2 := x.repo.DeleteByNama(ctx, nama)
+			af, _ := x.repo.DeleteByNama(ctx, nama)
 			affected += af
-			if err2 != nil {
-				return affected, err2
-			}
 		}
 	}
 	return affected, nil

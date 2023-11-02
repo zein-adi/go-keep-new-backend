@@ -49,20 +49,10 @@ func (x *PosMysqlRepository) GetJumlahById(ctx context.Context, id string) (sald
 	return saldo
 }
 
-func (x *PosMysqlRepository) CountChildren(ctx context.Context, id string) (count int) {
+func (x *PosMysqlRepository) GetChildrenById(ctx context.Context, id string) []*keep_entities.Pos {
 	q := x.newQueryRequest(ctx, "aktif")
-	q.Select("COUNT(0)")
 	q.Where("parent_id", "=", id)
-	rows, cleanup := q.Get()
-	defer cleanup()
-
-	if !rows.Next() {
-		panic("failed to next")
-	}
-	err := rows.Scan(&count)
-	helpers_error.PanicIfError(err)
-
-	return count
+	return x.newEntitiesFromRows(q.Get())
 }
 
 func (x *PosMysqlRepository) FindById(ctx context.Context, id string) (*keep_entities.Pos, error) {

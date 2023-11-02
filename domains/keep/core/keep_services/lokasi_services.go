@@ -27,6 +27,7 @@ func (x *LokasiServices) Get(ctx context.Context, search string) []*keep_entitie
 
 func (x *LokasiServices) UpdateLokasiFromTransaksi(ctx context.Context) (affected int, err error) {
 	request := keep_request.NewGetTransaksi()
+	request.Take = 0
 	request.Jenis = "pengeluaran"
 	request.WaktuAwal = time.Now().AddDate(0, -6, 0).Unix()
 	transaksis := x.transaksiRepo.Get(ctx, request)
@@ -54,27 +55,18 @@ func (x *LokasiServices) UpdateLokasiFromTransaksi(ctx context.Context) (affecte
 	for nama, lokasi := range transaksiMap {
 		_, ok := lokasiMap[nama]
 		if !ok {
-			af, err2 := x.repo.Insert(ctx, lokasi)
+			af, _ := x.repo.Insert(ctx, lokasi)
 			affected += af
-			if err2 != nil {
-				return affected, err2
-			}
 		} else {
-			af, err2 := x.repo.Update(ctx, lokasi)
+			af, _ := x.repo.Update(ctx, lokasi)
 			affected += af
-			if err2 != nil {
-				return affected, err2
-			}
 		}
 	}
 	for nama := range lokasiMap {
 		_, ok := transaksiMap[nama]
 		if !ok {
-			af, err2 := x.repo.DeleteByNama(ctx, nama)
+			af, _ := x.repo.DeleteByNama(ctx, nama)
 			affected += af
-			if err2 != nil {
-				return affected, err2
-			}
 		}
 	}
 	return affected, nil

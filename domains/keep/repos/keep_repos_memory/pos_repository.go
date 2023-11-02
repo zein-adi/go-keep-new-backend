@@ -37,11 +37,13 @@ func (x *PosMemoryRepository) GetJumlahById(_ context.Context, id string) (saldo
 	})
 }
 
-func (x *PosMemoryRepository) CountChildren(_ context.Context, id string) (count int) {
+func (x *PosMemoryRepository) GetChildrenById(_ context.Context, id string) []*keep_entities.Pos {
 	models := helpers.Filter(x.Data, func(v *keep_entities.Pos) bool {
 		return v.Status == "aktif" && v.ParentId == id
 	})
-	return len(models)
+	return helpers.Map(models, func(v *keep_entities.Pos) *keep_entities.Pos {
+		return v.Copy()
+	})
 }
 
 func (x *PosMemoryRepository) FindById(_ context.Context, id string) (*keep_entities.Pos, error) {

@@ -90,6 +90,10 @@ func RegisterKeepListeners(
 	lokasi := keep_handlers_events.NewLokasiEventListenerHandler(lokasiServices)
 	barang := keep_handlers_events.NewBarangEventListenerHandler(barangServices)
 
+	/*
+	 * Transaksi
+	 */
+
 	_ = d.Register(keep_events.TransaksiCreated,
 		pos.TransaksiCreated,
 		kantong.TransaksiCreated,
@@ -111,7 +115,25 @@ func RegisterKeepListeners(
 		lokasi.TransaksiRestored,
 		barang.TransaksiRestored,
 	)
+
+	/*
+	 * Kantong History
+	 */
+
 	_ = d.Register(keep_events.KantongHistoryCreated,
 		kantong.KantongHistoryCreated,
+	)
+
+	/*
+	 * Pos
+	 */
+	_ = d.Register(keep_events.PosUpdated,
+		pos.PosUpdated,
+	)
+	_ = d.Register(keep_events.PosSoftDeleted,
+		pos.PosSoftDeleted,
+	)
+	_ = d.Register(keep_events.PosRestored,
+		pos.PosRestored,
 	)
 }
