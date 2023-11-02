@@ -27,8 +27,10 @@ type KantongHistoryMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (x *KantongHistoryMysqlRepository) Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory {
+func (x *KantongHistoryMysqlRepository) Get(ctx context.Context, kantongId string, request *helpers_requests.Get) []*keep_entities.KantongHistory {
 	q := x.newQueryRequest(ctx)
+	q.Where("kantong_id", "=", kantongId)
+
 	if request.Search != "" {
 		q.Where("uraian", "LIKE", "%"+request.Search+"%")
 	}

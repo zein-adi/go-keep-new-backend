@@ -20,12 +20,21 @@ type BarangMemoryRepository struct {
 
 func (x *BarangMemoryRepository) Get(_ context.Context, search string, lokasi string) []*keep_entities.Barang {
 	search = strings.ToLower(search)
+	searchArray := strings.Split(search, " ")
 	lokasi = strings.ToLower(lokasi)
 	models := helpers.Filter(x.Data, func(v *keep_entities.Barang) bool {
 		res := true
 
 		if search != "" {
-			res = res && strings.Contains(strings.ToLower(v.Nama), search)
+			nama := strings.ToLower(v.Nama)
+			tmpRes := true
+			for _, s := range searchArray {
+				if !strings.Contains(nama, s) {
+					tmpRes = false
+					break
+				}
+			}
+			res = res && tmpRes
 		}
 		if lokasi != "" {
 			_, err := helpers.FindIndex(v.Details, func(v *keep_entities.BarangDetail) bool {

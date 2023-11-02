@@ -50,7 +50,9 @@ func (x *KantongHistoryRestfulHandler) Get(w http.ResponseWriter, r *http.Reques
 	request.Take, err = strconv.Atoi(q.Get("take"))
 	helpers_error.PanicIfError(err)
 
-	models := x.service.Get(ctx, request)
+	vars := mux.Vars(r)
+	kantongId := vars["kantongId"]
+	models := x.service.Get(ctx, kantongId, request)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 
@@ -88,8 +90,8 @@ func (x *KantongHistoryRestfulHandler) Update(w http.ResponseWriter, r *http.Req
 	}
 
 	vars := mux.Vars(r)
-	input.Id = vars["kantongHistoryId"]
 	input.KantongId = vars["kantongId"]
+	input.Id = vars["kantongHistoryId"]
 	model, err := x.service.Update(ctx, input)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {
@@ -110,8 +112,9 @@ func (x *KantongHistoryRestfulHandler) DeleteById(w http.ResponseWriter, r *http
 	defer cancel()
 
 	vars := mux.Vars(r)
+	kantongId := vars["kantongId"]
 	id := vars["kantongHistoryId"]
-	affected, err := x.service.DeleteById(ctx, id)
+	affected, err := x.service.DeleteById(ctx, kantongId, id)
 	if err != nil {
 		if errors.Is(err, helpers_error.EntryNotFoundError) {
 			h.SendErrorResponse(w, http.StatusNotFound, "")

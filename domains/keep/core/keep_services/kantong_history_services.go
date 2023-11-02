@@ -24,8 +24,8 @@ type KantongHistoryServices struct {
 	kantongRepo keep_repo_interfaces.IKantongRepository
 }
 
-func (x *KantongHistoryServices) Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory {
-	return x.repo.Get(ctx, request)
+func (x *KantongHistoryServices) Get(ctx context.Context, kantongId string, request *helpers_requests.Get) []*keep_entities.KantongHistory {
+	return x.repo.Get(ctx, kantongId, request)
 }
 
 func (x *KantongHistoryServices) Insert(ctx context.Context, kantongHistoryRequest *keep_request.KantongHistoryInsertUpdate) (*keep_entities.KantongHistory, error) {
@@ -96,7 +96,7 @@ func (x *KantongHistoryServices) Update(ctx context.Context, kantongHistoryReque
 	return affected, nil
 }
 
-func (x *KantongHistoryServices) DeleteById(ctx context.Context, id string) (affected int, err error) {
+func (x *KantongHistoryServices) DeleteById(ctx context.Context, _ string, id string) (affected int, err error) {
 	model, err := x.repo.FindById(ctx, id)
 	if err != nil {
 		return 0, err

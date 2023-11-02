@@ -21,8 +21,8 @@ type KantongHistoryMemoryRepository struct {
 	Data []*keep_entities.KantongHistory
 }
 
-func (x *KantongHistoryMemoryRepository) Get(_ context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory {
-	models := x.newQueryRequest(request)
+func (x *KantongHistoryMemoryRepository) Get(_ context.Context, kantongId string, request *helpers_requests.Get) []*keep_entities.KantongHistory {
+	models := x.newQueryRequest(kantongId, request)
 	sort.Slice(models, func(i, j int) bool {
 		return models[i].Waktu > models[j].Waktu
 	})
@@ -75,9 +75,9 @@ func (x *KantongHistoryMemoryRepository) DeleteById(_ context.Context, id string
 	return 1, nil
 }
 
-func (x *KantongHistoryMemoryRepository) newQueryRequest(request *helpers_requests.Get) []*keep_entities.KantongHistory {
+func (x *KantongHistoryMemoryRepository) newQueryRequest(kantongId string, request *helpers_requests.Get) []*keep_entities.KantongHistory {
 	return helpers.Filter(x.Data, func(v *keep_entities.KantongHistory) bool {
-		res := true
+		res := v.KantongId == kantongId
 		if request.Search != "" {
 			res = res && strings.Contains(strings.ToLower(v.Uraian), strings.ToLower(request.Search))
 		}

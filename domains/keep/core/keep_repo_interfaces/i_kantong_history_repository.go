@@ -7,7 +7,7 @@ import (
 )
 
 type IKantongHistoryRepository interface {
-	Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.KantongHistory
+	Get(ctx context.Context, kantongId string, request *helpers_requests.Get) []*keep_entities.KantongHistory
 	FindById(ctx context.Context, id string) (*keep_entities.KantongHistory, error)
 	Insert(ctx context.Context, kantongHistory *keep_entities.KantongHistory) (*keep_entities.KantongHistory, error)
 	Update(ctx context.Context, kantongHistory *keep_entities.KantongHistory) (affected int, err error)

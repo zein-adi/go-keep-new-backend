@@ -32,12 +32,22 @@ func (x *BarangMysqlRepository) Get(ctx context.Context, search string, lokasi s
 	lokasi = strings.ToLower(lokasi)
 	q := x.newQueryRequest(ctx, search)
 	models := x.newEntitiesFromRows(q.Get())
-	return helpers.Map(models, func(model *keep_entities.Barang) *keep_entities.Barang {
-		model.Details = helpers.Filter(model.Details, func(d *keep_entities.BarangDetail) bool {
-			return strings.Contains(strings.ToLower(d.Lokasi), lokasi)
+	if lokasi != "" {
+		models = helpers.Filter(models, func(v *keep_entities.Barang) bool {
+			_, err := helpers.FindIndex(v.Details, func(v *keep_entities.BarangDetail) bool {
+				return strings.Contains(strings.ToLower(v.Lokasi), lokasi)
+			})
+			if err != nil {
+				return false
+			}
+
+			v.Details = helpers.Filter(v.Details, func(d *keep_entities.BarangDetail) bool {
+				return strings.Contains(strings.ToLower(d.Lokasi), lokasi)
+			})
+			return true
 		})
-		return model
-	})
+	}
+	return models
 }
 func (x *BarangMysqlRepository) Insert(ctx context.Context, barang *keep_entities.Barang) (affected int, err error) {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, barangTableName)
@@ -101,7 +111,11 @@ func (x *BarangMysqlRepository) newQueryRequest(ctx context.Context, search stri
 	q.Select("nama,harga,diskon,satuan_nama,satuan_jumlah,satuan_harga,keterangan,last_update,details")
 
 	if search != "" {
-		q.Where("nama", "LIKE", "%"+search+"%")
+		searchArray := strings.Split(search, " ")
+		andWhere := q.WhereSub()
+		for _, s := range searchArray {
+			andWhere.Where("nama", "LIKE", "%"+s+"%")
+		}
 	}
 
 	return q
