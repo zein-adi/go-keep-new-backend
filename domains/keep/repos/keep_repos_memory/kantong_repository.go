@@ -5,8 +5,10 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/helpers"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 var kantongEntityName = "pos"
@@ -19,8 +21,11 @@ type KantongMemoryRepository struct {
 	Data []*keep_entities.Kantong
 }
 
-func (x *KantongMemoryRepository) Get(_ context.Context) []*keep_entities.Kantong {
-	models := x.newQueryRequest("aktif")
+func (x *KantongMemoryRepository) Get(_ context.Context, request *helpers_requests.Get) []*keep_entities.Kantong {
+	models := x.newQueryRequest("aktif", request)
+	if request.Take > 0 {
+		models = helpers.Slice(models, request.Skip, request.Take)
+	}
 	sort.Slice(models, func(i, j int) bool {
 		return models[i].Urutan < models[i].Urutan
 	})
@@ -74,8 +79,11 @@ func (x *KantongMemoryRepository) SoftDeleteById(_ context.Context, id string) (
 	x.Data[index].Status = "trashed"
 	return 1, nil
 }
-func (x *KantongMemoryRepository) GetTrashed(_ context.Context) []*keep_entities.Kantong {
-	models := x.newQueryRequest("trashed")
+func (x *KantongMemoryRepository) GetTrashed(_ context.Context, request *helpers_requests.Get) []*keep_entities.Kantong {
+	models := x.newQueryRequest("trashed", request)
+	if request.Take > 0 {
+		models = helpers.Slice(models, request.Skip, request.Take)
+	}
 	return helpers.Map(models, func(d *keep_entities.Kantong) *keep_entities.Kantong {
 		return d.Copy()
 	})
@@ -125,11 +133,14 @@ func (x *KantongMemoryRepository) UpdateVisibility(_ context.Context, id string,
 	return 1, nil
 }
 
-func (x *KantongMemoryRepository) newQueryRequest(status string) []*keep_entities.Kantong {
-	return helpers.Filter(x.Data, func(pos *keep_entities.Kantong) bool {
+func (x *KantongMemoryRepository) newQueryRequest(status string, request *helpers_requests.Get) []*keep_entities.Kantong {
+	return helpers.Filter(x.Data, func(v *keep_entities.Kantong) bool {
 		res := true
 		if status != "" {
-			res = res && pos.Status == status
+			res = res && v.Status == status
+		}
+		if request.Search != "" {
+			res = res && strings.Contains(strings.ToLower(v.Nama), strings.ToLower(request.Search))
 		}
 		return res
 	})

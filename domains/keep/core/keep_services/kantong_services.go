@@ -7,6 +7,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_repo_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_request"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_events"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"time"
 )
@@ -23,8 +24,8 @@ type KantongServices struct {
 	posRepo keep_repo_interfaces.IPosRepository
 }
 
-func (x *KantongServices) Get(ctx context.Context) []*keep_entities.Kantong {
-	return x.repo.Get(ctx)
+func (x *KantongServices) Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.Kantong {
+	return x.repo.Get(ctx, request)
 }
 func (x *KantongServices) FindById(ctx context.Context, id string) (*keep_entities.Kantong, error) {
 	return x.repo.FindById(ctx, id)
@@ -115,8 +116,8 @@ func (x *KantongServices) DeleteById(ctx context.Context, id string) (affected i
 
 	return affected, nil
 }
-func (x *KantongServices) GetTrashed(ctx context.Context) []*keep_entities.Kantong {
-	return x.repo.GetTrashed(ctx)
+func (x *KantongServices) GetTrashed(ctx context.Context, request *helpers_requests.Get) []*keep_entities.Kantong {
+	return x.repo.GetTrashed(ctx, request)
 }
 func (x *KantongServices) RestoreTrashedById(ctx context.Context, id string) (affected int, err error) {
 	model, err := x.repo.FindTrashedById(ctx, id)

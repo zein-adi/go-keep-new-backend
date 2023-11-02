@@ -16,6 +16,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_events"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"testing"
 	"time"
 )
@@ -31,7 +32,7 @@ func TestKantong(t *testing.T) {
 			return d.Id
 		})
 
-		models := x.services.Get(context.Background())
+		models := x.services.Get(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 2)
 
 		for _, m := range models {
@@ -45,7 +46,7 @@ func TestKantong(t *testing.T) {
 			return d.Id
 		})
 
-		models := x.services.Get(context.Background())
+		models := x.services.Get(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 2)
 
 		for _, m := range models {
@@ -141,7 +142,7 @@ func TestKantong(t *testing.T) {
 	t.Run("GetTrashedSuccess", func(t *testing.T) {
 		_, kantongs := x.reset()
 
-		models := x.services.GetTrashed(context.Background())
+		models := x.services.GetTrashed(context.Background(), helpers_requests.NewGet())
 		assert.Len(t, models, 1)
 
 		m := models[0]
@@ -447,16 +448,19 @@ func (x *KantongServicesTest) setUpMysqlRepository() {
 		repo.Cleanup()
 	}
 	x.truncate = func() {
+		request := helpers_requests.NewGet()
+		request.Take = 1000
+
 		for _, m := range posRepo.Get(context.Background()) {
 			_, _ = posRepo.SoftDeleteById(context.Background(), m.Id)
 		}
 		for _, m := range posRepo.GetTrashed(context.Background()) {
 			_, _ = posRepo.HardDeleteTrashedById(context.Background(), m.Id)
 		}
-		for _, m := range repo.Get(context.Background()) {
+		for _, m := range repo.Get(context.Background(), request) {
 			_, _ = repo.SoftDeleteById(context.Background(), m.Id)
 		}
-		for _, m := range repo.GetTrashed(context.Background()) {
+		for _, m := range repo.GetTrashed(context.Background(), request) {
 			_, _ = repo.HardDeleteTrashedById(context.Background(), m.Id)
 		}
 	}

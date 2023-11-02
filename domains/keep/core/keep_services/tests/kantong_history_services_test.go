@@ -161,10 +161,12 @@ func (x *KantongHistoryServicesTest) setUpMysqlRepository() {
 		repo.Cleanup()
 	}
 	x.truncate = func() {
-		for _, m := range kantongRepo.Get(context.Background()) {
+		request := helpers_requests.NewGet()
+		request.Take = 1000
+		for _, m := range kantongRepo.Get(context.Background(), request) {
 			_, _ = kantongRepo.SoftDeleteById(context.Background(), m.Id)
 		}
-		for _, m := range kantongRepo.GetTrashed(context.Background()) {
+		for _, m := range kantongRepo.GetTrashed(context.Background(), request) {
 			_, _ = kantongRepo.HardDeleteTrashedById(context.Background(), m.Id)
 		}
 		for _, m := range repo.Get(context.Background(), helpers_requests.NewGet()) {

@@ -6,6 +6,7 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_mysql"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 	"strconv"
 )
 
@@ -25,9 +26,15 @@ type KantongMysqlRepository struct {
 	dbCleanup func()
 }
 
-func (x *KantongMysqlRepository) Get(ctx context.Context) []*keep_entities.Kantong {
-	q := x.newQueryRequest(ctx, "aktif")
+func (x *KantongMysqlRepository) Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.Kantong {
+	q := x.newQueryRequest(ctx, "aktif", request)
 	q.OrderBy("urutan")
+
+	if request.Take > 0 {
+		q.Skip(request.Skip)
+		q.Take(request.Take)
+	}
+
 	return x.newEntitiesFromRows(q.Get())
 }
 
@@ -79,7 +86,7 @@ func (x *KantongMysqlRepository) Update(ctx context.Context, kantong *keep_entit
 	return affected, nil
 }
 func (x *KantongMysqlRepository) UpdateSaldo(ctx context.Context, id string, saldo int) (affected int, err error) {
-	q := x.newQueryRequest(ctx, "aktif")
+	q := x.newQueryRequest(ctx, "aktif", helpers_requests.NewGet())
 	q.Where("id", "=", id)
 	affected = q.Update(map[string]any{
 		"saldo": saldo,
@@ -110,22 +117,26 @@ func (x *KantongMysqlRepository) UpdateVisibility(ctx context.Context, id string
 }
 
 func (x *KantongMysqlRepository) SoftDeleteById(ctx context.Context, id string) (affected int, err error) {
-	q := x.newQueryRequest(ctx, "aktif")
+	q := x.newQueryRequest(ctx, "aktif", helpers_requests.NewGet())
 	q.Where("id", "=", id)
 	affected = q.Update(map[string]any{
 		"status": "trashed",
 	})
 	return affected, nil
 }
-func (x *KantongMysqlRepository) GetTrashed(ctx context.Context) []*keep_entities.Kantong {
-	q := x.newQueryRequest(ctx, "trashed")
+func (x *KantongMysqlRepository) GetTrashed(ctx context.Context, request *helpers_requests.Get) []*keep_entities.Kantong {
+	q := x.newQueryRequest(ctx, "trashed", request)
+	if request.Take > 0 {
+		q.Skip(request.Skip)
+		q.Take(request.Take)
+	}
 	return x.newEntitiesFromRows(q.Get())
 }
 func (x *KantongMysqlRepository) FindTrashedById(ctx context.Context, id string) (*keep_entities.Kantong, error) {
 	return x.findById(ctx, "trashed", id)
 }
 func (x *KantongMysqlRepository) RestoreTrashedById(ctx context.Context, id string) (affected int, err error) {
-	q := x.newQueryRequest(ctx, "trashed")
+	q := x.newQueryRequest(ctx, "trashed", helpers_requests.NewGet())
 	q.Where("id", "=", id)
 	affected = q.Update(map[string]any{
 		"status": "aktif",
@@ -133,23 +144,26 @@ func (x *KantongMysqlRepository) RestoreTrashedById(ctx context.Context, id stri
 	return affected, nil
 }
 func (x *KantongMysqlRepository) HardDeleteTrashedById(ctx context.Context, id string) (affected int, err error) {
-	q := x.newQueryRequest(ctx, "trashed")
+	q := x.newQueryRequest(ctx, "trashed", helpers_requests.NewGet())
 	q.Where("id", "=", id)
 	return q.Delete(), nil
 }
 
-func (x *KantongMysqlRepository) newQueryRequest(ctx context.Context, status string) *helpers_mysql.QueryBuilder {
+func (x *KantongMysqlRepository) newQueryRequest(ctx context.Context, status string, request *helpers_requests.Get) *helpers_mysql.QueryBuilder {
 	q := helpers_mysql.NewQueryBuilder(ctx, x.db, kantongTableName)
 	q.Select("id,nama,urutan,saldo,saldo_mengendap,pos_id,is_show,status")
 
 	if status != "" {
 		q.Where("status", "=", status)
 	}
+	if request.Search != "" {
+		q.Where("nama", "LIKE", "%"+request.Search+"%")
+	}
 
 	return q
 }
 func (x *KantongMysqlRepository) findById(ctx context.Context, status string, id string) (*keep_entities.Kantong, error) {
-	q := x.newQueryRequest(ctx, status)
+	q := x.newQueryRequest(ctx, status, helpers_requests.NewGet())
 	q.Where("id", "=", id)
 	models := x.newEntitiesFromRows(q.Get())
 	if len(models) == 0 {

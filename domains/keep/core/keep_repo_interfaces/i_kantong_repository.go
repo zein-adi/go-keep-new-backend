@@ -3,10 +3,11 @@ package keep_repo_interfaces
 import (
 	"context"
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_entities"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
 )
 
 type IKantongRepository interface {
-	Get(ctx context.Context) []*keep_entities.Kantong
+	Get(ctx context.Context, request *helpers_requests.Get) []*keep_entities.Kantong
 
 	FindById(ctx context.Context, id string) (*keep_entities.Kantong, error)
 
@@ -17,7 +18,7 @@ type IKantongRepository interface {
 	UpdateVisibility(ctx context.Context, id string, isShow bool) (affected int, err error)
 
 	SoftDeleteById(ctx context.Context, id string) (affected int, err error)
-	GetTrashed(ctx context.Context) []*keep_entities.Kantong
+	GetTrashed(ctx context.Context, request *helpers_requests.Get) []*keep_entities.Kantong
 	FindTrashedById(ctx context.Context, id string) (*keep_entities.Kantong, error)
 	RestoreTrashedById(ctx context.Context, id string) (affected int, err error)
 	HardDeleteTrashedById(ctx context.Context, id string) (affected int, err error)

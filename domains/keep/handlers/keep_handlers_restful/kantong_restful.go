@@ -8,7 +8,10 @@ import (
 	"github.com/zein-adi/go-keep-new-backend/domains/keep/core/keep_service_interfaces"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_error"
 	h "github.com/zein-adi/go-keep-new-backend/helpers/helpers_http"
+	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_requests"
+	"github.com/zein-adi/go-keep-new-backend/helpers/validator"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -22,11 +25,38 @@ type KantongRestfulHandler struct {
 	service keep_service_interfaces.IKantongServices
 }
 
-func (x *KantongRestfulHandler) Get(w http.ResponseWriter, _ *http.Request) {
+func (x *KantongRestfulHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	models := x.service.Get(ctx)
+	q := r.URL.Query()
+	v := validator.New()
+	err := v.ValidateMap(map[string]any{
+		"skip": q.Get("skip"),
+		"take": q.Get("take"),
+	}, map[string]any{
+		"skip": "omitempty,number",
+		"take": "omitempty,number",
+	})
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
+	}
+
+	request := helpers_requests.NewGet()
+	request.Skip, err = strconv.Atoi(q.Get("skip"))
+	helpers_error.PanicIfError(err)
+	request.Take, err = strconv.Atoi(q.Get("take"))
+	helpers_error.PanicIfError(err)
+	request.Search = q.Get("search")
+
+	err = v.ValidateStruct(request)
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
+	}
+
+	models := x.service.Get(ctx, request)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 
@@ -139,11 +169,38 @@ func (x *KantongRestfulHandler) DeleteById(w http.ResponseWriter, r *http.Reques
 	}
 	h.SendSingleResponse(w, http.StatusOK, affected)
 }
-func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, _ *http.Request) {
+func (x *KantongRestfulHandler) GetTrashed(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	models := x.service.GetTrashed(ctx)
+	q := r.URL.Query()
+	v := validator.New()
+	err := v.ValidateMap(map[string]any{
+		"skip": q.Get("skip"),
+		"take": q.Get("take"),
+	}, map[string]any{
+		"skip": "omitempty,number",
+		"take": "omitempty,number",
+	})
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
+	}
+
+	request := helpers_requests.NewGet()
+	request.Skip, err = strconv.Atoi(q.Get("skip"))
+	helpers_error.PanicIfError(err)
+	request.Take, err = strconv.Atoi(q.Get("take"))
+	helpers_error.PanicIfError(err)
+	request.Search = q.Get("search")
+
+	err = v.ValidateStruct(request)
+	if err != nil {
+		h.SendErrorResponse(w, 400, err.Error())
+		return
+	}
+
+	models := x.service.GetTrashed(ctx, request)
 	h.SendMultiResponse(w, http.StatusOK, models, len(models))
 }
 func (x *KantongRestfulHandler) RestoreTrashedById(w http.ResponseWriter, r *http.Request) {
