@@ -51,7 +51,7 @@ func (x *Dispatcher) Dispatch(name string, eventData any) error {
 func (x *Dispatcher) consume() {
 	for j := range x.jobs {
 		for _, listener := range x.listeners[j.eventName] {
-			listener(j.eventData)
+			go listener(j.eventData)
 		}
 	}
 }
