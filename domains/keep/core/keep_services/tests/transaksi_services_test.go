@@ -296,11 +296,11 @@ func TestTransaksi(t *testing.T) {
 		uraian := "Jajan"
 		lokasi := "Citra Ken Dedes"
 
-		nama := "Bloat Cake Special"
-		harga := float64(13000)
-		jumlah := float64(1)
-		diskon := float64(1000)
-		satuanJumlah := float64(1)
+		nama := "Lollipop"
+		harga := float64(10000)
+		jumlah := float64(2)
+		diskon := float64(2000)
+		satuanJumlah := float64(5)
 		satuanNama := "pcs"
 		keteranganDetail := "lagi diskon"
 
@@ -327,12 +327,13 @@ func TestTransaksi(t *testing.T) {
 		m, err := x.services.Insert(ctx, input)
 		d := m.Details[0]
 		assert.Nil(t, err)
-		assert.Equal(t, 12000, m.Jumlah)
+		assert.Equal(t, 18000, m.Jumlah)
 		assert.Equal(t, nama, d.Uraian)
 		assert.Equal(t, harga, d.Harga)
 		assert.Equal(t, jumlah, d.Jumlah)
 		assert.Equal(t, diskon, d.Diskon)
 		assert.Equal(t, satuanJumlah, d.SatuanJumlah)
+		assert.Equal(t, float64(1800), d.SatuanHarga)
 		assert.Equal(t, satuanNama, d.SatuanNama)
 		assert.Equal(t, keteranganDetail, d.Keterangan)
 	})

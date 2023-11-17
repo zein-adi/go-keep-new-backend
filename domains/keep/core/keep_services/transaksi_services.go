@@ -223,8 +223,8 @@ func (x *TransaksiServices) newEntityFromRequest(ctx context.Context, transaksiR
 	if len(transaksiRequest.Details) > 0 {
 		transaksi.Jumlah = 0
 		for _, detailRequest := range transaksiRequest.Details {
-			total := int(float64(detailRequest.Harga)*detailRequest.Jumlah - float64(detailRequest.Diskon))
-			satuanHarga := float64(total) / detailRequest.SatuanJumlah
+			total := int(detailRequest.Harga*detailRequest.Jumlah - detailRequest.Diskon)
+			satuanHarga := float64(total) / (detailRequest.SatuanJumlah * detailRequest.Jumlah)
 			transaksi.Jumlah += total
 
 			d := &keep_entities.TransaksiDetail{

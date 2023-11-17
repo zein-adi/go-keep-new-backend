@@ -12,7 +12,7 @@ import (
  * APP_ENV: production (default), development, testing
  */
 
-var Version = "1.0.1"
+var Version = "1.0.2"
 
 func main() {
 	fmt.Printf("%-25s: %s\n", "Version", Version)
