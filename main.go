@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zein-adi/go-keep-new-backend/app/commands"
+	"github.com/zein-adi/go-keep-new-backend/domains/auth/core/auth_responses"
 	"github.com/zein-adi/go-keep-new-backend/helpers/helpers_env"
 	"github.com/zein-adi/go-keep-new-backend/routes"
 )
@@ -12,10 +13,8 @@ import (
  * APP_ENV: production (default), development, testing
  */
 
-var Version = "1.0.2"
-
 func main() {
-	fmt.Printf("%-25s: %s\n", "Version", Version)
+	fmt.Printf("%-25s: %s\n", "Version", auth_responses.Version)
 	helpers_env.Init(0)
 	cliHandler()
 }

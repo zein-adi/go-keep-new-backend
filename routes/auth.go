@@ -19,6 +19,7 @@ func injectAuthRoutes(r *gorillamux_router.Router) {
 		r.New().SetMiddleware(middlewares.AuthHandle).
 			Group("", "", func(r *gorillamux_router.Router) {
 				r.GET("/profile", authRestful.Profile, "")
+				r.GET("/configs", authRestful.Config, "")
 			})
 
 		r.New().SetMiddleware(middlewares.AuthRefreshHandle).

@@ -86,3 +86,9 @@ func (x *AuthRestfulHandler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 	h.SendSingleResponse(w, http.StatusOK, response)
 }
+func (x *AuthRestfulHandler) Config(w http.ResponseWriter, r *http.Request) {
+	response := &auth_responses.ConfigResponse{
+		Version: auth_responses.Version,
+	}
+	h.SendSingleResponse(w, http.StatusOK, response)
+}
